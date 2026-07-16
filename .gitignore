@@ -1,3 +1,4 @@
+# ─── Backend (Node) ───────────────────────────────────────────────
 node_modules/
 dist/
 build/
@@ -6,8 +7,6 @@ build/
 *.sqlite-shm
 *.sqlite-journal
 *.db
-.env
-.DS_Store
 media/*
 !media/.gitkeep
 
@@ -16,3 +15,56 @@ server/data/
 test-results/
 playwright-report/
 .playwright/
+
+# ─── Frontend (Dart / Flutter) ────────────────────────────────────
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec_overrides.yaml
+**/doc/api/
+coverage/
+*.log
+
+# Lockfiles are committed for apps but not for pure packages (ignore nested, keep root)
+**/pubspec.lock
+
+# Android
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/local.properties
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+*.keystore
+*.jks
+
+# iOS / macOS
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Pods/
+**/ios/.symlinks/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+.metadata
+
+# Melos
+.melos_tool/
+
+# ─── IDE / OS / secrets ───────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.iml
+*.ipr
+*.iws
+.DS_Store
+Thumbs.db
+
+.env
+.env.*
+!.env.example
