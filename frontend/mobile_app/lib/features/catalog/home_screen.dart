@@ -52,7 +52,7 @@ class HomeScreen extends StatelessWidget {
                           style: AppTypography.eyebrow(c.accent),
                         ),
                         const SizedBox(height: 2),
-                        Text('Maison Ébani', style: t.headlineMedium),
+                        Text('Ebani', style: t.headlineMedium),
                       ],
                     ),
                   ),

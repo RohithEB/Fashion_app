@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // The display is a fixed landscape screen (TV / tablet kiosk).
-  SystemChrome.setPreferredOrientations(<DeviceOrientation>[
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  // The display follows the device orientation; every screen is responsive to
+  // both landscape (TV) and portrait (kiosk panel).
   runApp(const DisplayApp());
 }

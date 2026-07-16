@@ -34,60 +34,65 @@ class PresentationScreen extends StatelessWidget {
     final bool isVideo = p.view == PresentationView.video;
     final bool isGallery = p.view == PresentationView.gallery;
 
+    final Widget stage = Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        AnimatedSwitcher(
+          duration: AppMotion.display,
+          child: isGallery
+              ? _GalleryStage(
+                  key: const ValueKey<String>('gallery'),
+                  images: images,
+                )
+              : isVideo
+              ? _VideoStage(
+                  key: const ValueKey<String>('video'),
+                  poster: image,
+                  playing: p.videoPlaying,
+                )
+              : Transform.translate(
+                  key: ValueKey<String>('${p.variantId}-${p.imageIndex}'),
+                  offset: Offset(p.panX * 60, p.panY * 60),
+                  child: Transform.scale(
+                    scale: p.zoom,
+                    child: NetworkPhoto(url: image),
+                  ),
+                ),
+        ),
+        if (!isVideo && !isGallery && images.length > 1)
+          Positioned(
+            left: AppSpacing.xl,
+            bottom: AppSpacing.xl,
+            child: _ImageDots(count: images.length, index: p.imageIndex),
+          ),
+      ],
+    );
+
+    final Widget info = _InfoPanel(
+      product: product,
+      variant: variant,
+      showAI: p.showAIHighlights,
+    );
+
     return ColoredBox(
       color: c.background,
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            flex: 6,
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                AnimatedSwitcher(
-                  duration: AppMotion.display,
-                  child: isGallery
-                      ? _GalleryStage(
-                          key: const ValueKey<String>('gallery'),
-                          images: images,
-                        )
-                      : isVideo
-                      ? _VideoStage(
-                          key: const ValueKey<String>('video'),
-                          poster: image,
-                          playing: p.videoPlaying,
-                        )
-                      : Transform.translate(
-                          key: ValueKey<String>(
-                            '${p.variantId}-${p.imageIndex}',
-                          ),
-                          offset: Offset(p.panX * 60, p.panY * 60),
-                          child: Transform.scale(
-                            scale: p.zoom,
-                            child: NetworkPhoto(url: image),
-                          ),
-                        ),
-                ),
-                if (!isVideo && !isGallery && images.length > 1)
-                  Positioned(
-                    left: AppSpacing.xl,
-                    bottom: AppSpacing.xl,
-                    child: _ImageDots(
-                      count: images.length,
-                      index: p.imageIndex,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: _InfoPanel(
-              product: product,
-              variant: variant,
-              showAI: p.showAIHighlights,
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final bool portrait = constraints.maxHeight > constraints.maxWidth;
+          return portrait
+              ? Column(
+                  children: <Widget>[
+                    Expanded(flex: 6, child: stage),
+                    Expanded(flex: 5, child: info),
+                  ],
+                )
+              : Row(
+                  children: <Widget>[
+                    Expanded(flex: 6, child: stage),
+                    Expanded(flex: 4, child: info),
+                  ],
+                );
+        },
       ),
     );
   }
@@ -134,7 +139,7 @@ class _InfoPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.xl),
           Text(
-            'COLOUR — ${variant.colorName}',
+            'COLOR — ${variant.colorName}',
             style: AppTypography.eyebrow(c.textSecondary),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -173,7 +178,7 @@ class _InfoPanel extends StatelessWidget {
                             Icon(AppIcons.sparkle, size: 16, color: c.accent),
                             const SizedBox(width: AppSpacing.xs),
                             Text(
-                              'ATELIER NOTES',
+                              'STYLE NOTES',
                               style: AppTypography.eyebrow(c.accent),
                             ),
                           ],

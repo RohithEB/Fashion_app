@@ -124,7 +124,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(product.name, style: t.headlineMedium),
                   const SizedBox(height: AppSpacing.lg),
-                  _Label(text: 'COLOUR — ${variant.colorName}'),
+                  _Label(text: 'COLOR — ${variant.colorName}'),
                   const SizedBox(height: AppSpacing.xs),
                   _ColorSelector(
                     product: product,
@@ -146,7 +146,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Icon(AppIcons.sparkle, size: 16, color: c.accent),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
-                          'ATELIER NOTES',
+                          'STYLE NOTES',
                           style: AppTypography.eyebrow(c.textSecondary),
                         ),
                       ],

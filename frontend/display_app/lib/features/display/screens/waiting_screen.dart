@@ -17,52 +17,78 @@ class WaitingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
-    final TextTheme t = Theme.of(context).textTheme;
     final DisplayController ctrl = context.read<DisplayController>();
 
     return GestureDetector(
       onTap: ctrl.startDemoSession,
       child: ColoredBox(
         color: c.background,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.giant),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                flex: 3,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'MAISON ÉBANI',
-                      style: AppTypography.eyebrow(c.accent),
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final bool portrait = constraints.maxHeight > constraints.maxWidth;
+            final double pad = portrait ? AppSpacing.xl : AppSpacing.giant;
+            final Widget invitation = _Invitation(portrait: portrait);
+            final Widget qr = _QrCard(url: ctrl.pairingUrl);
+            return Padding(
+              padding: EdgeInsets.all(pad),
+              child: portrait
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        invitation,
+                        const SizedBox(height: AppSpacing.xxl),
+                        qr,
+                      ],
+                    )
+                  : Row(
+                      children: <Widget>[
+                        Expanded(flex: 3, child: invitation),
+                        const SizedBox(width: AppSpacing.giant),
+                        Expanded(flex: 2, child: qr),
+                      ],
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'A private\nshowroom,\nfor you.',
-                      style: AppTypography.displayHero(
-                        c.textPrimary,
-                      ).copyWith(fontSize: 80),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    Text(
-                      'A style advisor will pair their device to begin your\n'
-                      'personal session.',
-                      style: t.titleMedium?.copyWith(
-                        color: c.textSecondary,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.giant),
-              Expanded(flex: 2, child: _QrCard(url: ctrl.pairingUrl)),
-            ],
-          ),
+            );
+          },
         ),
       ),
+    );
+  }
+}
+
+class _Invitation extends StatelessWidget {
+  const _Invitation({required this.portrait});
+
+  final bool portrait;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    final TextTheme t = Theme.of(context).textTheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment:
+          portrait ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      children: <Widget>[
+        Text('EBANI', style: AppTypography.eyebrow(c.accent)),
+        const SizedBox(height: AppSpacing.lg),
+        Text(
+          'A private\nshowroom,\nfor you.',
+          textAlign: portrait ? TextAlign.center : TextAlign.start,
+          style: AppTypography.displayHero(
+            c.textPrimary,
+          ).copyWith(fontSize: portrait ? 56 : 80),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        Text(
+          'A style advisor will pair their device\nto begin your personal session.',
+          textAlign: portrait ? TextAlign.center : TextAlign.start,
+          style: t.titleMedium?.copyWith(
+            color: c.textSecondary,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
     );
   }
 }

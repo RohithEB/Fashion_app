@@ -46,7 +46,7 @@ class FashionControllerApp extends StatelessWidget {
       child: Builder(
         builder: (BuildContext context) {
           return MaterialApp.router(
-            title: 'Maison Ébani — Atelier',
+            title: 'Ebani — Studio',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),

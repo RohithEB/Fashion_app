@@ -24,9 +24,9 @@ class SplashScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Text('MAISON DE COUTURE', style: AppTypography.eyebrow(c.accent)),
+              Text('LUXURY FASHION', style: AppTypography.eyebrow(c.accent)),
               const SizedBox(height: AppSpacing.md),
-              Text('Maison Ébani', style: t.displayMedium),
+              Text('Ebani', style: t.displayMedium),
             ],
           ),
         ),

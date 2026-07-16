@@ -135,7 +135,7 @@ class _HighlightsOverlay extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('ATELIER NOTES', style: AppTypography.eyebrow(dark.accent)),
+          Text('STYLE NOTES', style: AppTypography.eyebrow(dark.accent)),
           const SizedBox(height: 4),
           for (final String h in product.aiHighlights.take(3))
             Padding(

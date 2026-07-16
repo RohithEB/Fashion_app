@@ -14,9 +14,9 @@ class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   static const List<Salesperson> _mockRoster = <Salesperson>[
-    Salesperson(id: 's1', name: 'Éléonore', title: 'Senior Style Advisor'),
+    Salesperson(id: 's1', name: 'Eleanor', title: 'Senior Style Advisor'),
     Salesperson(id: 's2', name: 'Marcus', title: 'Client Advisor'),
-    Salesperson(id: 's3', name: 'Sofia', title: 'Atelier Specialist'),
+    Salesperson(id: 's3', name: 'Sofia', title: 'Studio Specialist'),
   ];
 
   @override
@@ -31,9 +31,9 @@ class LoginScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               const Spacer(flex: 2),
-              Text('ATELIER', style: AppTypography.eyebrow(c.accent)),
+              Text('THE STUDIO', style: AppTypography.eyebrow(c.accent)),
               const SizedBox(height: AppSpacing.sm),
-              Text('Maison Ébani', style: t.displaySmall),
+              Text('Ebani', style: t.displaySmall),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Sign in to begin a personal showroom session.',

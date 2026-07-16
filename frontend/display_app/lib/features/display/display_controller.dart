@@ -245,7 +245,7 @@ class DisplayController extends ChangeNotifier {
       0,
       WsEvent(
         type: WsEventType.connectScreen,
-        payload: const <String, dynamic>{'salespersonName': 'Éléonore'},
+        payload: const <String, dynamic>{'salespersonName': 'Eleanor'},
       ),
     );
     at(

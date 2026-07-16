@@ -99,8 +99,35 @@ class ConnectScreen extends StatelessWidget {
   }
 }
 
-class _ScannerSheet extends StatelessWidget {
+class _ScannerSheet extends StatefulWidget {
   const _ScannerSheet();
+
+  @override
+  State<_ScannerSheet> createState() => _ScannerSheetState();
+}
+
+class _ScannerSheetState extends State<_ScannerSheet> {
+  final MobileScannerController _controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+  );
+
+  /// Guards against [MobileScanner.onDetect] firing repeatedly and popping the
+  /// route more than once (the cause of the post-scan lifecycle error).
+  bool _handled = false;
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_handled) return;
+    final String? value = capture.barcodes.firstOrNull?.rawValue;
+    if (value == null || value.isEmpty) return;
+    _handled = true;
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,13 +148,8 @@ class _ScannerSheet extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: AppRadius.brLg,
                 child: MobileScanner(
-                  onDetect: (BarcodeCapture capture) {
-                    final String? value =
-                        capture.barcodes.firstOrNull?.rawValue;
-                    if (value != null && value.isNotEmpty) {
-                      Navigator.of(context).pop(value);
-                    }
-                  },
+                  controller: _controller,
+                  onDetect: _onDetect,
                 ),
               ),
             ),

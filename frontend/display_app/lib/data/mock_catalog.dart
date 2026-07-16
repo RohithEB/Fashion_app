@@ -65,7 +65,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p1',
       name: 'Silk Column Gown',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'rtw',
       price: Money.fromMajor(2890),
       isNew: true,
@@ -93,7 +93,7 @@ abstract final class MockCatalog {
         ),
         _variant(
           id: 'p1v3',
-          color: 'Bordeaux',
+          color: 'Burgundy',
           hex: '#5B2130',
           seedBase: 'gown-bord',
         ),
@@ -102,7 +102,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p2',
       name: 'Tailored Wool Blazer',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'rtw',
       price: Money.fromMajor(1650),
       description:
@@ -132,7 +132,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p3',
       name: 'Cashmere Trench',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'outerwear',
       price: Money.fromMajor(3450),
       isNew: true,
@@ -163,7 +163,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p4',
       name: 'Structured Leather Tote',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'leather',
       price: Money.fromMajor(1980),
       description:
@@ -195,7 +195,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p5',
       name: 'Ribbed Cashmere Knit',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'knitwear',
       price: Money.fromMajor(890),
       description:
@@ -222,7 +222,7 @@ abstract final class MockCatalog {
         ),
         _variant(
           id: 'p5v3',
-          color: 'Noir',
+          color: 'Black',
           hex: '#141210',
           seedBase: 'knit-noir',
         ),
@@ -231,7 +231,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p6',
       name: 'Pleated Midi Skirt',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'rtw',
       price: Money.fromMajor(1120),
       description:
@@ -261,7 +261,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p7',
       name: 'Quilted Field Jacket',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'outerwear',
       price: Money.fromMajor(1390),
       description:
@@ -291,7 +291,7 @@ abstract final class MockCatalog {
     Product(
       id: 'p8',
       name: 'Leather Chelsea Boot',
-      brand: 'MAISON ÉBANI',
+      brand: 'EBANI',
       categoryId: 'leather',
       price: Money.fromMajor(1240),
       description:

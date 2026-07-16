@@ -106,7 +106,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Boutique Terminal · Fake Gateway',
+                    'Store Terminal · Demo Gateway',
                     style: t.bodyMedium,
                   ),
                 ),

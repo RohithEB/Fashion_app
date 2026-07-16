@@ -33,7 +33,7 @@ class DisplayApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'Maison Ébani — Showroom',
+        title: 'Ebani — Showroom',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark(),
         darkTheme: AppTheme.dark(),
