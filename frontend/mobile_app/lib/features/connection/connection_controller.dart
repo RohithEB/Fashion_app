@@ -22,6 +22,10 @@ class ConnectionController extends ChangeNotifier {
   SessionInfo? session;
   String? error;
 
+  /// True when a real WebSocket link to the display was established (vs. an
+  /// offline demo fallback).
+  bool liveLink = false;
+
   bool get isConnected => status == ConnectionStatus.connected;
 
   void login(Salesperson person) {
@@ -48,6 +52,11 @@ class ConnectionController extends ChangeNotifier {
     final Salesperson person =
         salesperson ?? const Salesperson(id: 's0', name: 'Associate');
 
+    // Attempt a real WebSocket link to the display's LAN server. If it fails
+    // (e.g. the demo display), we fall back to an offline session so the app
+    // stays fully usable.
+    liveLink = await _realtime.connect(info.wsUri);
+
     _realtime.emit(
       WsEvent(
         type: WsEventType.pair,
@@ -56,8 +65,8 @@ class ConnectionController extends ChangeNotifier {
       ),
     );
 
-    // Simulated server binding latency.
-    await Future<void>.delayed(const Duration(milliseconds: 900));
+    // Brief binding delay (real server acknowledges; fallback simulates).
+    await Future<void>.delayed(const Duration(milliseconds: 700));
 
     session = SessionInfo(
       sessionId: 'sess_${info.token}',

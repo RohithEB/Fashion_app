@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
+import 'core/realtime/controller_realtime_service.dart';
 import 'core/realtime/realtime_service.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -24,7 +25,7 @@ class FashionControllerApp extends StatelessWidget {
           create: (_) => const MockCatalogRepository(),
         ),
         Provider<RealtimeService>(
-          create: (_) => MockRealtimeService(),
+          create: (_) => ControllerRealtimeService(),
           dispose: (_, RealtimeService s) => s.dispose(),
         ),
         ChangeNotifierProvider<CatalogController>(

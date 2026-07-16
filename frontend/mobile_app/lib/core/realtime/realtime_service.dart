@@ -4,10 +4,10 @@ import '../../models/ws_event.dart';
 
 /// Transport-agnostic realtime channel.
 ///
-/// The apps depend only on this interface. [MockRealtimeService] powers the POC
-/// (in-app loopback, no server); [WsRealtimeService] talks to the real
-/// Android-hosted LAN server when it exists — swapping one for the other needs
-/// no UI changes.
+/// The apps depend only on this interface. [MockRealtimeService] powers offline
+/// demos (in-app loopback); the mobile [ControllerRealtimeService] and the
+/// display's LAN server talk to a real WebSocket — swapping one for another
+/// needs no UI change.
 abstract class RealtimeService {
   /// Inbound events (from the peer/server).
   Stream<WsEvent> get events;
@@ -18,23 +18,25 @@ abstract class RealtimeService {
   /// Send an event to the peer/server.
   void emit(WsEvent event);
 
+  /// Open a real transport to [url]. Returns true if connected. Default is a
+  /// no-op (used by the offline mock), so callers can attempt a real connection
+  /// and gracefully fall back.
+  Future<bool> connect(Uri url) async => false;
+
   Future<void> dispose();
 }
 
-/// In-memory realtime used for the POC.
+/// In-memory realtime used for offline demos.
 ///
-/// * [emit] both forwards to any real transport (none in mock) AND echoes back
-///   on [events] as a loopback, so an in-app live preview can mirror exactly
-///   what the display would render.
-/// * [inject] simulates an inbound event from the server/peer (used to script
-///   pairing and demo flows).
-class MockRealtimeService implements RealtimeService {
+/// * [emit] echoes on [events] when [loopback] is set, so an in-app preview can
+///   mirror what the display would render.
+/// * [inject] simulates an inbound event from the server/peer.
+class MockRealtimeService extends RealtimeService {
   MockRealtimeService({this.role = SenderRole.salesperson, this.loopback = true});
 
   @override
   final SenderRole role;
 
-  /// When true, [emit]ted events are echoed on [events].
   final bool loopback;
 
   final StreamController<WsEvent> _controller =
@@ -45,9 +47,7 @@ class MockRealtimeService implements RealtimeService {
 
   @override
   void emit(WsEvent event) {
-    if (loopback && !_controller.isClosed) {
-      _controller.add(event);
-    }
+    if (loopback && !_controller.isClosed) _controller.add(event);
   }
 
   /// Simulate an event arriving from the server/peer.

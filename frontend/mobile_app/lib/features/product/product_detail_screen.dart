@@ -92,6 +92,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 controller: _page,
                 index: _imageIndex,
                 onChanged: _onImageChanged,
+                interactive: presentingThis,
+                onTransform: (double scale, double px, double py) => context
+                    .read<PresentationController>()
+                    .zoom(scale, focalX: px, focalY: py),
               ),
             ),
           ),
@@ -186,31 +190,81 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 }
 
-class _Gallery extends StatelessWidget {
+/// Product gallery. When [interactive] (Presentation mode for this product),
+/// each image becomes pinch-zoom/pan enabled and reports its transform via
+/// [onTransform] as `(scale, panXNormalized, panYNormalized)`, which the
+/// controller emits as live-sync events to the display.
+class _Gallery extends StatefulWidget {
   const _Gallery({
     required this.variant,
     required this.controller,
     required this.index,
     required this.onChanged,
+    this.interactive = false,
+    this.onTransform,
   });
 
   final ProductVariant variant;
   final PageController controller;
   final int index;
   final ValueChanged<int> onChanged;
+  final bool interactive;
+  final void Function(double scale, double panX, double panY)? onTransform;
+
+  @override
+  State<_Gallery> createState() => _GalleryState();
+}
+
+class _GalleryState extends State<_Gallery> {
+  final TransformationController _tc = TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tc.addListener(_emit);
+  }
+
+  void _emit() {
+    if (!widget.interactive || widget.onTransform == null) return;
+    final Matrix4 m = _tc.value;
+    final double scale = m.getMaxScaleOnAxis();
+    // Normalize translation to roughly [-1, 1] against a nominal image extent.
+    final double px = (m.getTranslation().x / 300).clamp(-1.0, 1.0);
+    final double py = (m.getTranslation().y / 400).clamp(-1.0, 1.0);
+    widget.onTransform!(scale, px, py);
+  }
+
+  @override
+  void dispose() {
+    _tc.removeListener(_emit);
+    _tc.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
-    final List<ProductMedia> images = variant.images;
+    final List<ProductMedia> images = widget.variant.images;
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
         PageView.builder(
-          controller: controller,
-          onPageChanged: onChanged,
+          controller: widget.controller,
+          onPageChanged: widget.onChanged,
+          physics: widget.interactive
+              ? const NeverScrollableScrollPhysics()
+              : const PageScrollPhysics(),
           itemCount: images.length,
-          itemBuilder: (_, int i) => NetworkPhoto(url: images[i].url),
+          itemBuilder: (_, int i) {
+            final Widget photo = NetworkPhoto(url: images[i].url);
+            if (!widget.interactive) return photo;
+            return InteractiveViewer(
+              transformationController: _tc,
+              minScale: 1,
+              maxScale: 4,
+              child: photo,
+            );
+          },
         ),
         Positioned(
           bottom: AppSpacing.md,
@@ -223,10 +277,12 @@ class _Gallery extends StatelessWidget {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == index ? 20 : 6,
+                  width: i == widget.index ? 20 : 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: i == index ? c.onPrimary : c.onPrimary.withValues(alpha: 0.5),
+                    color: i == widget.index
+                        ? c.onPrimary
+                        : c.onPrimary.withValues(alpha: 0.5),
                     borderRadius: AppRadius.brPill,
                   ),
                 ),

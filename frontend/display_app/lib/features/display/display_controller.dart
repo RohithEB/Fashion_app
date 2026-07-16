@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/realtime/display_realtime.dart';
 import '../../core/realtime/realtime_service.dart';
 import '../../data/catalog_repository.dart';
 import '../../models/presentation_state.dart';
@@ -27,9 +28,9 @@ class DisplayController extends ChangeNotifier {
   /// shortened for the POC demo.
   static const int thankYouSeconds = 15;
 
-  /// The pairing link encoded in the on-screen QR. In production the
-  /// Android-hosted server issues this with the device IP + a fresh token.
-  final String pairingUrl = 'http://192.168.1.42:8080/pair?token=DEMO-8421';
+  /// The pairing link encoded in the on-screen QR. Set from the LAN server's
+  /// real device IP + token once [start] completes (placeholder until then).
+  String pairingUrl = 'http://192.168.1.42:8080/pair?token=DEMO-8421';
 
   List<Product> _cache = <Product>[];
 
@@ -43,6 +44,13 @@ class DisplayController extends ChangeNotifier {
   Timer? _countdownTimer;
 
   Future<void> _boot() async {
+    // Host the LAN server (native) and publish the real pairing URL.
+    final RealtimeService rt = _realtime;
+    if (rt is DisplayRealtimeService) {
+      await rt.start();
+      pairingUrl = rt.pairingUrl;
+      notifyListeners();
+    }
     _cache = await _catalog.products(); // hydrate + cache the catalog
     _phaseTimer = Timer(const Duration(milliseconds: 2200), () {
       phase = DisplayPhase.advertisement;
@@ -151,7 +159,7 @@ class DisplayController extends ChangeNotifier {
   /// waiting screen for demos; no-op if a real transport is wired.
   void startDemoSession() {
     final RealtimeService rt = _realtime;
-    if (rt is! MockRealtimeService) return;
+    if (rt is! DisplayRealtimeService) return;
     final List<Product> demo = _cache.take(3).toList();
     if (demo.isEmpty) return;
 
