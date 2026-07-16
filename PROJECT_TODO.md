@@ -68,9 +68,9 @@
 |----|------|-----|--------|------|-----------|-------|
 | CON-01 | `RealtimeService` interface (connect/emit/stream events) | 🔴 | ⬜ | MOD-06 | M | transport-agnostic |
 | CON-02 | MockRealtimeService (in-app loopback/simulated) | 🔴 | ⬜ | CON-01 | M | UI-first, no server |
-| CON-03 | Real WS client (`web_socket_channel`) impl | 🟠 | ⬜ | CON-01 | M | reconnect + heartbeat |
-| CON-04 | Display: boot → open WS → get pairingToken → render QR | 🔴 | ⬜ | CON-01 | M | QR = pair url+token |
-| CON-05 | Mobile: scan QR (`mobile_scanner`) → parse → `pair` event | 🔴 | ⬜ | CON-01 | M | |
+| CON-03 | Real WS client (`web_socket_channel`) impl | 🟠 | ✅ | CON-01 | M | `ControllerRealtimeService` + demo fallback |
+| CON-04 | Display: host LAN WS server → real IP/token → render QR | 🔴 | ✅ | CON-01 | M | `dart:io` server, web stub via cond. import |
+| CON-05 | Mobile: scan QR (`mobile_scanner`) → parse → `pair` event | 🔴 | ✅ | CON-01 | M | connect + optimistic session |
 | CON-06 | Server-side bind → `paired {sessionId, displayId}` to both | 🔴 | ⬜ | CON-02 | M | mocked in loopback |
 | CON-07 | Session lifecycle: connecting → loading → welcome | 🔴 | ⬜ | CON-06 | S | |
 | CON-08 | Idle timeout (10 min) → `session_warning` → `session_end` | 🟠 | ⬜ | CON-07 | M | grace + keep_alive |
@@ -109,9 +109,9 @@
 ## 9. Live Presentation Synchronization
 | ID | Task | Pri | Status | Deps | Complexity | Notes |
 |----|------|-----|--------|------|-----------|-------|
-| SYN-01 | Presentation-mode session state (both apps) | 🔴 | ⬜ | MOB-05 | M | gate for sync |
-| SYN-02 | Image zoom sync (`zoomImage`) | 🔴 | ⬜ | SYN-01 | M | throttled |
-| SYN-03 | Image pan sync (`panImage`) + reset (`resetZoom`) | 🔴 | ⬜ | SYN-02 | M | |
+| SYN-01 | Presentation-mode session state (both apps) | 🔴 | ✅ | MOB-05 | M | `ProductPresentation` + pure reducer |
+| SYN-02 | Image zoom sync (`zoomImage`) | 🔴 | ✅ | SYN-01 | M | InteractiveViewer → throttled emit |
+| SYN-03 | Image pan sync (`panImage`) + reset (`resetZoom`) | 🔴 | ✅ | SYN-02 | M | via transform controller |
 | SYN-04 | Gallery change sync (`changeImage`) | 🟠 | ⬜ | SYN-01 | S | |
 | SYN-05 | Color/size change sync (`changeColor`,`changeSize`) | 🟠 | ⬜ | SYN-01 | M | |
 | SYN-06 | Video sync (`playVideo`,`pauseVideo`,`seekVideo`,`muteVideo`) | 🟠 | ⬜ | DIS-08 | M | |

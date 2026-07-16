@@ -90,9 +90,26 @@ Both apps are verified to build for web (`flutter build web`).
    toggle atelier notes → open the **Cart** and tap **Present** on any item to
    switch the look live → **Checkout → Pay** → display shows **Thank You**.
 
+## Real LAN connection
+
+On a **native build** the display app hosts a WebSocket server on the WiFi LAN
+(`dart:io`, port 8080) and encodes its real device IP + token in the pairing QR.
+The salesperson app scans it and connects with `web_socket_channel`; from then on
+every presentation interaction (show product, colour, **pinch-zoom / pan**, video,
+AI notes, payment) flows as live-sync events. On **web** (which cannot host a TCP
+server) both apps fall back to an in-app loopback + scripted demo, so everything
+still runs. Selection is by conditional import — the web build never sees `dart:io`.
+
+Android manifests enable `INTERNET` / `CAMERA` and `usesCleartextTraffic` for
+`ws://` LAN traffic.
+
 ## Status
 
-Milestone 1 complete: both apps build clean and run the full premium UI flow on
-mock data with event-based live sync. Backend integration points are stubbed
-behind interfaces. See `PROJECT_TODO.md` for the remaining backlog and
-`REQUIREMENTS.md` for the full spec.
+- **Milestone 1** — both apps build clean; full premium UI flow on mock data with
+  event-based live sync.
+- **Milestone 2** — real LAN WebSocket server hosted in the display app; mobile WS
+  client with graceful demo fallback; live pinch-zoom / pan gesture sync.
+
+Backend integration points remain stubbed behind interfaces. See `PROJECT_TODO.md`
+for the backlog and `REQUIREMENTS.md` for the full spec. Real cross-device pairing
+is implemented but pending on-device (two-device) testing.
