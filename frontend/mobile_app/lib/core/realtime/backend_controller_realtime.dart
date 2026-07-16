@@ -134,6 +134,12 @@ class BackendControllerRealtime extends RealtimeService {
     }
   }
 
+  @override
+  Future<void> closeTransport() async {
+    _sessionId = null;
+    await _teardown();
+  }
+
   Future<void> _teardown() async {
     await _sub?.cancel();
     _sub = null;

@@ -67,9 +67,25 @@ class ConnectionController extends ChangeNotifier {
 
   void _reset() {
     idleWarning = false;
+    liveLink = false;
     session = null;
     status = ConnectionStatus.disconnected;
     notifyListeners();
+  }
+
+  /// End the session (e.g. mobile idle timeout): clear the display, close the
+  /// live transport so the server frees the screen (returns it to idle + QR),
+  /// and drop back to the connect screen.
+  Future<void> endSession() async {
+    _realtime.emit(
+      WsEvent(
+        type: WsEventType.hideProduct,
+        sessionId: session?.sessionId,
+        senderRole: SenderRole.salesperson,
+      ),
+    );
+    await _realtime.closeTransport();
+    _reset();
   }
 
   void login(Salesperson person) {

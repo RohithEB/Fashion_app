@@ -11,6 +11,7 @@ import '../../models/product.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/network_photo.dart';
 import '../cart/cart_controller.dart';
+import '../connection/connection_controller.dart';
 import '../presentation/presentation_controller.dart';
 import '../presentation/widgets/live_preview.dart';
 
@@ -98,6 +99,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final TextTheme t = Theme.of(context).textTheme;
     final PresentationController pres = context.watch<PresentationController>();
     final bool presentingThis = _isPresentingThis(pres);
+    final bool connected = context.watch<ConnectionController>().liveLink;
 
     return Scaffold(
       body: CustomScrollView(
@@ -217,6 +219,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       bottomSheet: _ActionBar(
         presentingThis: presentingThis,
+        connected: connected,
         onShow: _showOnScreen,
         onAdd: () {
           context.read<CartController>().addItem(
@@ -499,17 +502,29 @@ class _Pill extends StatelessWidget {
 class _ActionBar extends StatelessWidget {
   const _ActionBar({
     required this.presentingThis,
+    required this.connected,
     required this.onShow,
     required this.onAdd,
   });
 
   final bool presentingThis;
+  final bool connected;
   final VoidCallback onShow;
   final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
+    final String label = !connected
+        ? 'No screen connected'
+        : (presentingThis ? 'Showing live' : 'Show on Screen');
+    final IconData icon = !connected
+        ? AppIcons.disconnect
+        : (presentingThis ? AppIcons.connected : AppIcons.showOnScreen);
+    // Only allow "make it live" when a display is actually connected.
+    final VoidCallback? onShowPressed =
+        (!connected || presentingThis) ? null : onShow;
+
     return Container(
       color: c.background,
       padding: EdgeInsets.fromLTRB(
@@ -523,10 +538,10 @@ class _ActionBar extends StatelessWidget {
           Expanded(
             flex: 3,
             child: AppButton(
-              label: presentingThis ? 'Showing live' : 'Show on Screen',
-              icon: presentingThis ? AppIcons.connected : AppIcons.showOnScreen,
+              label: label,
+              icon: icon,
               expand: true,
-              onPressed: presentingThis ? null : onShow,
+              onPressed: onShowPressed,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -560,14 +575,23 @@ class _CircleBackButton extends StatelessWidget {
   const _CircleBackButton();
   @override
   Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
+    // High-contrast dark scrim + white icon so it's visible over any image
+    // (including the light SVG placeholders).
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xs),
-      child: CircleAvatar(
-        backgroundColor: c.background.withValues(alpha: 0.9),
-        child: IconButton(
-          icon: const Icon(AppIcons.back, size: 18),
-          onPressed: () => Navigator.of(context).maybePop(),
+      child: Center(
+        child: Material(
+          color: Colors.black.withValues(alpha: 0.45),
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => Navigator.of(context).maybePop(),
+            child: const SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(AppIcons.back, size: 18, color: Colors.white),
+            ),
+          ),
         ),
       ),
     );

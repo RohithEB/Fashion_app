@@ -107,6 +107,14 @@ class ControllerRealtimeService extends RealtimeService {
     }
   }
 
+  @override
+  Future<void> closeTransport() async {
+    _url = null; // prevent reconnect
+    _reconnect?.cancel();
+    _heartbeat?.cancel();
+    await _closeChannel();
+  }
+
   Future<void> _closeChannel() async {
     await _sub?.cancel();
     _sub = null;

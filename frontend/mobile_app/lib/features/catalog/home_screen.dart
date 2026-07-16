@@ -52,7 +52,13 @@ class HomeScreen extends StatelessWidget {
                           style: AppTypography.eyebrow(c.accent),
                         ),
                         const SizedBox(height: 2),
-                        Text('Ebani', style: t.headlineMedium),
+                        Row(
+                          children: <Widget>[
+                            Flexible(child: Text('Ebani', style: t.headlineMedium)),
+                            const SizedBox(width: AppSpacing.sm),
+                            _StatusBadge(connected: conn.liveLink),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -124,6 +130,40 @@ class _CartButton extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.connected});
+
+  final bool connected;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    final Color color = connected ? c.success : c.textTertiary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            connected ? AppIcons.connected : AppIcons.disconnect,
+            size: 12,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            connected ? 'LIVE' : 'OFFLINE',
+            style: AppTypography.eyebrow(color).copyWith(fontSize: 9),
+          ),
+        ],
+      ),
     );
   }
 }
