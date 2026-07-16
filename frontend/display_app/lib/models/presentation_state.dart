@@ -99,6 +99,7 @@ class ProductPresentation {
       case WsEventType.changeImage:
         return copyWith(
           imageIndex: event.imageIndex ?? imageIndex,
+          view: PresentationView.hero,
           zoom: 1,
           panX: 0,
           panY: 0,

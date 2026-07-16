@@ -73,7 +73,7 @@
 | CON-05 | Mobile: scan QR (`mobile_scanner`) → parse → `pair` event | 🔴 | ✅ | CON-01 | M | connect + optimistic session |
 | CON-06 | Server-side bind → `paired {sessionId, displayId}` to both | 🔴 | ⬜ | CON-02 | M | mocked in loopback |
 | CON-07 | Session lifecycle: connecting → loading → welcome | 🔴 | ⬜ | CON-06 | S | |
-| CON-08 | Idle timeout (10 min) → `session_warning` → `session_end` | 🟠 | ⬜ | CON-07 | M | grace + keep_alive |
+| CON-08 | Idle timeout (10 min) → `session_warning` → `session_end` | 🟠 | ✅ | CON-07 | M | grace + keep_alive + heartbeat/reconnect |
 | CON-09 | Disconnect / re-pair handling both apps | 🟠 | ⬜ | CON-07 | M | |
 
 ## 7. Display App (Customer TV)
@@ -112,7 +112,7 @@
 | SYN-01 | Presentation-mode session state (both apps) | 🔴 | ✅ | MOB-05 | M | `ProductPresentation` + pure reducer |
 | SYN-02 | Image zoom sync (`zoomImage`) | 🔴 | ✅ | SYN-01 | M | InteractiveViewer → throttled emit |
 | SYN-03 | Image pan sync (`panImage`) + reset (`resetZoom`) | 🔴 | ✅ | SYN-02 | M | via transform controller |
-| SYN-04 | Gallery change sync (`changeImage`) | 🟠 | ⬜ | SYN-01 | S | |
+| SYN-04 | Gallery change sync (`changeImage`) + gallery view | 🟠 | ✅ | SYN-01 | S | display grid view |
 | SYN-05 | Color/size change sync (`changeColor`,`changeSize`) | 🟠 | ⬜ | SYN-01 | M | |
 | SYN-06 | Video sync (`playVideo`,`pauseVideo`,`seekVideo`,`muteVideo`) | 🟠 | ⬜ | DIS-08 | M | |
 | SYN-07 | AI highlights sync (`showAIHighlights`) | 🟡 | ⬜ | SYN-01 | S | |

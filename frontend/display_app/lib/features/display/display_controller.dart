@@ -28,6 +28,12 @@ class DisplayController extends ChangeNotifier {
   /// shortened for the POC demo.
   static const int thankYouSeconds = 15;
 
+  /// Idle before a warning is issued. Spec: 10 minutes; shortened for the demo.
+  static const Duration idleTimeout = Duration(seconds: 90);
+
+  /// Grace window after the warning before the session auto-ends.
+  static const int graceSeconds = 20;
+
   /// The pairing link encoded in the on-screen QR. Set from the LAN server's
   /// real device IP + token once [start] completes (placeholder until then).
   String pairingUrl = 'http://192.168.1.42:8080/pair?token=DEMO-8421';
@@ -40,8 +46,14 @@ class DisplayController extends ChangeNotifier {
   String salespersonName = '';
   int thankYouCountdown = thankYouSeconds;
 
+  /// True while the idle grace countdown is running (surfaced subtly on-screen).
+  bool idleWarningActive = false;
+  int idleSecondsLeft = graceSeconds;
+
   Timer? _phaseTimer;
   Timer? _countdownTimer;
+  Timer? _idleTimer;
+  Timer? _warningTimer;
 
   Future<void> _boot() async {
     // Host the LAN server (native) and publish the real pairing URL.
@@ -69,6 +81,9 @@ class DisplayController extends ChangeNotifier {
   }
 
   void _handle(WsEvent e) {
+    // Real interactions count as activity and reset the idle clock; pure
+    // liveness heartbeats do not (so an idle-but-connected app still times out).
+    if (e.type != WsEventType.heartbeat) _registerActivity();
     switch (e.type) {
       case WsEventType.connectScreen:
         salespersonName =
@@ -149,9 +164,62 @@ class DisplayController extends ChangeNotifier {
     });
   }
 
+  // ---- Idle / session lifecycle --------------------------------------------
+
+  /// Called on every inbound event. Restarts the idle countdown and cancels any
+  /// pending warning. Only armed while a session is active (welcome/presenting).
+  void _registerActivity() {
+    _idleTimer?.cancel();
+    if (idleWarningActive) {
+      idleWarningActive = false;
+      _warningTimer?.cancel();
+      notifyListeners();
+    }
+    _idleTimer = Timer(idleTimeout, _beginIdleWarning);
+  }
+
+  void _beginIdleWarning() {
+    if (phase != DisplayPhase.welcome && phase != DisplayPhase.presenting) {
+      return;
+    }
+    idleWarningActive = true;
+    idleSecondsLeft = graceSeconds;
+    notifyListeners();
+    _emit(WsEvent(
+      type: WsEventType.sessionWarning,
+      payload: <String, dynamic>{'secondsLeft': idleSecondsLeft},
+    ));
+    _warningTimer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+      idleSecondsLeft--;
+      if (idleSecondsLeft <= 0) {
+        _endSession('idle_timeout');
+      } else {
+        notifyListeners();
+        _emit(WsEvent(
+          type: WsEventType.sessionWarning,
+          payload: <String, dynamic>{'secondsLeft': idleSecondsLeft},
+        ));
+      }
+    });
+  }
+
+  void _endSession(String reason) {
+    _emit(WsEvent(
+      type: WsEventType.sessionEnd,
+      payload: <String, dynamic>{'reason': reason},
+    ));
+    _toWaiting();
+  }
+
+  /// Broadcast an event to connected controllers (no-op on the web stub).
+  void _emit(WsEvent event) => _realtime.emit(event);
+
   void _cancelTimers() {
     _phaseTimer?.cancel();
     _countdownTimer?.cancel();
+    _idleTimer?.cancel();
+    _warningTimer?.cancel();
+    idleWarningActive = false;
   }
 
   /// Standalone showcase: injects a scripted session so the display animates

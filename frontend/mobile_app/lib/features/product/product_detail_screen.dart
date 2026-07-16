@@ -402,6 +402,16 @@ class _SyncControls extends StatelessWidget {
                 label: ai ? 'Hide notes' : 'Show notes',
                 onTap: () => context.read<PresentationController>().toggleAIHighlights(),
               ),
+              _Pill(
+                icon: AppIcons.gallery,
+                label: 'Gallery',
+                onTap: () => context.read<PresentationController>().showGallery(),
+              ),
+              _Pill(
+                icon: AppIcons.zoomIn,
+                label: 'Focus',
+                onTap: () => context.read<PresentationController>().focusImage(0),
+              ),
               if (product.defaultVariant.video != null)
                 _Pill(
                   icon: AppIcons.play,
@@ -409,7 +419,7 @@ class _SyncControls extends StatelessWidget {
                   onTap: () => context.read<PresentationController>().playVideo(),
                 ),
               _Pill(
-                icon: AppIcons.gallery,
+                icon: AppIcons.close,
                 label: 'Reset view',
                 onTap: () => context.read<PresentationController>().resetZoom(),
               ),

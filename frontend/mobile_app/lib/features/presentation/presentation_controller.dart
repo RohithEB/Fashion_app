@@ -145,6 +145,15 @@ class PresentationController extends ChangeNotifier {
         payload: <String, dynamic>{'mediaId': mediaId},
       ));
 
+  /// Switch the display into the multi-image gallery view.
+  void showGallery() => _apply(const WsEvent(
+        type: WsEventType.showRelatedMedia,
+        payload: <String, dynamic>{'mediaId': 'gallery'},
+      ));
+
+  /// Return the display to a single focused image (hero) view.
+  void focusImage(int index) => changeImage(index);
+
   void playVideo() => _apply(const WsEvent(type: WsEventType.playVideo));
   void pauseVideo() => _apply(const WsEvent(type: WsEventType.pauseVideo));
   void seekVideo(int positionMs) => _apply(WsEvent(

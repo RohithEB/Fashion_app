@@ -32,6 +32,7 @@ class PresentationScreen extends StatelessWidget {
         ? null
         : images[p.imageIndex.clamp(0, images.length - 1)].url;
     final bool isVideo = p.view == PresentationView.video;
+    final bool isGallery = p.view == PresentationView.gallery;
 
     return ColoredBox(
       color: c.background,
@@ -44,22 +45,27 @@ class PresentationScreen extends StatelessWidget {
               children: <Widget>[
                 AnimatedSwitcher(
                   duration: AppMotion.display,
-                  child: isVideo
-                      ? _VideoStage(
-                          key: const ValueKey<String>('video'),
-                          poster: image,
-                          playing: p.videoPlaying,
+                  child: isGallery
+                      ? _GalleryStage(
+                          key: const ValueKey<String>('gallery'),
+                          images: images,
                         )
-                      : Transform.translate(
-                          key: ValueKey<String>('${p.variantId}-${p.imageIndex}'),
-                          offset: Offset(p.panX * 60, p.panY * 60),
-                          child: Transform.scale(
-                            scale: p.zoom,
-                            child: NetworkPhoto(url: image),
-                          ),
-                        ),
+                      : isVideo
+                          ? _VideoStage(
+                              key: const ValueKey<String>('video'),
+                              poster: image,
+                              playing: p.videoPlaying,
+                            )
+                          : Transform.translate(
+                              key: ValueKey<String>('${p.variantId}-${p.imageIndex}'),
+                              offset: Offset(p.panX * 60, p.panY * 60),
+                              child: Transform.scale(
+                                scale: p.zoom,
+                                child: NetworkPhoto(url: image),
+                              ),
+                            ),
                 ),
-                if (!isVideo && images.length > 1)
+                if (!isVideo && !isGallery && images.length > 1)
                   Positioned(
                     left: AppSpacing.xl,
                     bottom: AppSpacing.xl,
@@ -216,6 +222,37 @@ class _VideoStage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _GalleryStage extends StatelessWidget {
+  const _GalleryStage({required this.images, super.key});
+
+  final List<ProductMedia> images;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: AppSpacing.md,
+          mainAxisSpacing: AppSpacing.md,
+          childAspectRatio: 0.8,
+        ),
+        itemCount: images.length,
+        itemBuilder: (_, int i) => DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.brLg,
+            border: Border.all(color: c.border),
+          ),
+          child: NetworkPhoto(url: images[i].url, borderRadius: AppRadius.brLg),
+        ),
+      ),
     );
   }
 }

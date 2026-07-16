@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/realtime/realtime_service.dart';
@@ -13,9 +15,12 @@ enum ConnectionStatus { disconnected, connecting, connected, error }
 /// the "server" is simulated locally; swapping [RealtimeService] for the real
 /// LAN client makes this real with no UI change.
 class ConnectionController extends ChangeNotifier {
-  ConnectionController(this._realtime);
+  ConnectionController(this._realtime) {
+    _sub = _realtime.events.listen(_onEvent);
+  }
 
   final RealtimeService _realtime;
+  StreamSubscription<WsEvent>? _sub;
 
   ConnectionStatus status = ConnectionStatus.disconnected;
   Salesperson? salesperson;
@@ -26,7 +31,44 @@ class ConnectionController extends ChangeNotifier {
   /// offline demo fallback).
   bool liveLink = false;
 
+  /// Idle-timeout warning surfaced from the display; prompts the associate to
+  /// keep the session alive.
+  bool idleWarning = false;
+  int idleSecondsLeft = 0;
+
   bool get isConnected => status == ConnectionStatus.connected;
+
+  void _onEvent(WsEvent e) {
+    switch (e.type) {
+      case WsEventType.sessionWarning:
+        idleWarning = true;
+        idleSecondsLeft = e.secondsLeft ?? 0;
+        notifyListeners();
+      case WsEventType.sessionEnd:
+      case WsEventType.sessionTimeout:
+        _reset();
+      default:
+        break;
+    }
+  }
+
+  /// Associate confirms they are still present; cancels the idle warning.
+  void keepAlive() {
+    idleWarning = false;
+    _realtime.emit(WsEvent(
+      type: WsEventType.keepAlive,
+      sessionId: session?.sessionId,
+      senderRole: SenderRole.salesperson,
+    ));
+    notifyListeners();
+  }
+
+  void _reset() {
+    idleWarning = false;
+    session = null;
+    status = ConnectionStatus.disconnected;
+    notifyListeners();
+  }
 
   void login(Salesperson person) {
     salesperson = person;
@@ -74,6 +116,7 @@ class ConnectionController extends ChangeNotifier {
       salesperson: person,
     );
     status = ConnectionStatus.connected;
+    idleWarning = false;
 
     _realtime.emit(
       WsEvent(
@@ -99,5 +142,11 @@ class ConnectionController extends ChangeNotifier {
     session = null;
     status = ConnectionStatus.disconnected;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 }
