@@ -24,7 +24,19 @@ class PresentationScreen extends StatelessWidget {
     final DisplayController ctrl = context.watch<DisplayController>();
     final ProductPresentation? p = ctrl.presentation;
     final Product? product = ctrl.product;
-    if (p == null || product == null) return ColoredBox(color: c.background);
+    if (p == null || product == null) {
+      // Never blank: show a brand loader while product data resolves.
+      return ColoredBox(
+        color: c.background,
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2, color: c.accent),
+          ),
+        ),
+      );
+    }
 
     final ProductVariant variant = product.variantById(p.variantId);
     final List<ProductMedia> images = variant.images;

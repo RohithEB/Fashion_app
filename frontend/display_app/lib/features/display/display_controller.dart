@@ -55,6 +55,10 @@ class DisplayController extends ChangeNotifier {
   bool idleWarningActive = false;
   int idleSecondsLeft = graceSeconds;
 
+  /// The product id we currently intend to present — guards against a stale
+  /// async detail fetch overwriting a newer command.
+  String? _presentTargetId;
+
   Timer? _phaseTimer;
   Timer? _countdownTimer;
   Timer? _idleTimer;
@@ -100,6 +104,7 @@ class DisplayController extends ChangeNotifier {
       case WsEventType.showProduct:
         _showProduct(e);
       case WsEventType.hideProduct:
+        _presentTargetId = null;
         phase = DisplayPhase.welcome;
         presentation = null;
         product = null;
@@ -147,10 +152,12 @@ class DisplayController extends ChangeNotifier {
   void _showProduct(WsEvent e) {
     final String? id = e.productId;
     if (id == null) return;
+    _presentTargetId = id;
     final Product? cached = _cache
         .where((Product p) => p.id == id)
         .firstOrNull;
     if (cached != null) {
+      // We have data → present immediately.
       product = cached;
       presentation = ProductPresentation(
         productId: id,
@@ -158,18 +165,39 @@ class DisplayController extends ChangeNotifier {
       );
       phase = DisplayPhase.presenting;
       notifyListeners();
+    } else {
+      // Not cached yet → show the loading screen (never a blank presenting
+      // screen) while we fetch the detail.
+      phase = DisplayPhase.loading;
+      notifyListeners();
     }
-    // Upgrade the summary to full detail (rich variants/media/enrichment).
+    // Fetch/upgrade to full detail (rich variants/media/enrichment).
     unawaited(
-      _catalog.productById(id).then((Product? full) {
-        if (full == null || presentation?.productId != id) return;
-        product = full;
-        presentation = presentation!.copyWith(
-          variantId: e.variantId ?? full.defaultVariant.id,
-        );
-        phase = DisplayPhase.presenting;
-        notifyListeners();
-      }),
+      _catalog
+          .productById(id)
+          .then((Product? full) {
+            if (full == null || _presentTargetId != id) {
+              // Detail unavailable and nothing to show → fall back to welcome.
+              if (product == null && phase == DisplayPhase.loading) {
+                phase = DisplayPhase.welcome;
+                notifyListeners();
+              }
+              return;
+            }
+            product = full;
+            presentation = ProductPresentation(
+              productId: id,
+              variantId: e.variantId ?? full.defaultVariant.id,
+            );
+            phase = DisplayPhase.presenting;
+            notifyListeners();
+          })
+          .catchError((Object _) {
+            if (product == null && phase == DisplayPhase.loading) {
+              phase = DisplayPhase.welcome;
+              notifyListeners();
+            }
+          }),
     );
   }
 

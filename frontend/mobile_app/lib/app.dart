@@ -13,6 +13,7 @@ import 'data/http_catalog_repository.dart';
 import 'features/cart/cart_controller.dart';
 import 'features/catalog/catalog_controller.dart';
 import 'features/connection/connection_controller.dart';
+import 'features/connection/idle_session_watcher.dart';
 import 'features/connection/idle_warning_overlay.dart';
 import 'features/presentation/presentation_controller.dart';
 
@@ -59,8 +60,9 @@ class FashionControllerApp extends StatelessWidget {
             darkTheme: AppTheme.dark(),
             themeMode: ThemeMode.light,
             routerConfig: AppRouter.build(context),
-            builder: (BuildContext context, Widget? child) =>
-                IdleWarningOverlay(child: child ?? const SizedBox.shrink()),
+            builder: (BuildContext context, Widget? child) => IdleSessionWatcher(
+              child: IdleWarningOverlay(child: child ?? const SizedBox.shrink()),
+            ),
           );
         },
       ),

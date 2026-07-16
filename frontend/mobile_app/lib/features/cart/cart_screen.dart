@@ -11,6 +11,7 @@ import '../../models/cart.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/network_photo.dart';
 import '../../widgets/state_views.dart';
+import '../connection/connection_controller.dart';
 import '../presentation/presentation_controller.dart';
 import '../presentation/widgets/live_preview.dart';
 import 'cart_controller.dart';
@@ -62,6 +63,7 @@ class _CartTile extends StatelessWidget {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
     final PresentationController pres = context.watch<PresentationController>();
+    final bool connected = context.watch<ConnectionController>().liveLink;
     final bool presenting =
         pres.presentation?.productId == item.product.id &&
         pres.presentation?.variantId == item.variantId;
@@ -114,25 +116,31 @@ class _CartTile extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: AppButton(
-                        label: presenting ? 'On screen' : 'Present',
+                        label: presenting
+                            ? 'On screen'
+                            : (connected ? 'Present' : 'Offline'),
                         icon: presenting
                             ? AppIcons.connected
-                            : AppIcons.showOnScreen,
+                            : (connected
+                                  ? AppIcons.showOnScreen
+                                  : AppIcons.disconnect),
                         size: AppButtonSize.small,
                         variant: presenting
                             ? AppButtonVariant.secondary
                             : AppButtonVariant.primary,
                         onPressed: presenting
                             ? () => LivePreviewSheet.show(context)
-                            : () {
-                                context
-                                    .read<PresentationController>()
-                                    .showProduct(
-                                      item.product,
-                                      variantId: item.variantId,
-                                    );
-                                LivePreviewSheet.show(context);
-                              },
+                            : (!connected
+                                  ? null
+                                  : () {
+                                      context
+                                          .read<PresentationController>()
+                                          .showProduct(
+                                            item.product,
+                                            variantId: item.variantId,
+                                          );
+                                      LivePreviewSheet.show(context);
+                                    }),
                       ),
                     ),
                     IconButton(

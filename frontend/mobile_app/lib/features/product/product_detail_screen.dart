@@ -123,10 +123,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 controller: _page,
                 index: _imageIndex,
                 onChanged: _onImageChanged,
-                interactive: presentingThis,
-                onTransform: (double scale, double px, double py) => context
-                    .read<PresentationController>()
-                    .zoom(scale, focalX: px, focalY: py),
+                // Pinch-to-zoom is always available for inspection; the zoom is
+                // only *synced* to the display while presenting this product.
+                interactive: true,
+                onTransform: presentingThis
+                    ? (double scale, double px, double py) => context
+                          .read<PresentationController>()
+                          .zoom(scale, focalX: px, focalY: py)
+                    : null,
               ),
             ),
           ),
@@ -297,9 +301,9 @@ class _GalleryState extends State<_Gallery> {
         PageView.builder(
           controller: widget.controller,
           onPageChanged: widget.onChanged,
-          physics: widget.interactive
-              ? const NeverScrollableScrollPhysics()
-              : const PageScrollPhysics(),
+          // Keep paging enabled; InteractiveViewer captures the gesture only
+          // once the image is zoomed in, so swipe works at scale 1.
+          physics: const PageScrollPhysics(),
           itemCount: images.length,
           itemBuilder: (_, int i) {
             final Widget photo = NetworkPhoto(url: images[i].url);

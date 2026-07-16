@@ -23,6 +23,10 @@ abstract class RealtimeService {
   /// and gracefully fall back.
   Future<bool> connect(Uri url) async => false;
 
+  /// Close the live transport (ending the session) but keep the service
+  /// reusable for a later [connect]. Default no-op.
+  Future<void> closeTransport() async {}
+
   Future<void> dispose();
 }
 

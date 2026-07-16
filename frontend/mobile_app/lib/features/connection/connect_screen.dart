@@ -69,17 +69,6 @@ class ConnectScreen extends StatelessWidget {
                 isLoading: connecting,
                 onPressed: connecting ? null : () => _scan(context),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              AppButton(
-                label: 'Connect to demo display',
-                variant: AppButtonVariant.outline,
-                expand: true,
-                onPressed: connecting
-                    ? null
-                    : () => context.read<ConnectionController>().connectFromQr(
-                        'http://192.168.1.42:8080/pair?token=DEMO-8421',
-                      ),
-              ),
               const SizedBox(height: AppSpacing.xl),
             ],
           ),

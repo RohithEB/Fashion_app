@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_icons.dart';
 import '../core/theme/app_motion.dart';
 
 /// A network image with a tasteful skeleton placeholder and graceful error
-/// fallback. Fades in on load so grids feel calm rather than janky.
+/// fallback. Renders **SVG** sources too (the backend serves SVG placeholder
+/// media at `/media/ph`), which `Image.network` cannot do on its own.
 class NetworkPhoto extends StatelessWidget {
   const NetworkPhoto({
     required this.url,
@@ -18,12 +20,24 @@ class NetworkPhoto extends StatelessWidget {
   final BoxFit fit;
   final BorderRadius borderRadius;
 
+  bool get _isSvg {
+    final String u = url ?? '';
+    return u.contains('/media/ph') || u.toLowerCase().endsWith('.svg') ||
+        u.contains('image/svg');
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
     Widget child;
     if (url == null || url!.isEmpty) {
       child = _placeholder(c, broken: true);
+    } else if (_isSvg) {
+      child = SvgPicture.network(
+        url!,
+        fit: fit,
+        placeholderBuilder: (_) => _placeholder(c),
+      );
     } else {
       child = Image.network(
         url!,
@@ -51,9 +65,9 @@ class NetworkPhoto extends StatelessWidget {
   }
 
   Widget _placeholder(AppColors c, {bool broken = false}) => ColoredBox(
-    color: c.skeleton,
-    child: broken
-        ? Center(child: Icon(AppIcons.gallery, color: c.textTertiary))
-        : null,
-  );
+        color: c.skeleton,
+        child: broken
+            ? Center(child: Icon(AppIcons.gallery, color: c.textTertiary))
+            : null,
+      );
 }
