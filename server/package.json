@@ -1,0 +1,26 @@
+{
+  "name": "fashion-showcase-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend for the Android-box fashion showcase: express static + ws relay + sqlite cache.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "db:check": "node scripts/db-check.js",
+    "db:view": "node scripts/db-view.js",
+    "db:reset": "node scripts/db-reset.js",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "express": "^5.1.0",
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}

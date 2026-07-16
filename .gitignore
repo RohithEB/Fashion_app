@@ -1,0 +1,18 @@
+node_modules/
+dist/
+build/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*.db
+.env
+.DS_Store
+media/*
+!media/.gitkeep
+
+# server data + test artifacts
+server/data/
+test-results/
+playwright-report/
+.playwright/
