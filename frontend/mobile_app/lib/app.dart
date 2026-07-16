@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
+import 'core/config/app_config.dart';
+import 'core/realtime/backend_controller_realtime.dart';
 import 'core/realtime/controller_realtime_service.dart';
 import 'core/realtime/realtime_service.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'data/catalog_repository.dart';
+import 'data/http_catalog_repository.dart';
 import 'features/cart/cart_controller.dart';
 import 'features/catalog/catalog_controller.dart';
 import 'features/connection/connection_controller.dart';
@@ -23,10 +26,14 @@ class FashionControllerApp extends StatelessWidget {
     return MultiProvider(
       providers: <SingleChildWidget>[
         Provider<CatalogRepository>(
-          create: (_) => const MockCatalogRepository(),
+          create: (_) => AppConfig.backendMode
+              ? HttpCatalogRepository()
+              : const MockCatalogRepository(),
         ),
         Provider<RealtimeService>(
-          create: (_) => ControllerRealtimeService(),
+          create: (_) => AppConfig.backendMode
+              ? BackendControllerRealtime()
+              : ControllerRealtimeService(),
           dispose: (_, RealtimeService s) => s.dispose(),
         ),
         ChangeNotifierProvider<CatalogController>(

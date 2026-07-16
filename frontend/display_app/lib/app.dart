@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
+import 'core/config/app_config.dart';
+import 'core/realtime/backend_display_realtime.dart';
 import 'core/realtime/display_realtime.dart';
 import 'core/realtime/realtime_service.dart';
 import 'core/theme/app_theme.dart';
 import 'data/catalog_repository.dart';
+import 'data/http_catalog_repository.dart';
 import 'features/display/display_controller.dart';
 import 'features/display/display_shell.dart';
 
@@ -19,16 +22,21 @@ class DisplayApp extends StatelessWidget {
     return MultiProvider(
       providers: <SingleChildWidget>[
         Provider<CatalogRepository>(
-          create: (_) => const MockCatalogRepository(),
+          create: (_) => AppConfig.backendMode
+              ? HttpCatalogRepository()
+              : const MockCatalogRepository(),
         ),
         Provider<RealtimeService>(
-          create: (_) => createDisplayRealtime(),
+          create: (_) => AppConfig.backendMode
+              ? BackendDisplayRealtime()
+              : createDisplayRealtime(),
           dispose: (_, RealtimeService s) => s.dispose(),
         ),
         ChangeNotifierProvider<DisplayController>(
           create: (BuildContext ctx) => DisplayController(
             ctx.read<RealtimeService>(),
             ctx.read<CatalogRepository>(),
+            ownsIdle: !AppConfig.backendMode,
           ),
         ),
       ],

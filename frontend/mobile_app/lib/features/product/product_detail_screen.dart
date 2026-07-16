@@ -6,6 +6,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../data/catalog_repository.dart';
 import '../../models/product.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/network_photo.dart';
@@ -26,13 +27,36 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  late Product _product = widget.product;
   late String _variantId = widget.product.defaultVariant.id;
   late String _size = widget.product.defaultVariant.sizes.first;
   int _imageIndex = 0;
   late final PageController _page = PageController();
 
-  Product get product => widget.product;
+  Product get product => _product;
   ProductVariant get variant => product.variantById(_variantId);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetail();
+  }
+
+  /// Upgrade the summary product (from the list) to full detail (variants,
+  /// media, enrichment). No-op-ish in mock mode; fetches rich data in backend
+  /// mode.
+  Future<void> _loadDetail() async {
+    final Product? full =
+        await context.read<CatalogRepository>().productById(widget.product.id);
+    if (full != null && mounted) {
+      setState(() {
+        _product = full;
+        _variantId = full.defaultVariant.id;
+        _size = full.defaultVariant.sizes.first;
+        _imageIndex = 0;
+      });
+    }
+  }
 
   bool _isPresentingThis(PresentationController pres) =>
       pres.isPresenting && pres.presentation?.productId == product.id;

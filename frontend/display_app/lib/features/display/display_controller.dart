@@ -15,13 +15,18 @@ import '../../models/ws_event.dart';
 /// via the server. Product content is rendered from the **cached catalog**
 /// (hydrated over HTTP on boot); events carry only ids + transform params.
 class DisplayController extends ChangeNotifier {
-  DisplayController(this._realtime, this._catalog) {
+  DisplayController(this._realtime, this._catalog, {this.ownsIdle = true}) {
     _sub = _realtime.events.listen(_handle);
     _boot();
   }
 
   final RealtimeService _realtime;
   final CatalogRepository _catalog;
+
+  /// Whether this controller runs the idle timer itself (standalone mode). In
+  /// backend mode the Node server owns idle/`session_end`, so we don't.
+  final bool ownsIdle;
+
   StreamSubscription<WsEvent>? _sub;
 
   /// Seconds the Thank-You screen stays before returning to idle. Spec: 60s;
@@ -73,6 +78,9 @@ class DisplayController extends ChangeNotifier {
 
   void _toWaiting() {
     _cancelTimers();
+    // In backend mode the server re-registers the display with a fresh token.
+    final RealtimeService rt = _realtime;
+    if (rt is DisplayRealtimeService) pairingUrl = rt.pairingUrl;
     phase = DisplayPhase.waiting;
     presentation = null;
     product = null;
@@ -137,17 +145,32 @@ class DisplayController extends ChangeNotifier {
   }
 
   void _showProduct(WsEvent e) {
-    final Product? found = _cache
-        .where((Product p) => p.id == e.productId)
+    final String? id = e.productId;
+    if (id == null) return;
+    final Product? cached = _cache
+        .where((Product p) => p.id == id)
         .firstOrNull;
-    if (found == null) return;
-    product = found;
-    presentation = ProductPresentation(
-      productId: found.id,
-      variantId: e.variantId ?? found.defaultVariant.id,
+    if (cached != null) {
+      product = cached;
+      presentation = ProductPresentation(
+        productId: id,
+        variantId: e.variantId ?? cached.defaultVariant.id,
+      );
+      phase = DisplayPhase.presenting;
+      notifyListeners();
+    }
+    // Upgrade the summary to full detail (rich variants/media/enrichment).
+    unawaited(
+      _catalog.productById(id).then((Product? full) {
+        if (full == null || presentation?.productId != id) return;
+        product = full;
+        presentation = presentation!.copyWith(
+          variantId: e.variantId ?? full.defaultVariant.id,
+        );
+        phase = DisplayPhase.presenting;
+        notifyListeners();
+      }),
     );
-    phase = DisplayPhase.presenting;
-    notifyListeners();
   }
 
   void _runThankYou() {
@@ -170,6 +193,7 @@ class DisplayController extends ChangeNotifier {
   /// Called on every inbound event. Restarts the idle countdown and cancels any
   /// pending warning. Only armed while a session is active (welcome/presenting).
   void _registerActivity() {
+    if (!ownsIdle) return; // server owns idle in backend mode
     _idleTimer?.cancel();
     if (idleWarningActive) {
       idleWarningActive = false;
