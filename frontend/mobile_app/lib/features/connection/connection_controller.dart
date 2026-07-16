@@ -55,11 +55,13 @@ class ConnectionController extends ChangeNotifier {
   /// Associate confirms they are still present; cancels the idle warning.
   void keepAlive() {
     idleWarning = false;
-    _realtime.emit(WsEvent(
-      type: WsEventType.keepAlive,
-      sessionId: session?.sessionId,
-      senderRole: SenderRole.salesperson,
-    ));
+    _realtime.emit(
+      WsEvent(
+        type: WsEventType.keepAlive,
+        sessionId: session?.sessionId,
+        senderRole: SenderRole.salesperson,
+      ),
+    );
     notifyListeners();
   }
 

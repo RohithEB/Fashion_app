@@ -32,9 +32,15 @@ class ThankYouScreen extends StatelessWidget {
                   Opacity(opacity: v, child: child),
               child: Column(
                 children: <Widget>[
-                  Text('WITH GRATITUDE', style: AppTypography.eyebrow(c.accent)),
+                  Text(
+                    'WITH GRATITUDE',
+                    style: AppTypography.eyebrow(c.accent),
+                  ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Thank you', style: AppTypography.displayHero(c.textPrimary)),
+                  Text(
+                    'Thank you',
+                    style: AppTypography.displayHero(c.textPrimary),
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     'We look forward to seeing you again.',

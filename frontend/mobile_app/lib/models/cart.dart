@@ -25,7 +25,8 @@ class CartItem {
   /// Stable identity for a configured line (product + variant + size).
   String get lineId => '${product.id}:$variantId:$size';
 
-  CartItem copyWith({int? quantity, String? variantId, String? size}) => CartItem(
+  CartItem copyWith({int? quantity, String? variantId, String? size}) =>
+      CartItem(
         product: product,
         variantId: variantId ?? this.variantId,
         size: size ?? this.size,
@@ -36,7 +37,11 @@ class CartItem {
 /// The cart aggregate. Totals are computed here for the POC; in production the
 /// server is authoritative and these mirror the server response.
 class Cart {
-  const Cart({this.items = const <CartItem>[], this.taxRate = 0.08, this.discountRate = 0});
+  const Cart({
+    this.items = const <CartItem>[],
+    this.taxRate = 0.08,
+    this.discountRate = 0,
+  });
 
   final List<CartItem> items;
   final double taxRate;
@@ -48,20 +53,22 @@ class Cart {
   Money get subtotal => items.isEmpty
       ? const Money.zero()
       : items
-          .map((CartItem i) => i.lineTotal)
-          .reduce((Money a, Money b) => a + b);
+            .map((CartItem i) => i.lineTotal)
+            .reduce((Money a, Money b) => a + b);
 
   Money get discount => subtotal.percent(discountRate);
   Money get taxedBase =>
       Money(minorUnits: subtotal.minorUnits - discount.minorUnits);
   Money get tax => taxedBase.percent(taxRate);
-  Money get total =>
-      Money(minorUnits: taxedBase.minorUnits + tax.minorUnits);
+  Money get total => Money(minorUnits: taxedBase.minorUnits + tax.minorUnits);
 
-  Cart copyWith({List<CartItem>? items, double? taxRate, double? discountRate}) =>
-      Cart(
-        items: items ?? this.items,
-        taxRate: taxRate ?? this.taxRate,
-        discountRate: discountRate ?? this.discountRate,
-      );
+  Cart copyWith({
+    List<CartItem>? items,
+    double? taxRate,
+    double? discountRate,
+  }) => Cart(
+    items: items ?? this.items,
+    taxRate: taxRate ?? this.taxRate,
+    discountRate: discountRate ?? this.discountRate,
+  );
 }

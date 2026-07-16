@@ -153,7 +153,7 @@
 | DOC-03 | README (run instructions, architecture overview) | 🟠 | ⬜ | SET-04 | S | |
 | DOC-04 | Architecture.md / FolderStructure.md | 🟡 | ⬜ | SET-04 | M | |
 | DOC-05 | GitHub issue + PR templates | 🟡 | ⬜ | SET-01 | S | |
-| DOC-06 | CI (analyze + test) GitHub Action | ⚪ | ⬜ | QA-* | S | |
+| DOC-06 | CI (format + analyze + test) GitHub Action | ⚪ | ✅ | QA-* | S | `.github/workflows/ci.yml`, matrix per app |
 | DOC-07 | Initial commit + push to main (needs client OK) | 🟠 | ⬜ | DOC-03 | S | confirm before push |
 
 ---

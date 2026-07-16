@@ -47,7 +47,10 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text('THE COLLECTION', style: AppTypography.eyebrow(c.accent)),
+                        Text(
+                          'THE COLLECTION',
+                          style: AppTypography.eyebrow(c.accent),
+                        ),
                         const SizedBox(height: 2),
                         Text('Maison Ébani', style: t.headlineMedium),
                       ],
@@ -63,7 +66,8 @@ class HomeScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: TextField(
-                onChanged: (String q) => context.read<CatalogController>().search(q),
+                onChanged: (String q) =>
+                    context.read<CatalogController>().search(q),
                 decoration: InputDecoration(
                   hintText: 'Search the atelier…',
                   prefixIcon: const Icon(AppIcons.search),
@@ -107,13 +111,15 @@ class _CartButton extends StatelessWidget {
             top: 4,
             child: Container(
               padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: c.accent,
+                shape: BoxShape.circle,
+              ),
               child: Text(
                 '$count',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: c.onAccent),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: c.onAccent),
               ),
             ),
           ),
@@ -155,7 +161,11 @@ class _CategoryBar extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.selected, required this.onTap});
+  const _Chip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;

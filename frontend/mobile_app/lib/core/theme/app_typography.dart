@@ -89,19 +89,19 @@ abstract final class AppTypography {
 
   /// Uppercase, wide-tracking "eyebrow"/overline for luxury signals.
   static TextStyle eyebrow(Color color) => GoogleFonts.inter(
-        color: color,
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 2.4,
-        height: 1.2,
-      );
+    color: color,
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 2.4,
+    height: 1.2,
+  );
 
   /// Oversized display style for the customer-facing TV screens.
   static TextStyle displayHero(Color color) => GoogleFonts.cormorantGaramond(
-        color: color,
-        fontSize: 96,
-        height: 1.02,
-        fontWeight: FontWeight.w500,
-        letterSpacing: -1,
-      );
+    color: color,
+    fontSize: 96,
+    height: 1.02,
+    fontWeight: FontWeight.w500,
+    letterSpacing: -1,
+  );
 }

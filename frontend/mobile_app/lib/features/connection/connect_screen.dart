@@ -77,8 +77,8 @@ class ConnectScreen extends StatelessWidget {
                 onPressed: connecting
                     ? null
                     : () => context.read<ConnectionController>().connectFromQr(
-                          'http://192.168.1.42:8080/pair?token=DEMO-8421',
-                        ),
+                        'http://192.168.1.42:8080/pair?token=DEMO-8421',
+                      ),
               ),
               const SizedBox(height: AppSpacing.xl),
             ],
@@ -110,7 +110,10 @@ class _ScannerSheet extends StatelessWidget {
       child: Column(
         children: <Widget>[
           const SizedBox(height: AppSpacing.md),
-          Text('Scan display QR', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Scan display QR',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.md),
           Expanded(
             child: Padding(
@@ -133,10 +136,9 @@ class _ScannerSheet extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Text(
               'Point the camera at the code on the screen',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: c.textSecondary),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: c.textSecondary),
             ),
           ),
         ],

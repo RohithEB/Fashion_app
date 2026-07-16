@@ -3,10 +3,10 @@ class Salesperson {
   const Salesperson({required this.id, required this.name, this.title});
 
   factory Salesperson.fromJson(Map<String, dynamic> json) => Salesperson(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        title: json['title'] as String?,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    title: json['title'] as String?,
+  );
 
   final String id;
   final String name;

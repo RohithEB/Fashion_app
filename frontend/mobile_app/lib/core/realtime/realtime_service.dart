@@ -32,7 +32,10 @@ abstract class RealtimeService {
 ///   mirror what the display would render.
 /// * [inject] simulates an inbound event from the server/peer.
 class MockRealtimeService extends RealtimeService {
-  MockRealtimeService({this.role = SenderRole.salesperson, this.loopback = true});
+  MockRealtimeService({
+    this.role = SenderRole.salesperson,
+    this.loopback = true,
+  });
 
   @override
   final SenderRole role;

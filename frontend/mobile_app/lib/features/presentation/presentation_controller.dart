@@ -81,13 +81,15 @@ class PresentationController extends ChangeNotifier {
       productId: product.id,
       variantId: variantId ?? product.defaultVariant.id,
     );
-    _emit(WsEvent(
-      type: WsEventType.showProduct,
-      payload: <String, dynamic>{
-        'productId': product.id,
-        'variantId': variantId ?? product.defaultVariant.id,
-      },
-    ));
+    _emit(
+      WsEvent(
+        type: WsEventType.showProduct,
+        payload: <String, dynamic>{
+          'productId': product.id,
+          'variantId': variantId ?? product.defaultVariant.id,
+        },
+      ),
+    );
     notifyListeners();
   }
 
@@ -101,65 +103,77 @@ class PresentationController extends ChangeNotifier {
 
   // ---- Synchronized interactions -------------------------------------------
 
-  void changeColor(String variantId) => _apply(WsEvent(
-        type: WsEventType.changeColor,
-        payload: <String, dynamic>{'variantId': variantId},
-      ));
+  void changeColor(String variantId) => _apply(
+    WsEvent(
+      type: WsEventType.changeColor,
+      payload: <String, dynamic>{'variantId': variantId},
+    ),
+  );
 
-  void changeImage(int index) => _apply(WsEvent(
-        type: WsEventType.changeImage,
-        payload: <String, dynamic>{'imageIndex': index},
-      ));
+  void changeImage(int index) => _apply(
+    WsEvent(
+      type: WsEventType.changeImage,
+      payload: <String, dynamic>{'imageIndex': index},
+    ),
+  );
 
   void zoom(double scale, {double focalX = 0, double focalY = 0}) => _apply(
-        WsEvent(
-          type: WsEventType.zoomImage,
-          payload: <String, dynamic>{
-            'scale': scale,
-            'focalX': focalX,
-            'focalY': focalY,
-          },
-        ),
-        throttled: true,
-      );
+    WsEvent(
+      type: WsEventType.zoomImage,
+      payload: <String, dynamic>{
+        'scale': scale,
+        'focalX': focalX,
+        'focalY': focalY,
+      },
+    ),
+    throttled: true,
+  );
 
   void pan(double dx, double dy) => _apply(
-        WsEvent(
-          type: WsEventType.panImage,
-          payload: <String, dynamic>{'offsetX': dx, 'offsetY': dy},
-        ),
-        throttled: true,
-      );
+    WsEvent(
+      type: WsEventType.panImage,
+      payload: <String, dynamic>{'offsetX': dx, 'offsetY': dy},
+    ),
+    throttled: true,
+  );
 
   void resetZoom() => _apply(const WsEvent(type: WsEventType.resetZoom));
 
-  void toggleAIHighlights() => _apply(WsEvent(
-        type: WsEventType.showAIHighlights,
-        payload: <String, dynamic>{
-          'visible': !(_presentation?.showAIHighlights ?? false),
-        },
-      ));
+  void toggleAIHighlights() => _apply(
+    WsEvent(
+      type: WsEventType.showAIHighlights,
+      payload: <String, dynamic>{
+        'visible': !(_presentation?.showAIHighlights ?? false),
+      },
+    ),
+  );
 
-  void showRelatedMedia(String mediaId) => _apply(WsEvent(
-        type: WsEventType.showRelatedMedia,
-        payload: <String, dynamic>{'mediaId': mediaId},
-      ));
+  void showRelatedMedia(String mediaId) => _apply(
+    WsEvent(
+      type: WsEventType.showRelatedMedia,
+      payload: <String, dynamic>{'mediaId': mediaId},
+    ),
+  );
 
   /// Switch the display into the multi-image gallery view.
-  void showGallery() => _apply(const WsEvent(
-        type: WsEventType.showRelatedMedia,
-        payload: <String, dynamic>{'mediaId': 'gallery'},
-      ));
+  void showGallery() => _apply(
+    const WsEvent(
+      type: WsEventType.showRelatedMedia,
+      payload: <String, dynamic>{'mediaId': 'gallery'},
+    ),
+  );
 
   /// Return the display to a single focused image (hero) view.
   void focusImage(int index) => changeImage(index);
 
   void playVideo() => _apply(const WsEvent(type: WsEventType.playVideo));
   void pauseVideo() => _apply(const WsEvent(type: WsEventType.pauseVideo));
-  void seekVideo(int positionMs) => _apply(WsEvent(
-        type: WsEventType.seekVideo,
-        payload: <String, dynamic>{'positionMs': positionMs},
-      ));
+  void seekVideo(int positionMs) => _apply(
+    WsEvent(
+      type: WsEventType.seekVideo,
+      payload: <String, dynamic>{'positionMs': positionMs},
+    ),
+  );
 
   @override
   void dispose() {

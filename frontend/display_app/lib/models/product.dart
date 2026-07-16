@@ -15,13 +15,13 @@ class ProductMedia {
   });
 
   factory ProductMedia.fromJson(Map<String, dynamic> json) => ProductMedia(
-        id: json['id'] as String,
-        type: ProductMediaType.values.byName(json['type'] as String),
-        url: json['url'] as String,
-        thumbnailUrl: json['thumbnailUrl'] as String?,
-        caption: json['caption'] as String?,
-        durationSeconds: (json['durationSeconds'] as num?)?.toInt(),
-      );
+    id: json['id'] as String,
+    type: ProductMediaType.values.byName(json['type'] as String),
+    url: json['url'] as String,
+    thumbnailUrl: json['thumbnailUrl'] as String?,
+    caption: json['caption'] as String?,
+    durationSeconds: (json['durationSeconds'] as num?)?.toInt(),
+  );
 
   final String id;
   final ProductMediaType type;
@@ -45,17 +45,17 @@ class ProductVariant {
   });
 
   factory ProductVariant.fromJson(Map<String, dynamic> json) => ProductVariant(
-        id: json['id'] as String,
-        colorName: json['colorName'] as String,
-        colorHex: json['colorHex'] as String,
-        sizes: (json['sizes'] as List<dynamic>).cast<String>(),
-        media: (json['media'] as List<dynamic>)
-            .map((dynamic e) => ProductMedia.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        price: json['price'] == null
-            ? null
-            : Money.fromJson(json['price'] as Map<String, dynamic>),
-      );
+    id: json['id'] as String,
+    colorName: json['colorName'] as String,
+    colorHex: json['colorHex'] as String,
+    sizes: (json['sizes'] as List<dynamic>).cast<String>(),
+    media: (json['media'] as List<dynamic>)
+        .map((dynamic e) => ProductMedia.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    price: json['price'] == null
+        ? null
+        : Money.fromJson(json['price'] as Map<String, dynamic>),
+  );
 
   final String id;
   final String colorName;
@@ -68,8 +68,9 @@ class ProductVariant {
   /// Variant-specific price override; falls back to [Product.price].
   final Money? price;
 
-  List<ProductMedia> get images =>
-      media.where((ProductMedia m) => m.type == ProductMediaType.image).toList();
+  List<ProductMedia> get images => media
+      .where((ProductMedia m) => m.type == ProductMediaType.image)
+      .toList();
 
   ProductMedia? get video =>
       media.where((ProductMedia m) => m.isVideo).firstOrNull;
@@ -91,24 +92,23 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        brand: json['brand'] as String,
-        categoryId: json['categoryId'] as String,
-        price: Money.fromJson(json['price'] as Map<String, dynamic>),
-        variants: (json['variants'] as List<dynamic>)
-            .map((dynamic e) =>
-                ProductVariant.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        description: json['description'] as String? ?? '',
-        aiHighlights:
-            (json['aiHighlights'] as List<dynamic>?)?.cast<String>() ??
-                const <String>[],
-        materials:
-            (json['materials'] as List<dynamic>?)?.cast<String>() ??
-                const <String>[],
-        isNew: json['isNew'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    brand: json['brand'] as String,
+    categoryId: json['categoryId'] as String,
+    price: Money.fromJson(json['price'] as Map<String, dynamic>),
+    variants: (json['variants'] as List<dynamic>)
+        .map((dynamic e) => ProductVariant.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    description: json['description'] as String? ?? '',
+    aiHighlights:
+        (json['aiHighlights'] as List<dynamic>?)?.cast<String>() ??
+        const <String>[],
+    materials:
+        (json['materials'] as List<dynamic>?)?.cast<String>() ??
+        const <String>[],
+    isNew: json['isNew'] as bool? ?? false,
+  );
 
   final String id;
   final String name;

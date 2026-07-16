@@ -22,7 +22,8 @@ class ControllerRealtimeService extends RealtimeService {
   static const Duration _heartbeatInterval = Duration(seconds: 20);
   static const int _maxRetries = 5;
 
-  final StreamController<WsEvent> _events = StreamController<WsEvent>.broadcast();
+  final StreamController<WsEvent> _events =
+      StreamController<WsEvent>.broadcast();
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   Timer? _heartbeat;

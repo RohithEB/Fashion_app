@@ -65,8 +65,9 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: text.titleLarge,
-        systemOverlayStyle:
-            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
       cardTheme: CardThemeData(
         color: c.card,
@@ -80,10 +81,14 @@ abstract final class AppTheme {
         clipBehavior: Clip.antiAlias,
       ),
       filledButtonTheme: FilledButtonThemeData(style: _primaryButton(c, text)),
-      elevatedButtonTheme: ElevatedButtonThemeData(style: _primaryButton(c, text)),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: _primaryButton(c, text),
+      ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll<Size>(Size(0, AppSizes.buttonMd)),
+          minimumSize: const WidgetStatePropertyAll<Size>(
+            Size(0, AppSizes.buttonMd),
+          ),
           foregroundColor: WidgetStatePropertyAll<Color>(c.textPrimary),
           side: WidgetStatePropertyAll<BorderSide>(BorderSide(color: c.border)),
           textStyle: WidgetStatePropertyAll<TextStyle>(text.labelLarge!),
@@ -187,7 +192,10 @@ abstract final class AppTheme {
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.brPill),
       ),
       tooltipTheme: TooltipThemeData(
-        decoration: BoxDecoration(color: c.primary, borderRadius: AppRadius.brSm),
+        decoration: BoxDecoration(
+          color: c.primary,
+          borderRadius: AppRadius.brSm,
+        ),
         textStyle: text.labelSmall?.copyWith(color: c.onPrimary),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
@@ -280,25 +288,25 @@ abstract final class AppTheme {
   }
 
   static ButtonStyle _primaryButton(AppColors c, TextTheme text) => ButtonStyle(
-        minimumSize: const WidgetStatePropertyAll<Size>(Size(0, AppSizes.buttonMd)),
-        backgroundColor: WidgetStateProperty.resolveWith(
-          (Set<WidgetState> s) =>
-              s.contains(WidgetState.disabled) ? c.disabled : c.primary,
-        ),
-        foregroundColor: WidgetStateProperty.resolveWith(
-          (Set<WidgetState> s) =>
-              s.contains(WidgetState.disabled) ? c.onDisabled : c.onPrimary,
-        ),
-        overlayColor: WidgetStatePropertyAll<Color>(
-          c.onPrimary.withValues(alpha: 0.08),
-        ),
-        textStyle: WidgetStatePropertyAll<TextStyle>(text.labelLarge!),
-        padding: const WidgetStatePropertyAll<EdgeInsets>(
-          EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-        ),
-        elevation: const WidgetStatePropertyAll<double>(0),
-        shape: const WidgetStatePropertyAll<OutlinedBorder>(
-          RoundedRectangleBorder(borderRadius: AppRadius.brMd),
-        ),
-      );
+    minimumSize: const WidgetStatePropertyAll<Size>(Size(0, AppSizes.buttonMd)),
+    backgroundColor: WidgetStateProperty.resolveWith(
+      (Set<WidgetState> s) =>
+          s.contains(WidgetState.disabled) ? c.disabled : c.primary,
+    ),
+    foregroundColor: WidgetStateProperty.resolveWith(
+      (Set<WidgetState> s) =>
+          s.contains(WidgetState.disabled) ? c.onDisabled : c.onPrimary,
+    ),
+    overlayColor: WidgetStatePropertyAll<Color>(
+      c.onPrimary.withValues(alpha: 0.08),
+    ),
+    textStyle: WidgetStatePropertyAll<TextStyle>(text.labelLarge!),
+    padding: const WidgetStatePropertyAll<EdgeInsets>(
+      EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+    ),
+    elevation: const WidgetStatePropertyAll<double>(0),
+    shape: const WidgetStatePropertyAll<OutlinedBorder>(
+      RoundedRectangleBorder(borderRadius: AppRadius.brMd),
+    ),
+  );
 }

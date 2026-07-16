@@ -55,7 +55,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showOnScreen() {
-    context.read<PresentationController>().showProduct(product, variantId: _variantId);
+    context.read<PresentationController>().showProduct(
+      product,
+      variantId: _variantId,
+    );
     LivePreviewSheet.show(context);
   }
 
@@ -83,7 +86,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               if (presentingThis)
                 Padding(
                   padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: _LiveBadge(onTap: () => LivePreviewSheet.show(context)),
+                  child: _LiveBadge(
+                    onTap: () => LivePreviewSheet.show(context),
+                  ),
                 ),
             ],
             flexibleSpace: FlexibleSpaceBar(
@@ -108,7 +113,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Row(
                     children: <Widget>[
                       Expanded(
-                        child: Text(product.brand, style: AppTypography.eyebrow(c.textTertiary)),
+                        child: Text(
+                          product.brand,
+                          style: AppTypography.eyebrow(c.textTertiary),
+                        ),
                       ),
                       Text(product.price.formatted, style: t.titleMedium),
                     ],
@@ -137,23 +145,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       children: <Widget>[
                         Icon(AppIcons.sparkle, size: 16, color: c.accent),
                         const SizedBox(width: AppSpacing.xs),
-                        Text('ATELIER NOTES', style: AppTypography.eyebrow(c.textSecondary)),
+                        Text(
+                          'ATELIER NOTES',
+                          style: AppTypography.eyebrow(c.textSecondary),
+                        ),
                       ],
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    ...product.aiHighlights.map((String h) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text('—  ', style: t.bodyMedium?.copyWith(color: c.accent)),
-                              Expanded(child: Text(h, style: t.bodyMedium)),
-                            ],
-                          ),
-                        )),
+                    ...product.aiHighlights.map(
+                      (String h) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              '—  ',
+                              style: t.bodyMedium?.copyWith(color: c.accent),
+                            ),
+                            Expanded(child: Text(h, style: t.bodyMedium)),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: AppSpacing.lg),
-                  Text(product.description, style: t.bodyLarge?.copyWith(color: c.textSecondary)),
+                  Text(
+                    product.description,
+                    style: t.bodyLarge?.copyWith(color: c.textSecondary),
+                  ),
                   if (product.materials.isNotEmpty) ...<Widget>[
                     const SizedBox(height: AppSpacing.md),
                     Text(
@@ -177,10 +196,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         onShow: _showOnScreen,
         onAdd: () {
           context.read<CartController>().addItem(
-                product,
-                variantId: _variantId,
-                size: _size,
-              );
+            product,
+            variantId: _variantId,
+            size: _size,
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('${product.name} added to the cart')),
           );
@@ -400,23 +419,27 @@ class _SyncControls extends StatelessWidget {
               _Pill(
                 icon: AppIcons.sparkle,
                 label: ai ? 'Hide notes' : 'Show notes',
-                onTap: () => context.read<PresentationController>().toggleAIHighlights(),
+                onTap: () =>
+                    context.read<PresentationController>().toggleAIHighlights(),
               ),
               _Pill(
                 icon: AppIcons.gallery,
                 label: 'Gallery',
-                onTap: () => context.read<PresentationController>().showGallery(),
+                onTap: () =>
+                    context.read<PresentationController>().showGallery(),
               ),
               _Pill(
                 icon: AppIcons.zoomIn,
                 label: 'Focus',
-                onTap: () => context.read<PresentationController>().focusImage(0),
+                onTap: () =>
+                    context.read<PresentationController>().focusImage(0),
               ),
               if (product.defaultVariant.video != null)
                 _Pill(
                   icon: AppIcons.play,
                   label: 'Play video',
-                  onTap: () => context.read<PresentationController>().playVideo(),
+                  onTap: () =>
+                      context.read<PresentationController>().playVideo(),
                 ),
               _Pill(
                 icon: AppIcons.close,
@@ -503,8 +526,10 @@ class _Label extends StatelessWidget {
   const _Label({required this.text});
   final String text;
   @override
-  Widget build(BuildContext context) =>
-      Text(text, style: AppTypography.eyebrow(AppColors.of(context).textSecondary));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: AppTypography.eyebrow(AppColors.of(context).textSecondary),
+  );
 }
 
 class _CircleBackButton extends StatelessWidget {
@@ -534,8 +559,14 @@ class _LiveBadge extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
-        decoration: BoxDecoration(color: c.primary, borderRadius: AppRadius.brPill),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: c.primary,
+          borderRadius: AppRadius.brPill,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[

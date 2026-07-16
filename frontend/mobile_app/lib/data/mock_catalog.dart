@@ -9,21 +9,30 @@ import '../models/product.dart';
 /// Swapping to the real API means replacing [MockCatalog] behind
 /// `CatalogRepository` — no UI changes required.
 abstract final class MockCatalog {
-  static String _img(String seed) => 'https://picsum.photos/seed/$seed/900/1200';
+  static String _img(String seed) =>
+      'https://picsum.photos/seed/$seed/900/1200';
 
   static const List<Category> categories = <Category>[
     Category(id: 'rtw', name: 'Ready-to-Wear', tagline: 'The seasonal atelier'),
-    Category(id: 'outerwear', name: 'Outerwear', tagline: 'Sculpted silhouettes'),
-    Category(id: 'leather', name: 'Leather Goods', tagline: 'Crafted to endure'),
+    Category(
+      id: 'outerwear',
+      name: 'Outerwear',
+      tagline: 'Sculpted silhouettes',
+    ),
+    Category(
+      id: 'leather',
+      name: 'Leather Goods',
+      tagline: 'Crafted to endure',
+    ),
     Category(id: 'knitwear', name: 'Knitwear', tagline: 'Quiet luxury'),
   ];
 
   static ProductMedia _image(String seed) => ProductMedia(
-        id: 'm_$seed',
-        type: ProductMediaType.image,
-        url: _img(seed),
-        thumbnailUrl: _img(seed),
-      );
+    id: 'm_$seed',
+    type: ProductMediaType.image,
+    url: _img(seed),
+    thumbnailUrl: _img(seed),
+  );
 
   static ProductVariant _variant({
     required String id,
@@ -31,27 +40,26 @@ abstract final class MockCatalog {
     required String hex,
     required String seedBase,
     List<String> sizes = const <String>['XS', 'S', 'M', 'L', 'XL'],
-  }) =>
-      ProductVariant(
-        id: id,
-        colorName: color,
-        colorHex: hex,
-        sizes: sizes,
-        media: <ProductMedia>[
-          _image('${seedBase}a'),
-          _image('${seedBase}b'),
-          _image('${seedBase}c'),
-          ProductMedia(
-            id: 'v_$seedBase',
-            type: ProductMediaType.video,
-            url:
-                'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-            thumbnailUrl: _img('${seedBase}a'),
-            caption: 'On the runway',
-            durationSeconds: 15,
-          ),
-        ],
-      );
+  }) => ProductVariant(
+    id: id,
+    colorName: color,
+    colorHex: hex,
+    sizes: sizes,
+    media: <ProductMedia>[
+      _image('${seedBase}a'),
+      _image('${seedBase}b'),
+      _image('${seedBase}c'),
+      ProductMedia(
+        id: 'v_$seedBase',
+        type: ProductMediaType.video,
+        url:
+            'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+        thumbnailUrl: _img('${seedBase}a'),
+        caption: 'On the runway',
+        durationSeconds: 15,
+      ),
+    ],
+  );
 
   static final List<Product> products = <Product>[
     Product(
@@ -71,9 +79,24 @@ abstract final class MockCatalog {
         'Pairs with the Onyx clutch',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p1v1', color: 'Onyx', hex: '#141210', seedBase: 'gown-onyx'),
-        _variant(id: 'p1v2', color: 'Champagne', hex: '#C9A97E', seedBase: 'gown-champ'),
-        _variant(id: 'p1v3', color: 'Bordeaux', hex: '#5B2130', seedBase: 'gown-bord'),
+        _variant(
+          id: 'p1v1',
+          color: 'Onyx',
+          hex: '#141210',
+          seedBase: 'gown-onyx',
+        ),
+        _variant(
+          id: 'p1v2',
+          color: 'Champagne',
+          hex: '#C9A97E',
+          seedBase: 'gown-champ',
+        ),
+        _variant(
+          id: 'p1v3',
+          color: 'Bordeaux',
+          hex: '#5B2130',
+          seedBase: 'gown-bord',
+        ),
       ],
     ),
     Product(
@@ -92,8 +115,18 @@ abstract final class MockCatalog {
         'Tonal pick-stitch lapel',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p2v1', color: 'Charcoal', hex: '#37342F', seedBase: 'blazer-char'),
-        _variant(id: 'p2v2', color: 'Camel', hex: '#B79268', seedBase: 'blazer-camel'),
+        _variant(
+          id: 'p2v1',
+          color: 'Charcoal',
+          hex: '#37342F',
+          seedBase: 'blazer-char',
+        ),
+        _variant(
+          id: 'p2v2',
+          color: 'Camel',
+          hex: '#B79268',
+          seedBase: 'blazer-camel',
+        ),
       ],
     ),
     Product(
@@ -113,8 +146,18 @@ abstract final class MockCatalog {
         'Weightless warmth',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p3v1', color: 'Stone', hex: '#B4ABA0', seedBase: 'trench-stone'),
-        _variant(id: 'p3v2', color: 'Ink', hex: '#1F2430', seedBase: 'trench-ink'),
+        _variant(
+          id: 'p3v1',
+          color: 'Stone',
+          hex: '#B4ABA0',
+          seedBase: 'trench-stone',
+        ),
+        _variant(
+          id: 'p3v2',
+          color: 'Ink',
+          hex: '#1F2430',
+          seedBase: 'trench-ink',
+        ),
       ],
     ),
     Product(
@@ -133,8 +176,20 @@ abstract final class MockCatalog {
         'Palladium hardware',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p4v1', color: 'Cognac', hex: '#8A4B2F', seedBase: 'tote-cognac', sizes: <String>['One Size']),
-        _variant(id: 'p4v2', color: 'Black', hex: '#141210', seedBase: 'tote-black', sizes: <String>['One Size']),
+        _variant(
+          id: 'p4v1',
+          color: 'Cognac',
+          hex: '#8A4B2F',
+          seedBase: 'tote-cognac',
+          sizes: <String>['One Size'],
+        ),
+        _variant(
+          id: 'p4v2',
+          color: 'Black',
+          hex: '#141210',
+          seedBase: 'tote-black',
+          sizes: <String>['One Size'],
+        ),
       ],
     ),
     Product(
@@ -153,9 +208,24 @@ abstract final class MockCatalog {
         'Ribbed cuffs and hem',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p5v1', color: 'Oat', hex: '#D8CDBD', seedBase: 'knit-oat'),
-        _variant(id: 'p5v2', color: 'Slate', hex: '#5C6670', seedBase: 'knit-slate'),
-        _variant(id: 'p5v3', color: 'Noir', hex: '#141210', seedBase: 'knit-noir'),
+        _variant(
+          id: 'p5v1',
+          color: 'Oat',
+          hex: '#D8CDBD',
+          seedBase: 'knit-oat',
+        ),
+        _variant(
+          id: 'p5v2',
+          color: 'Slate',
+          hex: '#5C6670',
+          seedBase: 'knit-slate',
+        ),
+        _variant(
+          id: 'p5v3',
+          color: 'Noir',
+          hex: '#141210',
+          seedBase: 'knit-noir',
+        ),
       ],
     ),
     Product(
@@ -174,8 +244,18 @@ abstract final class MockCatalog {
         'Metallic sheen',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p6v1', color: 'Pewter', hex: '#8E8B84', seedBase: 'skirt-pewter'),
-        _variant(id: 'p6v2', color: 'Emerald', hex: '#1F5B4E', seedBase: 'skirt-emerald'),
+        _variant(
+          id: 'p6v1',
+          color: 'Pewter',
+          hex: '#8E8B84',
+          seedBase: 'skirt-pewter',
+        ),
+        _variant(
+          id: 'p6v2',
+          color: 'Emerald',
+          hex: '#1F5B4E',
+          seedBase: 'skirt-emerald',
+        ),
       ],
     ),
     Product(
@@ -194,8 +274,18 @@ abstract final class MockCatalog {
         'Snap-stud placket',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p7v1', color: 'Olive', hex: '#5A5A3C', seedBase: 'field-olive'),
-        _variant(id: 'p7v2', color: 'Navy', hex: '#26303F', seedBase: 'field-navy'),
+        _variant(
+          id: 'p7v1',
+          color: 'Olive',
+          hex: '#5A5A3C',
+          seedBase: 'field-olive',
+        ),
+        _variant(
+          id: 'p7v2',
+          color: 'Navy',
+          hex: '#26303F',
+          seedBase: 'field-navy',
+        ),
       ],
     ),
     Product(
@@ -214,8 +304,20 @@ abstract final class MockCatalog {
         'Blake-stitched sole',
       ],
       variants: <ProductVariant>[
-        _variant(id: 'p8v1', color: 'Black', hex: '#141210', seedBase: 'boot-black', sizes: <String>['40', '41', '42', '43', '44']),
-        _variant(id: 'p8v2', color: 'Chestnut', hex: '#6E4227', seedBase: 'boot-chest', sizes: <String>['40', '41', '42', '43', '44']),
+        _variant(
+          id: 'p8v1',
+          color: 'Black',
+          hex: '#141210',
+          seedBase: 'boot-black',
+          sizes: <String>['40', '41', '42', '43', '44'],
+        ),
+        _variant(
+          id: 'p8v2',
+          color: 'Chestnut',
+          hex: '#6E4227',
+          seedBase: 'boot-chest',
+          sizes: <String>['40', '41', '42', '43', '44'],
+        ),
       ],
     ),
   ];

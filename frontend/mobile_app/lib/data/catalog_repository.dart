@@ -29,8 +29,10 @@ class MockCatalogRepository implements CatalogRepository {
     await Future<void>.delayed(_latency);
     final String? q = query?.trim().toLowerCase();
     return MockCatalog.products.where((Product p) {
-      final bool matchesCategory = categoryId == null || p.categoryId == categoryId;
-      final bool matchesQuery = q == null ||
+      final bool matchesCategory =
+          categoryId == null || p.categoryId == categoryId;
+      final bool matchesQuery =
+          q == null ||
           q.isEmpty ||
           p.name.toLowerCase().contains(q) ||
           p.brand.toLowerCase().contains(q) ||

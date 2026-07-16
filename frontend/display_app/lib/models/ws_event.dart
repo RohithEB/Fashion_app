@@ -52,9 +52,9 @@ enum WsEventType {
   paymentSuccess;
 
   static WsEventType fromName(String name) => WsEventType.values.firstWhere(
-        (WsEventType t) => t.name == name,
-        orElse: () => WsEventType.heartbeat,
-      );
+    (WsEventType t) => t.name == name,
+    orElse: () => WsEventType.heartbeat,
+  );
 }
 
 /// The wire envelope for every realtime message.
@@ -70,17 +70,17 @@ class WsEvent {
   });
 
   factory WsEvent.fromJson(Map<String, dynamic> json) => WsEvent(
-        id: json['id'] as String? ?? '',
-        type: WsEventType.fromName(json['type'] as String),
-        sessionId: json['sessionId'] as String?,
-        senderRole: SenderRole.values.byName(
-          json['senderRole'] as String? ?? 'salesperson',
-        ),
-        payload: (json['payload'] as Map<String, dynamic>?) ??
-            const <String, dynamic>{},
-        ts: (json['ts'] as num?)?.toInt(),
-        seq: (json['seq'] as num?)?.toInt(),
-      );
+    id: json['id'] as String? ?? '',
+    type: WsEventType.fromName(json['type'] as String),
+    sessionId: json['sessionId'] as String?,
+    senderRole: SenderRole.values.byName(
+      json['senderRole'] as String? ?? 'salesperson',
+    ),
+    payload:
+        (json['payload'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+    ts: (json['ts'] as num?)?.toInt(),
+    seq: (json['seq'] as num?)?.toInt(),
+  );
 
   /// Decode from a raw socket frame.
   factory WsEvent.decode(String raw) =>
@@ -95,14 +95,14 @@ class WsEvent {
   final int? seq;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'id': id,
-        'type': type.name,
-        if (sessionId != null) 'sessionId': sessionId,
-        'senderRole': senderRole.name,
-        'payload': payload,
-        if (ts != null) 'ts': ts,
-        if (seq != null) 'seq': seq,
-      };
+    'id': id,
+    'type': type.name,
+    if (sessionId != null) 'sessionId': sessionId,
+    'senderRole': senderRole.name,
+    'payload': payload,
+    if (ts != null) 'ts': ts,
+    if (seq != null) 'seq': seq,
+  };
 
   /// Encode to a raw socket frame.
   String encode() => jsonEncode(toJson());

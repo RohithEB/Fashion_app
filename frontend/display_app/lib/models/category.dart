@@ -8,11 +8,11 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) => Category(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        tagline: json['tagline'] as String?,
-        imageUrl: json['imageUrl'] as String?,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    tagline: json['tagline'] as String?,
+    imageUrl: json['imageUrl'] as String?,
+  );
 
   final String id;
   final String name;

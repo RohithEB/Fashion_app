@@ -7,7 +7,8 @@ import 'display_realtime_base.dart';
 /// in-app loopback with a placeholder pairing URL. The scripted demo still works
 /// via [inject]; real LAN hosting runs on the Android device build.
 class StubDisplayRealtime extends DisplayRealtimeService {
-  final StreamController<WsEvent> _events = StreamController<WsEvent>.broadcast();
+  final StreamController<WsEvent> _events =
+      StreamController<WsEvent>.broadcast();
 
   @override
   Stream<WsEvent> get events => _events.stream;

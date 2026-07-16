@@ -35,7 +35,11 @@ class PaymentSuccessScreen extends StatelessWidget {
                 child: Icon(AppIcons.success, size: 88, color: c.success),
               ),
               const SizedBox(height: AppSpacing.xl),
-              Text('Thank you', style: t.displaySmall, textAlign: TextAlign.center),
+              Text(
+                'Thank you',
+                style: t.displaySmall,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'The order is complete and the client display is showing a '

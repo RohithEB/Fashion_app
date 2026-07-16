@@ -20,8 +20,9 @@ class DisplayShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DisplayPhase phase =
-        context.select<DisplayController, DisplayPhase>((DisplayController c) => c.phase);
+    final DisplayPhase phase = context.select<DisplayController, DisplayPhase>(
+      (DisplayController c) => c.phase,
+    );
 
     final Widget child = switch (phase) {
       DisplayPhase.splash => const SplashScreen(),

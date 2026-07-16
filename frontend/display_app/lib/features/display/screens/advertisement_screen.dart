@@ -61,11 +61,16 @@ class _AdvertisementScreenState extends State<AdvertisementScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('THE AUTUMN COLLECTION', style: AppTypography.eyebrow(c.accent)),
+              Text(
+                'THE AUTUMN COLLECTION',
+                style: AppTypography.eyebrow(c.accent),
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 item.name,
-                style: AppTypography.displayHero(Colors.white).copyWith(fontSize: 64),
+                style: AppTypography.displayHero(
+                  Colors.white,
+                ).copyWith(fontSize: 64),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(

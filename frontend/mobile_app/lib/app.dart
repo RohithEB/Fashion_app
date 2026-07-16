@@ -33,9 +33,7 @@ class FashionControllerApp extends StatelessWidget {
           create: (BuildContext ctx) =>
               CatalogController(ctx.read<CatalogRepository>())..load(),
         ),
-        ChangeNotifierProvider<CartController>(
-          create: (_) => CartController(),
-        ),
+        ChangeNotifierProvider<CartController>(create: (_) => CartController()),
         ChangeNotifierProvider<ConnectionController>(
           create: (BuildContext ctx) =>
               ConnectionController(ctx.read<RealtimeService>()),

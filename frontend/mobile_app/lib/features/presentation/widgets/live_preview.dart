@@ -18,10 +18,10 @@ class LivePreviewSheet extends StatelessWidget {
   const LivePreviewSheet({super.key});
 
   static Future<void> show(BuildContext context) => showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => const LivePreviewSheet(),
-      );
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => const LivePreviewSheet(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +37,10 @@ class LivePreviewSheet extends StatelessWidget {
             children: <Widget>[
               Icon(AppIcons.connected, size: 16, color: c.accent),
               const SizedBox(width: AppSpacing.xs),
-              Text('CUSTOMER DISPLAY', style: AppTypography.eyebrow(c.textSecondary)),
+              Text(
+                'CUSTOMER DISPLAY',
+                style: AppTypography.eyebrow(c.textSecondary),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),

@@ -59,9 +59,8 @@ abstract final class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.product,
-          pageBuilder: (_, GoRouterState state) => _fade(
-            ProductDetailScreen(product: state.extra! as Product),
-          ),
+          pageBuilder: (_, GoRouterState state) =>
+              _fade(ProductDetailScreen(product: state.extra! as Product)),
         ),
         GoRoute(
           path: AppRoutes.cart,
@@ -85,8 +84,11 @@ abstract final class AppRouter {
         transitionDuration: AppMotion.base,
         transitionsBuilder: (_, Animation<double> animation, _, Widget child) =>
             FadeTransition(
-          opacity: CurvedAnimation(parent: animation, curve: AppMotion.standard),
-          child: child,
-        ),
+              opacity: CurvedAnimation(
+                parent: animation,
+                curve: AppMotion.standard,
+              ),
+              child: child,
+            ),
       );
 }

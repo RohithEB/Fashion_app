@@ -17,7 +17,10 @@ class LoadingScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text('PREPARING YOUR SHOWROOM', style: AppTypography.eyebrow(c.accent)),
+            Text(
+              'PREPARING YOUR SHOWROOM',
+              style: AppTypography.eyebrow(c.accent),
+            ),
             const SizedBox(height: AppSpacing.md),
             Text('One moment', style: t.headlineMedium),
             const SizedBox(height: AppSpacing.xl),

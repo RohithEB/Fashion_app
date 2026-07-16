@@ -40,12 +40,17 @@ class LoginScreen extends StatelessWidget {
                 style: t.bodyLarge?.copyWith(color: c.textSecondary),
               ),
               const Spacer(),
-              Text('SELECT ASSOCIATE', style: AppTypography.eyebrow(c.textTertiary)),
+              Text(
+                'SELECT ASSOCIATE',
+                style: AppTypography.eyebrow(c.textTertiary),
+              ),
               const SizedBox(height: AppSpacing.md),
-              ..._mockRoster.map((Salesperson p) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: _AssociateTile(person: p),
-                  )),
+              ..._mockRoster.map(
+                (Salesperson p) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: _AssociateTile(person: p),
+                ),
+              ),
               const Spacer(flex: 3),
             ],
           ),
@@ -99,7 +104,11 @@ class _AssociateTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded, size: 16, color: c.textTertiary),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: c.textTertiary,
+              ),
             ],
           ),
         ),

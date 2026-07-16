@@ -47,7 +47,10 @@ class ProductCard extends StatelessWidget {
                         color: c.background,
                         borderRadius: AppRadius.brPill,
                       ),
-                      child: Text('NEW', style: AppTypography.eyebrow(c.textPrimary)),
+                      child: Text(
+                        'NEW',
+                        style: AppTypography.eyebrow(c.textPrimary),
+                      ),
                     ),
                   ),
               ],

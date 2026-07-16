@@ -19,10 +19,12 @@ class IdleWarningOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool warning =
-        context.select<ConnectionController, bool>((ConnectionController c) => c.idleWarning);
-    final int seconds =
-        context.select<ConnectionController, int>((ConnectionController c) => c.idleSecondsLeft);
+    final bool warning = context.select<ConnectionController, bool>(
+      (ConnectionController c) => c.idleWarning,
+    );
+    final int seconds = context.select<ConnectionController, int>(
+      (ConnectionController c) => c.idleSecondsLeft,
+    );
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
 
@@ -57,11 +59,16 @@ class IdleWarningOverlay extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
-                                Text('SESSION IDLE', style: AppTypography.eyebrow(c.accent)),
+                                Text(
+                                  'SESSION IDLE',
+                                  style: AppTypography.eyebrow(c.accent),
+                                ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'Ending in ${seconds}s',
-                                  style: t.titleSmall?.copyWith(color: c.onPrimary),
+                                  style: t.titleSmall?.copyWith(
+                                    color: c.onPrimary,
+                                  ),
                                 ),
                               ],
                             ),
@@ -69,8 +76,9 @@ class IdleWarningOverlay extends StatelessWidget {
                           AppButton(
                             label: "I'm still here",
                             size: AppButtonSize.small,
-                            onPressed: () =>
-                                context.read<ConnectionController>().keepAlive(),
+                            onPressed: () => context
+                                .read<ConnectionController>()
+                                .keepAlive(),
                           ),
                         ],
                       ),

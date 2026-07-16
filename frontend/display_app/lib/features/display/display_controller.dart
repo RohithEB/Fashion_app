@@ -137,8 +137,9 @@ class DisplayController extends ChangeNotifier {
   }
 
   void _showProduct(WsEvent e) {
-    final Product? found =
-        _cache.where((Product p) => p.id == e.productId).firstOrNull;
+    final Product? found = _cache
+        .where((Product p) => p.id == e.productId)
+        .firstOrNull;
     if (found == null) return;
     product = found;
     presentation = ProductPresentation(
@@ -185,29 +186,35 @@ class DisplayController extends ChangeNotifier {
     idleWarningActive = true;
     idleSecondsLeft = graceSeconds;
     notifyListeners();
-    _emit(WsEvent(
-      type: WsEventType.sessionWarning,
-      payload: <String, dynamic>{'secondsLeft': idleSecondsLeft},
-    ));
+    _emit(
+      WsEvent(
+        type: WsEventType.sessionWarning,
+        payload: <String, dynamic>{'secondsLeft': idleSecondsLeft},
+      ),
+    );
     _warningTimer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
       idleSecondsLeft--;
       if (idleSecondsLeft <= 0) {
         _endSession('idle_timeout');
       } else {
         notifyListeners();
-        _emit(WsEvent(
-          type: WsEventType.sessionWarning,
-          payload: <String, dynamic>{'secondsLeft': idleSecondsLeft},
-        ));
+        _emit(
+          WsEvent(
+            type: WsEventType.sessionWarning,
+            payload: <String, dynamic>{'secondsLeft': idleSecondsLeft},
+          ),
+        );
       }
     });
   }
 
   void _endSession(String reason) {
-    _emit(WsEvent(
-      type: WsEventType.sessionEnd,
-      payload: <String, dynamic>{'reason': reason},
-    ));
+    _emit(
+      WsEvent(
+        type: WsEventType.sessionEnd,
+        payload: <String, dynamic>{'reason': reason},
+      ),
+    );
     _toWaiting();
   }
 
@@ -234,38 +241,56 @@ class DisplayController extends ChangeNotifier {
     void at(int ms, WsEvent event) =>
         Timer(Duration(milliseconds: ms), () => rt.inject(event));
 
-    at(0, WsEvent(
-      type: WsEventType.connectScreen,
-      payload: const <String, dynamic>{'salespersonName': 'Éléonore'},
-    ));
-    at(3200, WsEvent(
-      type: WsEventType.showProduct,
-      payload: <String, dynamic>{
-        'productId': demo[0].id,
-        'variantId': demo[0].defaultVariant.id,
-      },
-    ));
-    at(5200, const WsEvent(
-      type: WsEventType.showAIHighlights,
-      payload: <String, dynamic>{'visible': true},
-    ));
+    at(
+      0,
+      WsEvent(
+        type: WsEventType.connectScreen,
+        payload: const <String, dynamic>{'salespersonName': 'Éléonore'},
+      ),
+    );
+    at(
+      3200,
+      WsEvent(
+        type: WsEventType.showProduct,
+        payload: <String, dynamic>{
+          'productId': demo[0].id,
+          'variantId': demo[0].defaultVariant.id,
+        },
+      ),
+    );
+    at(
+      5200,
+      const WsEvent(
+        type: WsEventType.showAIHighlights,
+        payload: <String, dynamic>{'visible': true},
+      ),
+    );
     if (demo[0].variants.length > 1) {
-      at(7600, WsEvent(
-        type: WsEventType.changeColor,
-        payload: <String, dynamic>{'variantId': demo[0].variants[1].id},
-      ));
+      at(
+        7600,
+        WsEvent(
+          type: WsEventType.changeColor,
+          payload: <String, dynamic>{'variantId': demo[0].variants[1].id},
+        ),
+      );
     }
-    at(10000, const WsEvent(
-      type: WsEventType.changeImage,
-      payload: <String, dynamic>{'imageIndex': 1},
-    ));
-    at(12400, WsEvent(
-      type: WsEventType.showProduct,
-      payload: <String, dynamic>{
-        'productId': demo[1].id,
-        'variantId': demo[1].defaultVariant.id,
-      },
-    ));
+    at(
+      10000,
+      const WsEvent(
+        type: WsEventType.changeImage,
+        payload: <String, dynamic>{'imageIndex': 1},
+      ),
+    );
+    at(
+      12400,
+      WsEvent(
+        type: WsEventType.showProduct,
+        payload: <String, dynamic>{
+          'productId': demo[1].id,
+          'variantId': demo[1].defaultVariant.id,
+        },
+      ),
+    );
     at(15000, const WsEvent(type: WsEventType.paymentSuccess));
   }
 

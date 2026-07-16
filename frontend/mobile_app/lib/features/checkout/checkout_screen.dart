@@ -61,20 +61,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: <Widget>[
           Text('ORDER', style: AppTypography.eyebrow(c.textSecondary)),
           const SizedBox(height: AppSpacing.sm),
-          ...cart.cart.items.map((i) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        '${i.product.name}  ×${i.quantity}',
-                        style: t.bodyMedium,
-                      ),
+          ...cart.cart.items.map(
+            (i) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      '${i.product.name}  ×${i.quantity}',
+                      style: t.bodyMedium,
                     ),
-                    Text(i.lineTotal.formatted, style: t.bodyMedium),
-                  ],
-                ),
-              )),
+                  ),
+                  Text(i.lineTotal.formatted, style: t.bodyMedium),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: AppSpacing.md),
           Divider(color: c.divider),
           const SizedBox(height: AppSpacing.md),
@@ -103,7 +105,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Icon(AppIcons.payment, color: c.textSecondary),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
-                  child: Text('Boutique Terminal · Fake Gateway', style: t.bodyMedium),
+                  child: Text(
+                    'Boutique Terminal · Fake Gateway',
+                    style: t.bodyMedium,
+                  ),
                 ),
                 Icon(AppIcons.check, color: c.success, size: 18),
               ],
@@ -120,7 +125,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           MediaQuery.of(context).padding.bottom + AppSpacing.sm,
         ),
         child: AppButton(
-          label: _processing ? 'Processing payment…' : 'Pay ${cart.cart.total.formatted}',
+          label: _processing
+              ? 'Processing payment…'
+              : 'Pay ${cart.cart.total.formatted}',
           icon: AppIcons.payment,
           expand: true,
           isLoading: _processing,

@@ -58,7 +58,10 @@ class NowShowingBar extends StatelessWidget {
                           children: <Widget>[
                             Icon(AppIcons.connected, size: 14, color: c.accent),
                             const SizedBox(width: 4),
-                            Text('ON SCREEN', style: AppTypography.eyebrow(c.accent)),
+                            Text(
+                              'ON SCREEN',
+                              style: AppTypography.eyebrow(c.accent),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 2),

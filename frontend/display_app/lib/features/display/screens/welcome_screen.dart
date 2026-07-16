@@ -29,7 +29,10 @@ class WelcomeScreen extends StatelessWidget {
           curve: AppMotion.decelerate,
           builder: (_, double v, Widget? child) => Opacity(
             opacity: v,
-            child: Transform.translate(offset: Offset(0, (1 - v) * 16), child: child),
+            child: Transform.translate(
+              offset: Offset(0, (1 - v) * 16),
+              child: child,
+            ),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
@@ -41,7 +44,9 @@ class WelcomeScreen extends StatelessWidget {
                 Text(
                   'You are now connected\nwith $name',
                   textAlign: TextAlign.center,
-                  style: AppTypography.displayHero(c.textPrimary).copyWith(fontSize: 72),
+                  style: AppTypography.displayHero(
+                    c.textPrimary,
+                  ).copyWith(fontSize: 72),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(

@@ -51,25 +51,30 @@ class PresentationScreen extends StatelessWidget {
                           images: images,
                         )
                       : isVideo
-                          ? _VideoStage(
-                              key: const ValueKey<String>('video'),
-                              poster: image,
-                              playing: p.videoPlaying,
-                            )
-                          : Transform.translate(
-                              key: ValueKey<String>('${p.variantId}-${p.imageIndex}'),
-                              offset: Offset(p.panX * 60, p.panY * 60),
-                              child: Transform.scale(
-                                scale: p.zoom,
-                                child: NetworkPhoto(url: image),
-                              ),
-                            ),
+                      ? _VideoStage(
+                          key: const ValueKey<String>('video'),
+                          poster: image,
+                          playing: p.videoPlaying,
+                        )
+                      : Transform.translate(
+                          key: ValueKey<String>(
+                            '${p.variantId}-${p.imageIndex}',
+                          ),
+                          offset: Offset(p.panX * 60, p.panY * 60),
+                          child: Transform.scale(
+                            scale: p.zoom,
+                            child: NetworkPhoto(url: image),
+                          ),
+                        ),
                 ),
                 if (!isVideo && !isGallery && images.length > 1)
                   Positioned(
                     left: AppSpacing.xl,
                     bottom: AppSpacing.xl,
-                    child: _ImageDots(count: images.length, index: p.imageIndex),
+                    child: _ImageDots(
+                      count: images.length,
+                      index: p.imageIndex,
+                    ),
                   ),
               ],
             ),
@@ -114,7 +119,10 @@ class _InfoPanel extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(product.name, style: t.displaySmall),
           const SizedBox(height: AppSpacing.sm),
-          Text((variant.price ?? product.price).formatted, style: t.headlineSmall),
+          Text(
+            (variant.price ?? product.price).formatted,
+            style: t.headlineSmall,
+          ),
           const SizedBox(height: AppSpacing.xl),
           Text(
             product.description,
@@ -125,7 +133,10 @@ class _InfoPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-          Text('COLOUR — ${variant.colorName}', style: AppTypography.eyebrow(c.textSecondary)),
+          Text(
+            'COLOUR — ${variant.colorName}',
+            style: AppTypography.eyebrow(c.textSecondary),
+          ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: <Widget>[
@@ -161,17 +172,25 @@ class _InfoPanel extends StatelessWidget {
                           children: <Widget>[
                             Icon(AppIcons.sparkle, size: 16, color: c.accent),
                             const SizedBox(width: AppSpacing.xs),
-                            Text('ATELIER NOTES', style: AppTypography.eyebrow(c.accent)),
+                            Text(
+                              'ATELIER NOTES',
+                              style: AppTypography.eyebrow(c.accent),
+                            ),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         for (final String h in product.aiHighlights)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.xs,
+                            ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                Text('—  ', style: t.bodyLarge?.copyWith(color: c.accent)),
+                                Text(
+                                  '—  ',
+                                  style: t.bodyLarge?.copyWith(color: c.accent),
+                                ),
                                 Expanded(child: Text(h, style: t.bodyLarge)),
                               ],
                             ),
@@ -202,9 +221,7 @@ class _VideoStage extends StatelessWidget {
       fit: StackFit.expand,
       children: <Widget>[
         NetworkPhoto(url: poster),
-        const DecoratedBox(
-          decoration: BoxDecoration(color: Color(0x55000000)),
-        ),
+        const DecoratedBox(decoration: BoxDecoration(color: Color(0x55000000))),
         Center(
           child: Container(
             width: 96,

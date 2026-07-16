@@ -34,11 +34,16 @@ class WaitingScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('MAISON ÉBANI', style: AppTypography.eyebrow(c.accent)),
+                    Text(
+                      'MAISON ÉBANI',
+                      style: AppTypography.eyebrow(c.accent),
+                    ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
                       'A private\nshowroom,\nfor you.',
-                      style: AppTypography.displayHero(c.textPrimary).copyWith(fontSize: 80),
+                      style: AppTypography.displayHero(
+                        c.textPrimary,
+                      ).copyWith(fontSize: 80),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     Text(
@@ -104,7 +109,10 @@ class _QrCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text('SCAN TO CONNECT', style: AppTypography.eyebrow(c.textSecondary)),
+            Text(
+              'SCAN TO CONNECT',
+              style: AppTypography.eyebrow(c.textSecondary),
+            ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Open the associate app and\nscan this code',

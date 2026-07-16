@@ -10,14 +10,20 @@ class CartController extends ChangeNotifier {
   Cart _cart = const Cart();
   Cart get cart => _cart;
 
-  void addItem(Product product, {required String variantId, required String size}) {
+  void addItem(
+    Product product, {
+    required String variantId,
+    required String size,
+  }) {
     final CartItem incoming = CartItem(
       product: product,
       variantId: variantId,
       size: size,
     );
     final List<CartItem> items = List<CartItem>.of(_cart.items);
-    final int idx = items.indexWhere((CartItem i) => i.lineId == incoming.lineId);
+    final int idx = items.indexWhere(
+      (CartItem i) => i.lineId == incoming.lineId,
+    );
     if (idx >= 0) {
       items[idx] = items[idx].copyWith(quantity: items[idx].quantity + 1);
     } else {
@@ -41,8 +47,9 @@ class CartController extends ChangeNotifier {
   }
 
   void removeItem(String lineId) {
-    final List<CartItem> items =
-        _cart.items.where((CartItem i) => i.lineId != lineId).toList();
+    final List<CartItem> items = _cart.items
+        .where((CartItem i) => i.lineId != lineId)
+        .toList();
     _cart = _cart.copyWith(items: items);
     notifyListeners();
   }

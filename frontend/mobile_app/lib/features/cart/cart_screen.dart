@@ -62,7 +62,8 @@ class _CartTile extends StatelessWidget {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
     final PresentationController pres = context.watch<PresentationController>();
-    final bool presenting = pres.presentation?.productId == item.product.id &&
+    final bool presenting =
+        pres.presentation?.productId == item.product.id &&
         pres.presentation?.variantId == item.variantId;
 
     return Container(
@@ -89,7 +90,12 @@ class _CartTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const SizedBox(height: AppSpacing.xxs),
-                Text(item.product.name, style: t.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  item.product.name,
+                  style: t.titleSmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 2),
                 Text(
                   '${item.variant.colorName}  ·  ${item.size}',
@@ -109,7 +115,9 @@ class _CartTile extends StatelessWidget {
                     Expanded(
                       child: AppButton(
                         label: presenting ? 'On screen' : 'Present',
-                        icon: presenting ? AppIcons.connected : AppIcons.showOnScreen,
+                        icon: presenting
+                            ? AppIcons.connected
+                            : AppIcons.showOnScreen,
                         size: AppButtonSize.small,
                         variant: presenting
                             ? AppButtonVariant.secondary
@@ -117,7 +125,9 @@ class _CartTile extends StatelessWidget {
                         onPressed: presenting
                             ? () => LivePreviewSheet.show(context)
                             : () {
-                                context.read<PresentationController>().showProduct(
+                                context
+                                    .read<PresentationController>()
+                                    .showProduct(
                                       item.product,
                                       variantId: item.variantId,
                                     );
@@ -127,8 +137,9 @@ class _CartTile extends StatelessWidget {
                     ),
                     IconButton(
                       icon: Icon(AppIcons.delete, color: c.textTertiary),
-                      onPressed: () =>
-                          context.read<CartController>().removeItem(item.lineId),
+                      onPressed: () => context
+                          .read<CartController>()
+                          .removeItem(item.lineId),
                     ),
                   ],
                 ),
@@ -162,7 +173,10 @@ class _Stepper extends StatelessWidget {
             icon: AppIcons.remove,
             onTap: () => ctrl.setQuantity(item.lineId, item.quantity - 1),
           ),
-          Text('${item.quantity}', style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            '${item.quantity}',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           _StepButton(
             icon: AppIcons.add,
             onTap: () => ctrl.setQuantity(item.lineId, item.quantity + 1),
@@ -179,13 +193,13 @@ class _StepButton extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) => InkResponse(
-        onTap: onTap,
-        radius: 20,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xs),
-          child: Icon(icon, size: 16),
-        ),
-      );
+    onTap: onTap,
+    radius: 20,
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.xs),
+      child: Icon(icon, size: 16),
+    ),
+  );
 }
 
 class _Summary extends StatelessWidget {
@@ -212,7 +226,8 @@ class _Summary extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           _row(context, 'Subtotal', cart.subtotal.formatted),
-          if (cart.discountRate > 0) _row(context, 'Discount', '-${cart.discount.formatted}'),
+          if (cart.discountRate > 0)
+            _row(context, 'Discount', '-${cart.discount.formatted}'),
           _row(context, 'Tax', cart.tax.formatted),
           const SizedBox(height: AppSpacing.xs),
           Divider(color: c.divider),

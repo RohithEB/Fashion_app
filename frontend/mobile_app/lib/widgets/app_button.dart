@@ -40,10 +40,10 @@ class _AppButtonState extends State<AppButton> {
   bool _pressed = false;
 
   double get _height => switch (widget.size) {
-        AppButtonSize.small => AppSizes.buttonSm,
-        AppButtonSize.medium => AppSizes.buttonMd,
-        AppButtonSize.large => AppSizes.buttonLg,
-      };
+    AppButtonSize.small => AppSizes.buttonSm,
+    AppButtonSize.medium => AppSizes.buttonMd,
+    AppButtonSize.large => AppSizes.buttonLg,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -55,15 +55,15 @@ class _AppButtonState extends State<AppButton> {
     final (Color bg, Color fg, BoxBorder? border) = switch (widget.variant) {
       AppButtonVariant.primary => (c.primary, c.onPrimary, null),
       AppButtonVariant.secondary => (
-          c.surface,
-          c.textPrimary,
-          Border.all(color: c.border),
-        ),
+        c.surface,
+        c.textPrimary,
+        Border.all(color: c.border),
+      ),
       AppButtonVariant.outline => (
-          Colors.transparent,
-          c.textPrimary,
-          Border.all(color: c.border),
-        ),
+        Colors.transparent,
+        c.textPrimary,
+        Border.all(color: c.border),
+      ),
       AppButtonVariant.ghost => (Colors.transparent, c.textPrimary, null),
     };
 
@@ -93,8 +93,9 @@ class _AppButtonState extends State<AppButton> {
                 border: border,
               ),
               child: Row(
-                mainAxisSize:
-                    widget.expand ? MainAxisSize.max : MainAxisSize.min,
+                mainAxisSize: widget.expand
+                    ? MainAxisSize.max
+                    : MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   if (widget.isLoading)

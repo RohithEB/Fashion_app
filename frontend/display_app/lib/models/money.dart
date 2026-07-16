@@ -9,9 +9,9 @@ class Money {
       Money(minorUnits: (amount * 100).round(), currency: currency);
 
   factory Money.fromJson(Map<String, dynamic> json) => Money(
-        minorUnits: (json['minorUnits'] as num).toInt(),
-        currency: json['currency'] as String? ?? 'USD',
-      );
+    minorUnits: (json['minorUnits'] as num).toInt(),
+    currency: json['currency'] as String? ?? 'USD',
+  );
 
   final int minorUnits;
   final String currency;
@@ -44,8 +44,10 @@ class Money {
     return '$symbol$intPart.${parts[1]}';
   }
 
-  Map<String, dynamic> toJson() =>
-      <String, dynamic>{'minorUnits': minorUnits, 'currency': currency};
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'minorUnits': minorUnits,
+    'currency': currency,
+  };
 
   @override
   bool operator ==(Object other) =>

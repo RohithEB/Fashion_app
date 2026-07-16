@@ -14,7 +14,8 @@ class IoDisplayRealtime extends DisplayRealtimeService {
   final int port;
   final String _token = _generateToken();
 
-  final StreamController<WsEvent> _events = StreamController<WsEvent>.broadcast();
+  final StreamController<WsEvent> _events =
+      StreamController<WsEvent>.broadcast();
   final List<WebSocket> _clients = <WebSocket>[];
   HttpServer? _server;
   String _pairingUrl = '';
@@ -35,7 +36,11 @@ class IoDisplayRealtime extends DisplayRealtimeService {
     final String ip = await _lanIp();
     _pairingUrl = 'http://$ip:$port/pair?token=$_token';
     try {
-      _server = await HttpServer.bind(InternetAddress.anyIPv4, port, shared: true);
+      _server = await HttpServer.bind(
+        InternetAddress.anyIPv4,
+        port,
+        shared: true,
+      );
       unawaited(_serve(_server!));
     } catch (_) {
       // Port busy / not permitted — the QR still renders; a retry can be added.
@@ -66,10 +71,12 @@ class IoDisplayRealtime extends DisplayRealtimeService {
         request.response
           ..statusCode = HttpStatus.ok
           ..headers.contentType = ContentType.html
-          ..write('<!doctype html><meta name="viewport" content="width=device-width,'
-              'initial-scale=1"><body style="font-family:sans-serif;text-align:'
-              'center;padding:48px"><h2>Maison &Eacute;bani</h2><p>Open the '
-              'associate app and scan this code to pair.</p></body>');
+          ..write(
+            '<!doctype html><meta name="viewport" content="width=device-width,'
+            'initial-scale=1"><body style="font-family:sans-serif;text-align:'
+            'center;padding:48px"><h2>Maison &Eacute;bani</h2><p>Open the '
+            'associate app and scan this code to pair.</p></body>',
+          );
         await request.response.close();
       } else {
         request.response.statusCode = HttpStatus.notFound;

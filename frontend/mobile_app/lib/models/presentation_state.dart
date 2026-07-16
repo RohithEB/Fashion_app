@@ -62,21 +62,20 @@ class ProductPresentation {
     bool? videoPlaying,
     int? videoPositionMs,
     bool? videoMuted,
-  }) =>
-      ProductPresentation(
-        productId: productId ?? this.productId,
-        variantId: variantId ?? this.variantId,
-        view: view ?? this.view,
-        imageIndex: imageIndex ?? this.imageIndex,
-        zoom: zoom ?? this.zoom,
-        panX: panX ?? this.panX,
-        panY: panY ?? this.panY,
-        showAIHighlights: showAIHighlights ?? this.showAIHighlights,
-        relatedMediaId: relatedMediaId ?? this.relatedMediaId,
-        videoPlaying: videoPlaying ?? this.videoPlaying,
-        videoPositionMs: videoPositionMs ?? this.videoPositionMs,
-        videoMuted: videoMuted ?? this.videoMuted,
-      );
+  }) => ProductPresentation(
+    productId: productId ?? this.productId,
+    variantId: variantId ?? this.variantId,
+    view: view ?? this.view,
+    imageIndex: imageIndex ?? this.imageIndex,
+    zoom: zoom ?? this.zoom,
+    panX: panX ?? this.panX,
+    panY: panY ?? this.panY,
+    showAIHighlights: showAIHighlights ?? this.showAIHighlights,
+    relatedMediaId: relatedMediaId ?? this.relatedMediaId,
+    videoPlaying: videoPlaying ?? this.videoPlaying,
+    videoPositionMs: videoPositionMs ?? this.videoPositionMs,
+    videoMuted: videoMuted ?? this.videoMuted,
+  );
 
   /// Reduce a realtime [event] into a new presentation state. Pure function —
   /// the same reducer runs on both apps so they stay perfectly in sync.
@@ -111,7 +110,10 @@ class ProductPresentation {
           panY: event.focalY ?? panY,
         );
       case WsEventType.panImage:
-        return copyWith(panX: event.offsetX ?? panX, panY: event.offsetY ?? panY);
+        return copyWith(
+          panX: event.offsetX ?? panX,
+          panY: event.offsetY ?? panY,
+        );
       case WsEventType.resetZoom:
         return copyWith(zoom: 1, panX: 0, panY: 0);
       case WsEventType.showAIHighlights:
