@@ -1,0 +1,57 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec_overrides.yaml
+**/doc/api/
+coverage/
+*.log
+
+# Lockfiles are committed for apps but not for pure packages (kept simple: ignore nested, keep root)
+**/pubspec.lock
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.iml
+*.ipr
+*.iws
+.metadata
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Android
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/local.properties
+**/android/key.properties
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+*.keystore
+*.jks
+
+# iOS / macOS
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Pods/
+**/ios/.symlinks/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Melos
+.melos_tool/
