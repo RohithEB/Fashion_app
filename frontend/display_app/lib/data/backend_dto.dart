@@ -139,16 +139,29 @@ abstract final class BackendDto {
 
     final List<String> highlights = <String>[];
     final List<String> materials = <String>[];
+    final List<ProductDetail> details = <ProductDetail>[];
     for (final dynamic e in enrichment) {
       final Map<String, dynamic> em = e as Map<String, dynamic>;
-      final String key = (em['key'] as String? ?? '').toLowerCase();
+      final String key = em['key'] as String? ?? '';
       final String value = em['value'] as String? ?? '';
       if (value.isEmpty) continue;
-      if (key.contains('fabric') || key.contains('material') || key.contains('composition')) {
-        materials.add(value);
-      } else {
+      final String lk = key.toLowerCase();
+      if (lk == 'highlight') {
         highlights.add(value);
+      } else {
+        details.add(ProductDetail(label: key, value: value));
+        if (lk.contains('fabric') || lk.contains('material') || lk.contains('composition')) {
+          materials.add(value);
+        }
       }
+    }
+    if (highlights.isEmpty) {
+      highlights.addAll(details
+          .where((ProductDetail d) =>
+              !d.label.toLowerCase().contains('material') &&
+              !d.label.toLowerCase().contains('fabric'))
+          .map((ProductDetail d) => d.value)
+          .take(4));
     }
 
     return Product(
@@ -173,6 +186,7 @@ abstract final class BackendDto {
       description: json['description'] as String? ?? '',
       aiHighlights: highlights,
       materials: materials,
+      details: details,
     );
   }
 }

@@ -1,6 +1,14 @@
 // Catalog read model: search / sort / filter, product detail, similar, filter metadata.
 import * as products from '../repositories/products.repo.js';
+import * as customers from '../repositories/customers.repo.js';
 import { notFound } from '../util/errors.js';
+
+// Map the onboarding profile onto the enriched product vocabulary.
+const GENDER_MAP = { female: 'women', male: 'men', women: 'women', men: 'men' };
+const AGE_RANGE_TO_GROUP = {
+  'Under 18': 'Teen', '18-24': 'Young Adult', '25-34': 'Young Adult',
+  '35-44': 'Adult', '45-54': 'Adult', '55+': 'Mature',
+};
 
 const parseTags = (raw) => {
   try { return JSON.parse(raw || '[]'); } catch { return []; }
@@ -97,4 +105,35 @@ export function getFilters() {
 
 export function getCategories() {
   return products.getCategories();
+}
+
+// Recommendations for a customer's onboarding profile (gender + personality + age).
+// Accepts an explicit profile or a customerId to look one up. Direct attribute match.
+export function getRecommendations(query = {}) {
+  let { gender, ageRange, personality } = query;
+  if (query.customerId) {
+    const c = customers.getCustomer(query.customerId);
+    if (c) {
+      gender = gender || c.gender;
+      ageRange = ageRange || c.ageRange;
+      personality = personality || c.personality;
+    }
+  }
+
+  const mappedGender = GENDER_MAP[String(gender || '').toLowerCase()] || null;
+  const ageGroup = query.ageGroup || AGE_RANGE_TO_GROUP[ageRange] || null;
+  const limit = Math.min(Number(query.limit) || 12, 50);
+
+  const rows = products.getRecommendations({
+    gender: mappedGender, ageGroup, personality: personality || null, limit,
+  });
+  const ids = rows.map((r) => r.id);
+  const heroes = products.getHeroImages(ids);
+  const facets = products.getVariantFacetsFor(ids);
+  const videos = products.hasVideoFor(ids);
+
+  return {
+    profile: { gender: mappedGender, ageGroup, personality: personality || null },
+    items: rows.map((p) => ({ ...toListItem(p, heroes, facets, videos), matchScore: p.score })),
+  };
 }

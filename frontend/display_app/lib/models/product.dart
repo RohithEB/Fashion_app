@@ -76,6 +76,14 @@ class ProductVariant {
       media.where((ProductMedia m) => m.isVideo).firstOrNull;
 }
 
+/// A labeled enrichment attribute (e.g. Fabric → "100% linen", Vibe → "Elegant").
+class ProductDetail {
+  const ProductDetail({required this.label, required this.value});
+
+  final String label;
+  final String value;
+}
+
 /// A catalog product, enriched with AI-generated highlights and related media.
 class Product {
   const Product({
@@ -88,6 +96,7 @@ class Product {
     this.description = '',
     this.aiHighlights = const <String>[],
     this.materials = const <String>[],
+    this.details = const <ProductDetail>[],
     this.isNew = false,
   });
 
@@ -121,6 +130,10 @@ class Product {
   /// AI-generated selling points (enrichment served by the catalog API).
   final List<String> aiHighlights;
   final List<String> materials;
+
+  /// Full labeled enrichment (fabric, vibe, season, occasion, fit, rating, …),
+  /// shown on the display when the associate expands the details sheet.
+  final List<ProductDetail> details;
   final bool isNew;
 
   ProductVariant get defaultVariant => variants.first;

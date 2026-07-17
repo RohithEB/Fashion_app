@@ -12,9 +12,31 @@ import '../../widgets/app_button.dart';
 import '../../widgets/network_photo.dart';
 import '../../widgets/state_views.dart';
 import '../connection/connection_controller.dart';
+import '../onboarding/onboarding_controller.dart';
 import '../presentation/presentation_controller.dart';
 import '../presentation/widgets/live_preview.dart';
 import 'cart_controller.dart';
+
+/// Serialise the cart into a display-friendly payload (formatted strings so the
+/// display renders it read-only without any Money logic).
+Map<String, dynamic> cartPayload(Cart cart, {String? customerName}) => <String, dynamic>{
+  'items': cart.items
+      .map((CartItem i) => <String, dynamic>{
+        'name': i.product.name,
+        'brand': i.product.brand,
+        'color': i.variant.colorName,
+        'size': i.size,
+        'quantity': i.quantity,
+        'lineTotal': i.lineTotal.formatted,
+        'image': i.variant.images.firstOrNull?.url,
+      })
+      .toList(),
+  'count': cart.count,
+  'subtotal': cart.subtotal.formatted,
+  'tax': cart.tax.formatted,
+  'total': cart.total.formatted,
+  if (customerName != null && customerName.isNotEmpty) 'customerName': customerName,
+};
 
 /// The cart doubles as the salesperson's **shortlist and on-screen selector**:
 /// each line can be pushed to the display with one tap ("Present"), so the
@@ -27,6 +49,16 @@ class CartScreen extends StatelessWidget {
     final TextTheme t = Theme.of(context).textTheme;
     final CartController cart = context.watch<CartController>();
     final Cart data = cart.cart;
+    final PresentationController pres = context.read<PresentationController>();
+    final bool connected = context.watch<ConnectionController>().liveLink;
+    final String? customerName = context.read<OnboardingController>().customer?.name;
+
+    // While the cart is mirrored on the display, re-sync on every change
+    // (quantity edits, deletions) after the frame settles.
+    if (pres.cartOnScreen) {
+      final Map<String, dynamic> payload = cartPayload(data, customerName: customerName);
+      WidgetsBinding.instance.addPostFrameCallback((_) => pres.syncCart(payload));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -48,7 +80,16 @@ class CartScreen extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
               itemBuilder: (_, int i) => _CartTile(item: data.items[i]),
             ),
-      bottomNavigationBar: data.isEmpty ? null : _Summary(cart: data),
+      bottomNavigationBar: data.isEmpty
+          ? null
+          : _Summary(
+              cart: data,
+              connected: connected,
+              showing: context.watch<PresentationController>().cartOnScreen,
+              onShowOnScreen: () => context
+                  .read<PresentationController>()
+                  .showCart(cartPayload(data, customerName: customerName)),
+            ),
     );
   }
 }
@@ -211,9 +252,17 @@ class _StepButton extends StatelessWidget {
 }
 
 class _Summary extends StatelessWidget {
-  const _Summary({required this.cart});
+  const _Summary({
+    required this.cart,
+    required this.connected,
+    required this.showing,
+    required this.onShowOnScreen,
+  });
 
   final Cart cart;
+  final bool connected;
+  final bool showing;
+  final VoidCallback onShowOnScreen;
 
   @override
   Widget build(BuildContext context) {
@@ -248,6 +297,16 @@ class _Summary extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
+          if (connected) ...<Widget>[
+            AppButton(
+              label: showing ? 'Cart on screen' : 'Show cart on screen',
+              icon: showing ? AppIcons.connected : AppIcons.showOnScreen,
+              variant: AppButtonVariant.secondary,
+              expand: true,
+              onPressed: onShowOnScreen,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           AppButton(
             label: 'Checkout',
             icon: AppIcons.checkout,

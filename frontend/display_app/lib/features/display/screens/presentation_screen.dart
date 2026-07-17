@@ -62,13 +62,12 @@ class PresentationScreen extends StatelessWidget {
                   poster: image,
                   playing: p.videoPlaying,
                 )
-              : Transform.translate(
+              : _SyncedTransform(
                   key: ValueKey<String>('${p.variantId}-${p.imageIndex}'),
-                  offset: Offset(p.panX * 60, p.panY * 60),
-                  child: Transform.scale(
-                    scale: p.zoom,
-                    child: NetworkPhoto(url: image),
-                  ),
+                  scale: p.zoom,
+                  panX: p.panX,
+                  panY: p.panY,
+                  child: NetworkPhoto(url: image),
                 ),
         ),
         if (!isVideo && !isGallery && images.length > 1)
@@ -84,6 +83,7 @@ class PresentationScreen extends StatelessWidget {
       product: product,
       variant: variant,
       showAI: p.showAIHighlights,
+      expanded: p.detailsExpanded,
     );
 
     return ColoredBox(
@@ -115,11 +115,13 @@ class _InfoPanel extends StatelessWidget {
     required this.product,
     required this.variant,
     required this.showAI,
+    required this.expanded,
   });
 
   final Product product;
   final ProductVariant variant;
   final bool showAI;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
@@ -128,8 +130,10 @@ class _InfoPanel extends StatelessWidget {
     return Container(
       color: c.surface,
       padding: const EdgeInsets.all(AppSpacing.giant),
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(product.brand, style: AppTypography.eyebrow(c.accent)),
@@ -217,13 +221,125 @@ class _InfoPanel extends StatelessWidget {
                   )
                 : const SizedBox.shrink(),
           ),
+          // Full labeled details, revealed when the associate expands the sheet.
+          AnimatedSize(
+            duration: AppMotion.base,
+            curve: AppMotion.standard,
+            alignment: Alignment.topLeft,
+            child: expanded && product.details.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xl),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text('DETAILS', style: AppTypography.eyebrow(c.accent)),
+                        const SizedBox(height: AppSpacing.sm),
+                        for (final ProductDetail d in product.details)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                SizedBox(
+                                  width: 150,
+                                  child: Text(
+                                    d.label.toUpperCase(),
+                                    style: AppTypography.eyebrow(c.textTertiary),
+                                  ),
+                                ),
+                                Expanded(child: Text(d.value, style: t.bodyLarge)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
+      ),
       ),
     );
   }
 
   Color _hex(String hex) =>
       Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16));
+}
+
+/// Smooths the zoom/pan that arrives as discrete WebSocket updates (~16 Hz) into
+/// continuous motion by interpolating from the current rendered transform toward
+/// each new target. Purely client-side — the transport stays WebSocket.
+class _SyncedTransform extends StatefulWidget {
+  const _SyncedTransform({
+    required this.scale,
+    required this.panX,
+    required this.panY,
+    required this.child,
+    super.key,
+  });
+
+  final double scale;
+  final double panX;
+  final double panY;
+  final Widget child;
+
+  @override
+  State<_SyncedTransform> createState() => _SyncedTransformState();
+}
+
+class _SyncedTransformState extends State<_SyncedTransform>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 120),
+  );
+
+  late double _fromScale = widget.scale;
+  late double _fromX = widget.panX;
+  late double _fromY = widget.panY;
+  late double _toScale = widget.scale;
+  late double _toX = widget.panX;
+  late double _toY = widget.panY;
+
+  static double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  @override
+  void didUpdateWidget(covariant _SyncedTransform old) {
+    super.didUpdateWidget(old);
+    if (widget.scale == _toScale && widget.panX == _toX && widget.panY == _toY) {
+      return;
+    }
+    // Continue from the value currently on screen so bursts don't snap back.
+    final double t = _ctrl.isAnimating ? Curves.easeOut.transform(_ctrl.value) : 1;
+    _fromScale = _lerp(_fromScale, _toScale, t);
+    _fromX = _lerp(_fromX, _toX, t);
+    _fromY = _lerp(_fromY, _toY, t);
+    _toScale = widget.scale;
+    _toX = widget.panX;
+    _toY = widget.panY;
+    _ctrl.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      child: widget.child,
+      builder: (_, Widget? child) {
+        final double t = Curves.easeOut.transform(_ctrl.value);
+        return Transform.translate(
+          offset: Offset(_lerp(_fromX, _toX, t) * 60, _lerp(_fromY, _toY, t) * 60),
+          child: Transform.scale(scale: _lerp(_fromScale, _toScale, t), child: child),
+        );
+      },
+    );
+  }
 }
 
 class _VideoStage extends StatelessWidget {

@@ -7,14 +7,21 @@ import 'core/realtime/backend_controller_realtime.dart';
 import 'core/realtime/controller_realtime_service.dart';
 import 'core/realtime/realtime_service.dart';
 import 'core/router/app_router.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'data/auth_repository.dart';
 import 'data/catalog_repository.dart';
+import 'data/checkout_repository.dart';
+import 'data/customer_repository.dart';
 import 'data/http_catalog_repository.dart';
+import 'data/journey_logger.dart';
+import 'features/auth/auth_controller.dart';
 import 'features/cart/cart_controller.dart';
 import 'features/catalog/catalog_controller.dart';
 import 'features/connection/connection_controller.dart';
 import 'features/connection/idle_session_watcher.dart';
 import 'features/connection/idle_warning_overlay.dart';
+import 'features/onboarding/onboarding_controller.dart';
 import 'features/presentation/presentation_controller.dart';
 
 /// Salesperson controller app root: wires dependency injection (provider),
@@ -31,6 +38,22 @@ class FashionControllerApp extends StatelessWidget {
               ? HttpCatalogRepository()
               : const MockCatalogRepository(),
         ),
+        Provider<AuthRepository>(
+          create: (_) => AppConfig.backendMode
+              ? HttpAuthRepository()
+              : const MockAuthRepository(),
+        ),
+        Provider<CheckoutRepository>(
+          create: (_) => AppConfig.backendMode
+              ? HttpCheckoutRepository()
+              : const MockCheckoutRepository(),
+        ),
+        Provider<CustomerRepository>(
+          create: (_) => AppConfig.backendMode
+              ? HttpCustomerRepository()
+              : const MockCustomerRepository(),
+        ),
+        Provider<JourneyLogger>(create: (_) => JourneyLogger()),
         Provider<RealtimeService>(
           create: (_) => AppConfig.backendMode
               ? BackendControllerRealtime()
@@ -40,6 +63,13 @@ class FashionControllerApp extends StatelessWidget {
         ChangeNotifierProvider<CatalogController>(
           create: (BuildContext ctx) =>
               CatalogController(ctx.read<CatalogRepository>())..load(),
+        ),
+        ChangeNotifierProvider<AuthController>(
+          create: (BuildContext ctx) => AuthController(ctx.read<AuthRepository>()),
+        ),
+        ChangeNotifierProvider<OnboardingController>(
+          create: (BuildContext ctx) =>
+              OnboardingController(ctx.read<CustomerRepository>()),
         ),
         ChangeNotifierProvider<CartController>(create: (_) => CartController()),
         ChangeNotifierProvider<ConnectionController>(
@@ -60,11 +90,39 @@ class FashionControllerApp extends StatelessWidget {
             darkTheme: AppTheme.dark(),
             themeMode: ThemeMode.light,
             routerConfig: AppRouter.build(context),
-            builder: (BuildContext context, Widget? child) => IdleSessionWatcher(
-              child: IdleWarningOverlay(child: child ?? const SizedBox.shrink()),
-            ),
+            builder: (BuildContext context, Widget? child) {
+              // Hold on a splash until the persisted session is restored, so a
+              // signed-in associate never sees the login screen flash by.
+              if (!context.watch<AuthController>().bootstrapped) {
+                return const _BootstrapSplash();
+              }
+              return IdleSessionWatcher(
+                child: IdleWarningOverlay(
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              );
+            },
           );
         },
+      ),
+    );
+  }
+}
+
+/// Shown briefly on cold start while the persisted auth session is restored.
+class _BootstrapSplash extends StatelessWidget {
+  const _BootstrapSplash();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    return Scaffold(
+      backgroundColor: c.background,
+      body: Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(c.accent),
+        ),
       ),
     );
   }

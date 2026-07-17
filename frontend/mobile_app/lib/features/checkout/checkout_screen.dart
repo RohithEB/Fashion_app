@@ -9,14 +9,18 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../data/checkout_repository.dart';
+import '../../models/order.dart';
 import '../../models/ws_event.dart';
 import '../../widgets/app_button.dart';
+import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
 
-/// Checkout summary + payment. Payment is a **modular fake gateway** for the
-/// POC — the "Pay" action simulates authorization, notifies the display
-/// (`checkout` → `paymentSuccess`), and completes the session.
+/// Checkout summary + confirm. Confirming **persists the order** through the
+/// backend (`POST /api/cart/:sessionId/checkout`) — cart lines, quantities,
+/// totals, and any captured customer — then notifies the display and completes
+/// the session. In standalone mode a mock repository completes the sale locally.
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -25,21 +29,69 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  final TextEditingController _customerName = TextEditingController();
+  final TextEditingController _customerMobile = TextEditingController();
   bool _processing = false;
 
-  Future<void> _pay() async {
-    setState(() => _processing = true);
+  @override
+  void dispose() {
+    _customerName.dispose();
+    _customerMobile.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirm() async {
+    final CartController cartCtrl = context.read<CartController>();
+    if (cartCtrl.cart.isEmpty) return;
+
     final RealtimeService realtime = context.read<RealtimeService>();
     final ConnectionController conn = context.read<ConnectionController>();
-    final String? sid = conn.session?.sessionId;
+    final AuthController auth = context.read<AuthController>();
+    final CheckoutRepository repo = context.read<CheckoutRepository>();
 
-    realtime.emit(WsEvent(type: WsEventType.checkout, sessionId: sid));
-    await Future<void>.delayed(const Duration(milliseconds: 1400));
-    realtime.emit(WsEvent(type: WsEventType.paymentSuccess, sessionId: sid));
+    final String? token = auth.token;
+    if (token == null) {
+      _showError('Your session expired. Please sign in again.');
+      return;
+    }
 
-    if (!mounted) return;
-    context.read<CartController>().clear();
-    context.go(AppRoutes.success);
+    setState(() => _processing = true);
+    final String sessionId = conn.session?.sessionId ?? 'no-session';
+
+    // Notify the display it is authorising (drives its thank-you sequence).
+    realtime.emit(WsEvent(type: WsEventType.checkout, sessionId: sessionId));
+
+    try {
+      final Order order = await repo.checkout(
+        sessionId: sessionId,
+        token: token,
+        cart: cartCtrl.cart,
+        customer: CustomerDraft(
+          name: _customerName.text,
+          mobile: _customerMobile.text,
+        ),
+      );
+      if (!mounted) return;
+      realtime.emit(
+        WsEvent(type: WsEventType.paymentSuccess, sessionId: sessionId),
+      );
+      cartCtrl.clear();
+      context.go(AppRoutes.success, extra: order);
+    } on CheckoutException catch (e) {
+      if (!mounted) return;
+      setState(() => _processing = false);
+      _showError(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _processing = false);
+      _showError('Checkout failed. Please try again.');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -91,6 +143,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
+          Text('CUSTOMER (OPTIONAL)',
+              style: AppTypography.eyebrow(c.textSecondary)),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Attach the client to this order for their records.',
+            style: t.bodySmall?.copyWith(color: c.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _customerName,
+            textCapitalization: TextCapitalization.words,
+            enabled: !_processing,
+            decoration: const InputDecoration(
+              labelText: 'Name',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            controller: _customerMobile,
+            keyboardType: TextInputType.phone,
+            enabled: !_processing,
+            decoration: const InputDecoration(
+              labelText: 'Mobile',
+              prefixIcon: Icon(Icons.phone_outlined),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
           Text('PAYMENT', style: AppTypography.eyebrow(c.textSecondary)),
           const SizedBox(height: AppSpacing.sm),
           Container(
@@ -114,6 +194,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.xxl),
         ],
       ),
       bottomSheet: Container(
@@ -126,12 +207,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         child: AppButton(
           label: _processing
-              ? 'Processing payment…'
-              : 'Pay ${cart.cart.total.formatted}',
+              ? 'Placing order…'
+              : 'Place order · ${cart.cart.total.formatted}',
           icon: AppIcons.payment,
           expand: true,
           isLoading: _processing,
-          onPressed: _processing || cart.cart.isEmpty ? null : _pay,
+          onPressed: _processing || cart.cart.isEmpty ? null : _confirm,
         ),
       ),
     );

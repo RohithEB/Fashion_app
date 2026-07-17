@@ -9,6 +9,16 @@ abstract interface class CatalogRepository {
   Future<List<Category>> categories();
   Future<List<Product>> products({String? categoryId, String? query});
   Future<Product?> productById(String id);
+
+  /// Products matched to a customer's onboarding profile (gender · personality ·
+  /// age range) against the enriched catalog attributes.
+  Future<List<Product>> recommendations({
+    String? gender,
+    String? ageRange,
+    String? personality,
+    String? customerId,
+    int limit,
+  });
 }
 
 /// In-memory implementation backed by [MockCatalog]. Simulates async latency
@@ -45,5 +55,17 @@ class MockCatalogRepository implements CatalogRepository {
   Future<Product?> productById(String id) async {
     await Future<void>.delayed(_latency);
     return MockCatalog.products.where((Product p) => p.id == id).firstOrNull;
+  }
+
+  @override
+  Future<List<Product>> recommendations({
+    String? gender,
+    String? ageRange,
+    String? personality,
+    String? customerId,
+    int limit = 12,
+  }) async {
+    await Future<void>.delayed(_latency);
+    return MockCatalog.products.take(limit).toList();
   }
 }

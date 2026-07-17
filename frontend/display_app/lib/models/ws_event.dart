@@ -22,6 +22,8 @@ enum WsEventType {
   ack,
 
   // Presentation gating
+  showCatalog,
+  showCart,
   showProduct,
   hideProduct,
 
@@ -44,6 +46,7 @@ enum WsEventType {
 
   // Enrichment
   showAIHighlights,
+  showDetails,
   showRelatedMedia,
 
   // Commerce

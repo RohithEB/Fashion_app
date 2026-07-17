@@ -83,8 +83,14 @@ class BackendDisplayRealtime extends DisplayRealtimeService {
           type: WsEventType.connectScreen,
           payload: <String, dynamic>{'salespersonName': 'your advisor'},
         ));
+      case 'show_catalog':
+        _push(WsEvent(type: WsEventType.showCatalog, payload: payload));
+      case 'show_cart':
+        _push(WsEvent(type: WsEventType.showCart, payload: payload));
       case 'show_product':
         _push(WsEvent(type: WsEventType.showProduct, payload: payload));
+      case 'show_details':
+        _push(WsEvent(type: WsEventType.showDetails, payload: payload));
       case 'show_related':
         _push(WsEvent(type: WsEventType.showRelatedMedia, payload: payload));
       case 'zoom':

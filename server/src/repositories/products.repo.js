@@ -48,6 +48,23 @@ export function getProductById(id) {
   return getDb().prepare('SELECT * FROM products WHERE id = ?').get(id);
 }
 
+// Attribute-scored recommendations for a customer profile. Direct keyword matching
+// on the enriched columns (styleArchetype/gender/ageGroup) — no AI, offline-safe.
+export function getRecommendations({ gender = null, ageGroup = null, personality = null, limit = 12 } = {}) {
+  return getDb().prepare(
+    `SELECT p.*,
+       ( (CASE WHEN @personality IS NOT NULL AND p.styleArchetype = @personality THEN 4 ELSE 0 END)
+       + (CASE WHEN @gender IS NOT NULL AND p.gender = @gender THEN 3
+               WHEN p.gender = 'unisex' THEN 1 ELSE 0 END)
+       + (CASE WHEN @ageGroup IS NOT NULL AND p.ageGroup = @ageGroup THEN 2 ELSE 0 END)
+       ) AS score
+     FROM products p
+     WHERE (@gender IS NULL OR p.gender = @gender OR p.gender = 'unisex')
+     ORDER BY score DESC, p.createdAt DESC
+     LIMIT @limit`,
+  ).all({ gender, ageGroup, personality, limit: Number(limit) || 12 });
+}
+
 export function getEnrichment(productId) {
   return getDb().prepare(
     'SELECT key, value FROM product_enrichment WHERE productId = ? ORDER BY sortOrder ASC, key ASC'

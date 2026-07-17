@@ -5,6 +5,8 @@ import '../../core/theme/app_motion.dart';
 import '../../models/presentation_state.dart';
 import 'display_controller.dart';
 import 'screens/advertisement_screen.dart';
+import 'screens/cart_screen.dart';
+import 'screens/catalog_screen.dart';
 import 'screens/connecting_screen.dart';
 import 'screens/loading_screen.dart';
 import 'screens/presentation_screen.dart';
@@ -31,6 +33,8 @@ class DisplayShell extends StatelessWidget {
       DisplayPhase.connecting => const ConnectingScreen(),
       DisplayPhase.loading => const LoadingScreen(),
       DisplayPhase.welcome => const WelcomeScreen(),
+      DisplayPhase.catalogue => const CatalogScreen(),
+      DisplayPhase.cart => const CartScreen(),
       DisplayPhase.presenting => const PresentationScreen(),
       DisplayPhase.thankYou => const ThankYouScreen(),
       DisplayPhase.disconnected => const WaitingScreen(),

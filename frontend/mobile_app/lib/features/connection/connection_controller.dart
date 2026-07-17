@@ -23,7 +23,6 @@ class ConnectionController extends ChangeNotifier {
   StreamSubscription<WsEvent>? _sub;
 
   ConnectionStatus status = ConnectionStatus.disconnected;
-  Salesperson? salesperson;
   SessionInfo? session;
   String? error;
 
@@ -88,12 +87,7 @@ class ConnectionController extends ChangeNotifier {
     _reset();
   }
 
-  void login(Salesperson person) {
-    salesperson = person;
-    notifyListeners();
-  }
-
-  Future<void> connectFromQr(String raw) async {
+  Future<void> connectFromQr(String raw, {Salesperson? salesperson}) async {
     final PairingInfo? info = PairingInfo.tryParse(raw);
     if (info == null) {
       error = 'That QR code is not a valid display pairing code.';
@@ -101,10 +95,10 @@ class ConnectionController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    await connect(info);
+    await connect(info, salesperson: salesperson);
   }
 
-  Future<void> connect(PairingInfo info) async {
+  Future<void> connect(PairingInfo info, {Salesperson? salesperson}) async {
     error = null;
     status = ConnectionStatus.connecting;
     notifyListeners();
@@ -121,7 +115,10 @@ class ConnectionController extends ChangeNotifier {
       WsEvent(
         type: WsEventType.pair,
         senderRole: SenderRole.salesperson,
-        payload: <String, dynamic>{'token': info.token},
+        payload: <String, dynamic>{
+          'token': info.token,
+          'salespersonId': person.id,
+        },
       ),
     );
 

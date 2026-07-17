@@ -14,6 +14,12 @@ catalogRouter.get('/categories', (req, res) => {
   res.json({ categories: catalog.getCategories() });
 });
 
+// GET /api/recommendations?gender=&ageRange=&personality=&customerId=&limit=
+//   -> products matched to the customer's onboarding profile (attribute scoring).
+catalogRouter.get('/recommendations', (req, res) => {
+  res.json(catalog.getRecommendations(req.query));
+});
+
 // GET /api/filters -> { categories, colors, sizes, priceRange }  (drives advanced filters)
 catalogRouter.get('/filters', (req, res) => {
   res.json(catalog.getFilters());

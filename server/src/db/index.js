@@ -31,6 +31,35 @@ function migrate(db) {
   if (tableExists('products') && !hasColumn('products', 'gender')) {
     db.exec("ALTER TABLE products ADD COLUMN gender TEXT NOT NULL DEFAULT 'unisex'");
   }
+
+  // Onboarding fields added to an existing customers table.
+  if (tableExists('customers') && !hasColumn('customers', 'ageRange')) {
+    db.exec('ALTER TABLE customers ADD COLUMN ageRange TEXT');
+  }
+  if (tableExists('customers') && !hasColumn('customers', 'personality')) {
+    db.exec('ALTER TABLE customers ADD COLUMN personality TEXT');
+  }
+
+  // Salesperson attribution added to an existing journey_events table.
+  if (tableExists('journey_events') && !hasColumn('journey_events', 'salespersonId')) {
+    db.exec('ALTER TABLE journey_events ADD COLUMN salespersonId TEXT');
+  }
+
+  // AI-enrichment / recommendation columns added to an existing products table.
+  if (tableExists('products')) {
+    const productCols = [
+      ['heroImage', 'TEXT'], ['subCategory', 'TEXT'], ['styleArchetype', 'TEXT'],
+      ['occasion', 'TEXT'], ['season', 'TEXT'], ['fit', 'TEXT'], ['pattern', 'TEXT'],
+      ['material', 'TEXT'], ['fabric', 'TEXT'], ['vibe', 'TEXT'],
+      ['primaryColor', 'TEXT'], ['ageGroup', 'TEXT'], ['rating', 'REAL'],
+      ['aiEnriched', 'INTEGER NOT NULL DEFAULT 0'],
+    ];
+    for (const [col, type] of productCols) {
+      if (!hasColumn('products', col)) {
+        db.exec(`ALTER TABLE products ADD COLUMN ${col} ${type}`);
+      }
+    }
+  }
 }
 
 // True when the catalog has never been populated — used to trigger the initial seed.

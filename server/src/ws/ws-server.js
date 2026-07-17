@@ -26,7 +26,7 @@ export function attachWs(httpServer, { manager = new SessionManager() } = {}) {
 
       switch (type) {
         case IN.PAIR:
-          manager.pair(ws, payload.pairingToken);
+          manager.pair(ws, payload.pairingToken, payload.salespersonId || null);
           break;
         case IN.ACTIVITY:
         case IN.KEEP_ALIVE:

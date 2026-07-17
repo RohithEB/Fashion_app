@@ -1,115 +1,129 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
-import '../../models/session.dart';
-import '../connection/connection_controller.dart';
+import '../../widgets/app_button.dart';
+import 'auth_controller.dart';
 
-/// Boutique sign-in. For the POC the associate is chosen from a short roster
-/// (mock auth); replacing [_mockRoster] with a real AuthRepository is a
-/// drop-in change.
-class LoginScreen extends StatelessWidget {
+/// Boutique sign-in. Login gates the whole app — a successful sign-in lets the
+/// associate through to pair a display. New associates register first.
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
-  static const List<Salesperson> _mockRoster = <Salesperson>[
-    Salesperson(id: 's1', name: 'Eleanor', title: 'Senior Style Advisor'),
-    Salesperson(id: 's2', name: 'Marcus', title: 'Client Advisor'),
-    Salesperson(id: 's3', name: 'Sofia', title: 'Studio Specialist'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
-    final TextTheme t = Theme.of(context).textTheme;
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Spacer(flex: 2),
-              Text('THE STUDIO', style: AppTypography.eyebrow(c.accent)),
-              const SizedBox(height: AppSpacing.sm),
-              Text('Ebani', style: t.displaySmall),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                'Sign in to begin a personal showroom session.',
-                style: t.bodyLarge?.copyWith(color: c.textSecondary),
-              ),
-              const Spacer(),
-              Text(
-                'SELECT ASSOCIATE',
-                style: AppTypography.eyebrow(c.textTertiary),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              ..._mockRoster.map(
-                (Salesperson p) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: _AssociateTile(person: p),
-                ),
-              ),
-              const Spacer(flex: 3),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _AssociateTile extends StatelessWidget {
-  const _AssociateTile({required this.person});
+class _LoginScreenState extends State<LoginScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _username = TextEditingController();
+  final TextEditingController _password = TextEditingController();
 
-  final Salesperson person;
+  @override
+  void dispose() {
+    _username.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
+    final AuthController auth = context.read<AuthController>();
+    await auth.login(
+      username: _username.text.trim(),
+      password: _password.text,
+    );
+    // On success the router guard redirects to the connect screen automatically.
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
-    return Material(
-      color: c.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: c.border),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.read<ConnectionController>().login(person),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: <Widget>[
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: c.accent.withValues(alpha: 0.16),
-                child: Text(
-                  person.name.characters.first,
-                  style: t.titleMedium?.copyWith(color: c.accent),
+    final AuthController auth = context.watch<AuthController>();
+
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const SizedBox(height: AppSpacing.xxl),
+                Text('THE STUDIO', style: AppTypography.eyebrow(c.accent)),
+                const SizedBox(height: AppSpacing.sm),
+                Text('Ebani', style: t.displaySmall),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Sign in to begin a personal showroom session.',
+                  style: t.bodyLarge?.copyWith(color: c.textSecondary),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(person.name, style: t.titleMedium),
-                    if (person.title != null)
-                      Text(
-                        person.title!,
-                        style: t.bodySmall?.copyWith(color: c.textSecondary),
-                      ),
-                  ],
+                const SizedBox(height: AppSpacing.xxl),
+                TextFormField(
+                  controller: _username,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  validator: (String? v) => (v == null || v.trim().isEmpty)
+                      ? 'Enter your username'
+                      : null,
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: c.textTertiary,
-              ),
-            ],
+                const SizedBox(height: AppSpacing.md),
+                TextFormField(
+                  controller: _password,
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submit(),
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  validator: (String? v) => (v == null || v.isEmpty)
+                      ? 'Enter your password'
+                      : null,
+                ),
+                if (auth.error != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    auth.error!,
+                    style: t.bodySmall?.copyWith(color: c.error),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.xl),
+                AppButton(
+                  label: auth.isBusy ? 'Signing in…' : 'Sign in',
+                  expand: true,
+                  isLoading: auth.isBusy,
+                  onPressed: auth.isBusy ? null : _submit,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Center(
+                  child: TextButton(
+                    onPressed: auth.isBusy
+                        ? null
+                        : () {
+                            context.read<AuthController>().clearError();
+                            context.push(AppRoutes.register);
+                          },
+                    child: Text(
+                      'New associate? Create an account',
+                      style: t.bodyMedium?.copyWith(color: c.accent),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+            ),
           ),
         ),
       ),

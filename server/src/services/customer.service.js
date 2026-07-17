@@ -3,7 +3,21 @@ import * as customers from '../repositories/customers.repo.js';
 import * as cart from '../repositories/cart.repo.js';
 import { badRequest, notFound } from '../util/errors.js';
 
-export function createCustomer({ name, mobile, gender, age, sessionId } = {}) {
+// Onboarding option lists — both apps render these; kept server-side so they can
+// evolve without a client release. Every field remains optional.
+const ONBOARDING_OPTIONS = {
+  genders: ['Female', 'Male', 'Non-binary', 'Prefer not to say'],
+  ageRanges: ['Under 18', '18-24', '25-34', '35-44', '45-54', '55+'],
+  personalities: ['Classic', 'Minimalist', 'Trendsetter', 'Bold', 'Romantic', 'Sporty'],
+};
+
+export function getOnboardingOptions() {
+  return ONBOARDING_OPTIONS;
+}
+
+export function createCustomer({
+  name, mobile, gender, age, ageRange, personality, sessionId,
+} = {}) {
   if (age != null && age !== '' && Number.isNaN(Number(age))) {
     throw badRequest('age must be a number');
   }
@@ -12,6 +26,8 @@ export function createCustomer({ name, mobile, gender, age, sessionId } = {}) {
     mobile: mobile?.trim() || null,
     gender: gender?.trim() || null,
     age: age == null || age === '' ? null : Number(age),
+    ageRange: ageRange?.trim() || null,
+    personality: personality?.trim() || null,
   });
 
   // Optionally link the customer to the session's cart so the journey ties together.

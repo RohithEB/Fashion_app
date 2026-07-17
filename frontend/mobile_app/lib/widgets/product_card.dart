@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_icons.dart';
 import '../core/theme/app_radius.dart';
 import '../core/theme/app_sizes.dart';
 import '../core/theme/app_spacing.dart';
@@ -8,12 +9,20 @@ import '../core/theme/app_typography.dart';
 import '../models/product.dart';
 import 'network_photo.dart';
 
-/// Editorial product tile used in the catalog grid.
+/// Editorial product tile used in the catalog grid. When [onPresent] is given
+/// (a display is connected) a quick "view on screen" button overlays the image
+/// so the associate can push the product to the TV without opening detail.
 class ProductCard extends StatelessWidget {
-  const ProductCard({required this.product, required this.onTap, super.key});
+  const ProductCard({
+    required this.product,
+    required this.onTap,
+    this.onPresent,
+    super.key,
+  });
 
   final Product product;
   final VoidCallback onTap;
+  final VoidCallback? onPresent;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +62,12 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (onPresent != null)
+                  Positioned(
+                    top: AppSpacing.xs,
+                    right: AppSpacing.xs,
+                    child: _PresentButton(onTap: onPresent!),
+                  ),
               ],
             ),
           ),
@@ -74,6 +89,34 @@ class ProductCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Compact overlay action to push this product to the display ("view on screen").
+class _PresentButton extends StatelessWidget {
+  const _PresentButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    return Material(
+      color: c.primary,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Tooltip(
+          message: 'View on screen',
+          child: SizedBox(
+            width: 34,
+            height: 34,
+            child: Icon(AppIcons.showOnScreen, size: 17, color: c.onPrimary),
+          ),
+        ),
       ),
     );
   }

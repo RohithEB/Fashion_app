@@ -101,6 +101,10 @@ class DisplayController extends ChangeNotifier {
         salespersonName =
             (e.payload['salespersonName'] as String?) ?? 'your advisor';
         _runConnectFlow();
+      case WsEventType.showCatalog:
+        _showCatalog();
+      case WsEventType.showCart:
+        _showCart(e);
       case WsEventType.showProduct:
         _showProduct(e);
       case WsEventType.hideProduct:
@@ -115,6 +119,7 @@ class DisplayController extends ChangeNotifier {
       case WsEventType.panImage:
       case WsEventType.resetZoom:
       case WsEventType.showAIHighlights:
+      case WsEventType.showDetails:
       case WsEventType.showRelatedMedia:
       case WsEventType.playVideo:
       case WsEventType.pauseVideo:
@@ -147,6 +152,33 @@ class DisplayController extends ChangeNotifier {
         notifyListeners();
       });
     });
+  }
+
+  /// The hydrated catalog, shown as a grid on the [DisplayPhase.catalogue] screen.
+  List<Product> get catalog => _cache;
+
+  /// The cart/shortlist payload mirrored from the controller (read-only).
+  Map<String, dynamic>? cartView;
+
+  /// Show the full collection grid (pushed by the controller after onboarding).
+  void _showCatalog() {
+    _cancelTimers();
+    _presentTargetId = null;
+    presentation = null;
+    product = null;
+    phase = DisplayPhase.catalogue;
+    notifyListeners();
+  }
+
+  /// Mirror the controller's cart page (items, quantities, totals) — read-only.
+  void _showCart(WsEvent e) {
+    _cancelTimers();
+    _presentTargetId = null;
+    presentation = null;
+    product = null;
+    cartView = e.payload;
+    phase = DisplayPhase.cart;
+    notifyListeners();
   }
 
   void _showProduct(WsEvent e) {
@@ -232,7 +264,10 @@ class DisplayController extends ChangeNotifier {
   }
 
   void _beginIdleWarning() {
-    if (phase != DisplayPhase.welcome && phase != DisplayPhase.presenting) {
+    if (phase != DisplayPhase.welcome &&
+        phase != DisplayPhase.presenting &&
+        phase != DisplayPhase.catalogue &&
+        phase != DisplayPhase.cart) {
       return;
     }
     idleWarningActive = true;

@@ -29,6 +29,9 @@ class PresentationController extends ChangeNotifier {
 
   bool get isPresenting => _presentation != null;
 
+  /// True while the cart is mirrored on the display (so cart edits re-sync live).
+  bool cartOnScreen = false;
+
   String? _sessionId;
   set sessionId(String? value) => _sessionId = value;
 
@@ -77,6 +80,7 @@ class PresentationController extends ChangeNotifier {
   /// Enter Presentation mode with [product] (the "Show on Screen" action).
   void showProduct(Product product, {String? variantId}) {
     _product = product;
+    cartOnScreen = false;
     _presentation = ProductPresentation(
       productId: product.id,
       variantId: variantId ?? product.defaultVariant.id,
@@ -93,10 +97,37 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Push the full catalogue to the display (used right after onboarding).
+  /// Leaves single-product presentation mode; the display shows the grid.
+  void showCatalog() {
+    _presentation = null;
+    _product = null;
+    cartOnScreen = false;
+    _emit(const WsEvent(type: WsEventType.showCatalog));
+    notifyListeners();
+  }
+
+  /// Mirror the cart onto the display as a full cart page (items, quantities,
+  /// totals). While [cartOnScreen], [syncCart] pushes live edits.
+  void showCart(Map<String, dynamic> payload) {
+    _presentation = null;
+    _product = null;
+    cartOnScreen = true;
+    _emit(WsEvent(type: WsEventType.showCart, payload: payload));
+    notifyListeners();
+  }
+
+  /// Re-push the updated cart if it is currently on the display (quantity/delete).
+  void syncCart(Map<String, dynamic> payload) {
+    if (!cartOnScreen) return;
+    _emit(WsEvent(type: WsEventType.showCart, payload: payload));
+  }
+
   /// Leave Presentation mode (customer returns to Welcome).
   void hideProduct() {
     _presentation = null;
     _product = null;
+    cartOnScreen = false;
     _emit(const WsEvent(type: WsEventType.hideProduct));
     notifyListeners();
   }
@@ -138,6 +169,15 @@ class PresentationController extends ChangeNotifier {
   );
 
   void resetZoom() => _apply(const WsEvent(type: WsEventType.resetZoom));
+
+  /// Expand/collapse the full product-details panel on the display (driven by
+  /// the draggable details sheet on the product screen).
+  void showDetails(bool expanded) => _apply(
+    WsEvent(
+      type: WsEventType.showDetails,
+      payload: <String, dynamic>{'expanded': expanded},
+    ),
+  );
 
   void toggleAIHighlights() => _apply(
     WsEvent(

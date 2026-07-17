@@ -91,7 +91,17 @@ class BackendControllerRealtime extends RealtimeService {
   void emit(WsEvent event) {
     switch (event.type) {
       case WsEventType.pair:
-        _send('pair', <String, dynamic>{'pairingToken': event.payload['token']});
+        _send('pair', <String, dynamic>{
+          'pairingToken': event.payload['token'],
+          if (event.payload['salespersonId'] != null)
+            'salespersonId': event.payload['salespersonId'],
+        });
+      case WsEventType.showCatalog:
+        _currentProductId = null;
+        _send('show_catalog', event.payload);
+      case WsEventType.showCart:
+        _currentProductId = null;
+        _send('show_cart', event.payload);
       case WsEventType.showProduct:
         _currentProductId = event.productId ?? _currentProductId;
         _send('show_product', <String, dynamic>{
@@ -117,6 +127,8 @@ class BackendControllerRealtime extends RealtimeService {
           'x': 0,
           'y': 0,
         });
+      case WsEventType.showDetails:
+        _send('show_details', event.payload);
       case WsEventType.showRelatedMedia:
         _send('show_related', <String, dynamic>{
           'productId': _currentProductId,

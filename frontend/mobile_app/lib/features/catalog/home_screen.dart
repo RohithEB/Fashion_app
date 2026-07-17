@@ -13,6 +13,8 @@ import '../../widgets/product_card.dart';
 import '../../widgets/state_views.dart';
 import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
+import '../presentation/presentation_controller.dart';
+import '../presentation/widgets/live_preview.dart';
 import '../presentation/widgets/now_showing_bar.dart';
 import 'catalog_controller.dart';
 
@@ -62,6 +64,13 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  IconButton(
+                    icon: const Icon(AppIcons.sparkle),
+                    iconSize: 24,
+                    tooltip: 'Recommendations',
+                    color: c.accent,
+                    onPressed: () => context.push(AppRoutes.recommendations),
+                  ),
                   _CartButton(
                     count: cart.cart.count,
                     onTap: () => context.push(AppRoutes.cart),
@@ -86,7 +95,7 @@ class HomeScreen extends StatelessWidget {
               selectedId: catalog.selectedCategoryId,
             ),
             const SizedBox(height: AppSpacing.xs),
-            Expanded(child: _Grid(catalog: catalog)),
+            Expanded(child: _Grid(catalog: catalog, connected: conn.liveLink)),
           ],
         ),
       ),
@@ -226,9 +235,15 @@ class _Chip extends StatelessWidget {
 }
 
 class _Grid extends StatelessWidget {
-  const _Grid({required this.catalog});
+  const _Grid({required this.catalog, required this.connected});
 
   final CatalogController catalog;
+  final bool connected;
+
+  void _present(BuildContext context, Product product) {
+    context.read<PresentationController>().showProduct(product);
+    LivePreviewSheet.show(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,11 +277,12 @@ class _Grid extends StatelessWidget {
         mainAxisSpacing: AppSpacing.lg,
       ),
       itemCount: catalog.products.length,
-      itemBuilder: (_, int i) {
+      itemBuilder: (BuildContext ctx, int i) {
         final Product product = catalog.products[i];
         return ProductCard(
           product: product,
-          onTap: () => context.push(AppRoutes.product, extra: product),
+          onTap: () => ctx.push(AppRoutes.product, extra: product),
+          onPresent: connected ? () => _present(ctx, product) : null,
         );
       },
     );

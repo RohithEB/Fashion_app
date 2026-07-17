@@ -11,6 +11,12 @@ class Salesperson {
   final String id;
   final String name;
   final String? title;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'id': id,
+    'name': name,
+    'title': title,
+  };
 }
 
 /// Parsed content of a pairing QR code:

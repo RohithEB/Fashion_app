@@ -5,8 +5,18 @@ import { config } from '../config.js';
 import { logger } from '../util/logger.js';
 import { prefixId, pairingToken as makeToken, nowIso } from '../util/ids.js';
 import { lanIp } from '../util/network.js';
-import { OUT, encode } from './protocol.js';
+import { IN, OUT, encode } from './protocol.js';
 import { logEvent } from '../repositories/journey.repo.js';
+
+// Controller commands worth journaling as the salesperson's presentation journey.
+const JOURNAL_TYPES = {
+  [IN.SHOW_CATALOG]: 'catalog_shown',
+  [IN.SHOW_CART]: 'cart_shown',
+  [IN.SHOW_PRODUCT]: 'product_shown',
+  [IN.SHOW_DETAILS]: 'details_toggled',
+  [IN.SHOW_RELATED]: 'related_shown',
+  [IN.CLEAR]: 'display_cleared',
+};
 
 export class SessionManager {
   constructor({ idleMs = config.idleMs, graceMs = config.graceMs } = {}) {
@@ -42,7 +52,7 @@ export class SessionManager {
   }
 
   // ─── Pairing ─────────────────────────────────────────────────────
-  pair(controllerWs, pairingToken) {
+  pair(controllerWs, pairingToken, salespersonId = null) {
     const displayId = this.tokens.get(pairingToken);
     const display = displayId && this.displays.get(displayId);
     if (!display) {
@@ -54,7 +64,7 @@ export class SessionManager {
 
     const sessionId = prefixId('sess');
     const session = {
-      id: sessionId, displayId, displayWs: display.ws, controllerWs,
+      id: sessionId, displayId, displayWs: display.ws, controllerWs, salespersonId,
       warned: false, idleTimer: null, graceTimer: null, createdAt: nowIso(),
     };
     this.sessions.set(sessionId, session);
@@ -68,7 +78,7 @@ export class SessionManager {
     this._send(session.displayWs, OUT.PAIRED, sessionId, { sessionId, displayId });
     this._send(session.controllerWs, OUT.PAIRED, sessionId, { sessionId, displayId });
     this._armIdle(session);
-    logEvent({ sessionId, eventType: 'session_start', refId: displayId });
+    logEvent({ sessionId, salespersonId, eventType: 'session_start', refId: displayId });
     logger.info(`Paired session ${sessionId} (display ${displayId})`);
     return session;
   }
@@ -78,6 +88,20 @@ export class SessionManager {
     const session = this.sessions.get(sessionId);
     if (!session) return false;
     this._send(session.displayWs, type, sessionId, payload);
+    // Record what the salesperson did on the display (the sales journey), so the
+    // CMS can replay each associate's presentation strategy.
+    const journalType = JOURNAL_TYPES[type];
+    if (journalType) {
+      logEvent({
+        sessionId,
+        salespersonId: session.salespersonId,
+        eventType: journalType,
+        refId: payload?.productId ?? null,
+        meta: type === IN.SHOW_DETAILS
+          ? { expanded: !!payload?.expanded }
+          : (payload?.variantId ? { variantId: payload.variantId } : null),
+      });
+    }
     this.touch(sessionId); // every command counts as activity
     return true;
   }

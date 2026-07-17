@@ -5,7 +5,13 @@ import { logEvent } from '../../repositories/journey.repo.js';
 
 export const customersRouter = Router();
 
-// POST /api/customers  { name?, mobile?, gender?, age?, sessionId? }
+// GET /api/customers/options  -> onboarding choice lists (genders, ageRanges, personalities)
+// Registered before /customers/:id so "options" isn't captured as an id.
+customersRouter.get('/customers/options', (_req, res) => {
+  res.json(customerSvc.getOnboardingOptions());
+});
+
+// POST /api/customers  { name?, mobile?, gender?, age?, ageRange?, personality?, sessionId? }
 customersRouter.post('/customers', (req, res) => {
   const customer = customerSvc.createCustomer(req.body || {});
   logEvent({

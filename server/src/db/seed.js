@@ -8,12 +8,53 @@ const MEN_FOOTWEAR = ['UK6', 'UK7', 'UK8', 'UK9', 'UK10'];
 const WOMEN_FOOTWEAR = ['UK3', 'UK4', 'UK5', 'UK6', 'UK7'];
 const ONE_SIZE = ['One Size'];
 
-// Placeholder image URL (served by src/http/placeholder.js). Swap for real assets later.
-const img = (text, bg, { w = 900, h = 1200 } = {}) =>
-  `/media/ph?w=${w}&h=${h}&bg=${encodeURIComponent(bg.replace('#', ''))}&fg=FFFFFF&text=${encodeURIComponent(text)}`;
-
 const enrich = (obj) =>
   Object.entries(obj).map(([key, value], i) => ({ key, value, sortOrder: i }));
+
+// ─── Real public media (free, no API key) ──────────────────────────
+// Images: loremflickr returns real photos matched to keywords (garment + colour).
+// `lock` pins a stable image per URL so it doesn't change between requests.
+// Video: a confirmed free stock clip (Pexels CDN) reused as the "model wearing" media,
+// with a garment-matched poster image.
+const MODEL_VIDEO = 'https://videos.pexels.com/video-files/3209828/3209828-uhd_2560_1440_25fps.mp4';
+
+// Map a product to a single garment keyword for image search.
+function garmentKeyword(p) {
+  const byTag = {
+    dress: 'dress', skirt: 'skirt', top: 'blouse', blouse: 'blouse', shirt: 'shirt',
+    't-shirt': 'tshirt', knit: 'sweater', blazer: 'blazer', coat: 'coat', jacket: 'jacket',
+    trousers: 'trousers', boots: 'boots', loafer: 'loafer', derby: 'shoes', sneaker: 'sneakers',
+    flats: 'ballet', sandal: 'sandals', bag: 'handbag', scarf: 'scarf', hat: 'hat', wallet: 'wallet',
+  };
+  const byCategory = {
+    Dresses: 'dress', Tops: 'blouse', Skirts: 'skirt', Shirts: 'shirt', 'T-Shirts': 'tshirt',
+    Knitwear: 'sweater', 'Jackets & Coats': 'coat', Trousers: 'trousers', Footwear: 'shoes',
+    Bags: 'handbag', Accessories: 'accessory',
+  };
+  return byTag[p.tags?.[0]] || byCategory[p.category] || 'fashion';
+}
+
+// Nearest basic colour word from a #hex (safe, unambiguous keywords for image search).
+const COLOR_WORDS = {
+  black: [28, 28, 28], white: [245, 245, 240], gray: [128, 128, 128], red: [150, 20, 30],
+  orange: [183, 65, 14], yellow: [225, 173, 1], green: [46, 125, 58], blue: [39, 67, 178],
+  brown: [122, 75, 43], beige: [216, 195, 165], pink: [222, 165, 164], teal: [14, 76, 76],
+};
+function nearestColor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return 'gray';
+  const r = parseInt(m[1].slice(0, 2), 16), g = parseInt(m[1].slice(2, 4), 16), b = parseInt(m[1].slice(4, 6), 16);
+  let best = 'gray', bestD = Infinity;
+  for (const [name, [cr, cg, cb]] of Object.entries(COLOR_WORDS)) {
+    const d = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2;
+    if (d < bestD) { bestD = d; best = name; }
+  }
+  return best;
+}
+
+// A stable, garment-and-colour-matched photo URL.
+const photo = (garment, colorHex, lock, { w = 800, h = 1000 } = {}) =>
+  `https://loremflickr.com/${w}/${h}/${encodeURIComponent(`${garment},${nearestColor(colorHex)}`)}?lock=${lock}`;
 
 // ─── Catalog definition ────────────────────────────────────────────
 const CATALOG = [

@@ -8,6 +8,7 @@ import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/app_button.dart';
+import '../auth/auth_controller.dart';
 import 'connection_controller.dart';
 
 /// Pairing entry point: scan the QR shown on a display to connect over WiFi.
@@ -79,12 +80,15 @@ class ConnectScreen extends StatelessWidget {
 
   Future<void> _scan(BuildContext context) async {
     final ConnectionController conn = context.read<ConnectionController>();
+    final AuthController auth = context.read<AuthController>();
     final String? code = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (_) => const _ScannerSheet(),
     );
-    if (code != null) await conn.connectFromQr(code);
+    if (code != null) {
+      await conn.connectFromQr(code, salesperson: auth.salesperson);
+    }
   }
 }
 

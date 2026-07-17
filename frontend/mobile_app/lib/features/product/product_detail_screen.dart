@@ -7,17 +7,21 @@ import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/catalog_repository.dart';
+import '../../data/journey_logger.dart';
 import '../../models/product.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/network_photo.dart';
+import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
 import '../presentation/presentation_controller.dart';
 import '../presentation/widgets/live_preview.dart';
 
-/// Private product detail. Selecting colours/sizes/images here is silent until
-/// "Show on Screen" enters Presentation mode; from then on those same actions
-/// are synchronized live to the display.
+/// Private product detail. The image fills the screen; a **draggable details
+/// sheet** sits at the bottom showing the main info, and drags up to reveal the
+/// full enriched details (fabric, vibe, season, occasion, fit, rating, …).
+/// While the product is presented, expanding the sheet mirrors the full details
+/// onto the display; colour/size/zoom stay synchronized as before.
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({required this.product, super.key});
 
@@ -33,6 +37,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late String _size = widget.product.defaultVariant.sizes.first;
   int _imageIndex = 0;
   late final PageController _page = PageController();
+  final DraggableScrollableController _sheet = DraggableScrollableController();
+  bool _detailsShown = false;
+
+  static const double _collapsed = 0.42;
+  static const double _expanded = 0.92;
 
   Product get product => _product;
   ProductVariant get variant => product.variantById(_variantId);
@@ -41,11 +50,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void initState() {
     super.initState();
     _loadDetail();
+    _sheet.addListener(_onSheetMove);
   }
 
-  /// Upgrade the summary product (from the list) to full detail (variants,
-  /// media, enrichment). No-op-ish in mock mode; fetches rich data in backend
-  /// mode.
   Future<void> _loadDetail() async {
     final Product? full =
         await context.read<CatalogRepository>().productById(widget.product.id);
@@ -61,6 +68,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   bool _isPresentingThis(PresentationController pres) =>
       pres.isPresenting && pres.presentation?.productId == product.id;
+
+  /// Mirror the details expansion to the display while presenting this product.
+  void _onSheetMove() {
+    if (!_sheet.isAttached) return;
+    final bool expanded = _sheet.size > (_collapsed + _expanded) / 2;
+    if (expanded == _detailsShown) return;
+    setState(() => _detailsShown = expanded);
+    final PresentationController pres = context.read<PresentationController>();
+    if (_isPresentingThis(pres)) pres.showDetails(expanded);
+  }
+
+  void _toggleSheet() {
+    _sheet.animateTo(
+      _detailsShown ? _collapsed : _expanded,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeInOut,
+    );
+  }
 
   void _selectVariant(String id) {
     setState(() {
@@ -80,161 +105,303 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showOnScreen() {
-    context.read<PresentationController>().showProduct(
+    final PresentationController pres = context.read<PresentationController>();
+    pres.showProduct(product, variantId: _variantId);
+    if (_detailsShown) pres.showDetails(true);
+    LivePreviewSheet.show(context);
+  }
+
+  void _addToCart() {
+    context.read<CartController>().addItem(
       product,
       variantId: _variantId,
+      size: _size,
     );
-    LivePreviewSheet.show(context);
+    context.read<JourneyLogger>().log(
+      eventType: 'cart_add',
+      token: context.read<AuthController>().token,
+      sessionId: context.read<ConnectionController>().session?.sessionId,
+      refId: product.id,
+      meta: <String, dynamic>{'size': _size, 'variantId': _variantId},
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${product.name} added to the cart')),
+    );
   }
 
   @override
   void dispose() {
+    _sheet.removeListener(_onSheetMove);
+    _sheet.dispose();
     _page.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
-    final TextTheme t = Theme.of(context).textTheme;
     final PresentationController pres = context.watch<PresentationController>();
     final bool presentingThis = _isPresentingThis(pres);
     final bool connected = context.watch<ConnectionController>().liveLink;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: MediaQuery.of(context).size.height * 0.62,
-            leading: const _CircleBackButton(),
-            actions: <Widget>[
-              if (presentingThis)
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: _LiveBadge(
-                    onTap: () => LivePreviewSheet.show(context),
-                  ),
-                ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: _Gallery(
-                variant: variant,
-                controller: _page,
-                index: _imageIndex,
-                onChanged: _onImageChanged,
-                // Pinch-to-zoom is always available for inspection; the zoom is
-                // only *synced* to the display while presenting this product.
-                interactive: true,
-                onTransform: presentingThis
-                    ? (double scale, double px, double py) => context
-                          .read<PresentationController>()
-                          .zoom(scale, focalX: px, focalY: py)
-                    : null,
-              ),
+      body: Stack(
+        children: <Widget>[
+          // Full-bleed gallery behind the sheet; pinch-zoom syncs while presenting.
+          Positioned.fill(
+            child: _Gallery(
+              variant: variant,
+              controller: _page,
+              index: _imageIndex,
+              onChanged: _onImageChanged,
+              interactive: true,
+              onTransform: presentingThis
+                  ? (double scale, double px, double py) => context
+                        .read<PresentationController>()
+                        .zoom(scale, focalX: px, focalY: py)
+                  : null,
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          product.brand,
-                          style: AppTypography.eyebrow(c.textTertiary),
-                        ),
-                      ),
-                      Text(product.price.formatted, style: t.titleMedium),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(product.name, style: t.headlineMedium),
-                  const SizedBox(height: AppSpacing.lg),
-                  _Label(text: 'COLOR — ${variant.colorName}'),
-                  const SizedBox(height: AppSpacing.xs),
-                  _ColorSelector(
-                    product: product,
-                    selectedId: _variantId,
-                    onSelect: _selectVariant,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const _Label(text: 'SIZE'),
-                  const SizedBox(height: AppSpacing.xs),
-                  _SizeSelector(
-                    sizes: variant.sizes,
-                    selected: _size,
-                    onSelect: (String s) => setState(() => _size = s),
-                  ),
-                  if (product.aiHighlights.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: AppSpacing.xl),
-                    Row(
-                      children: <Widget>[
-                        Icon(AppIcons.sparkle, size: 16, color: c.accent),
-                        const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          'STYLE NOTES',
-                          style: AppTypography.eyebrow(c.textSecondary),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ...product.aiHighlights.map(
-                      (String h) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              '—  ',
-                              style: t.bodyMedium?.copyWith(color: c.accent),
-                            ),
-                            Expanded(child: Text(h, style: t.bodyMedium)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.lg),
-                  Text(
-                    product.description,
-                    style: t.bodyLarge?.copyWith(color: c.textSecondary),
-                  ),
-                  if (product.materials.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      product.materials.join('  ·  '),
-                      style: t.bodySmall?.copyWith(color: c.textTertiary),
-                    ),
-                  ],
-                  if (presentingThis) ...<Widget>[
-                    const SizedBox(height: AppSpacing.xl),
-                    _SyncControls(product: product),
-                  ],
-                  const SizedBox(height: 96),
-                ],
+          const SafeArea(child: _CircleBackButton()),
+          if (presentingThis)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: _LiveBadge(onTap: () => LivePreviewSheet.show(context)),
+                ),
               ),
             ),
+          DraggableScrollableSheet(
+            controller: _sheet,
+            initialChildSize: _collapsed,
+            minChildSize: _collapsed,
+            maxChildSize: _expanded,
+            snap: true,
+            snapSizes: const <double>[_collapsed, _expanded],
+            builder: (BuildContext ctx, ScrollController scrollController) =>
+                _DetailsSheet(
+                  scrollController: scrollController,
+                  product: product,
+                  variant: variant,
+                  selectedVariantId: _variantId,
+                  selectedSize: _size,
+                  connected: connected,
+                  presentingThis: presentingThis,
+                  expanded: _detailsShown,
+                  onSelectVariant: _selectVariant,
+                  onSelectSize: (String s) => setState(() => _size = s),
+                  onToggleDetails: _toggleSheet,
+                  onShow: _showOnScreen,
+                  onAdd: _addToCart,
+                ),
           ),
         ],
       ),
-      bottomSheet: _ActionBar(
-        presentingThis: presentingThis,
-        connected: connected,
-        onShow: _showOnScreen,
-        onAdd: () {
-          context.read<CartController>().addItem(
-            product,
-            variantId: _variantId,
-            size: _size,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${product.name} added to the cart')),
-          );
-        },
+    );
+  }
+}
+
+/// The draggable bottom sheet. Collapsed it shows the main details (name, price,
+/// colour, size, actions); dragged up it reveals description, style notes, and
+/// the full labeled enrichment.
+class _DetailsSheet extends StatelessWidget {
+  const _DetailsSheet({
+    required this.scrollController,
+    required this.product,
+    required this.variant,
+    required this.selectedVariantId,
+    required this.selectedSize,
+    required this.connected,
+    required this.presentingThis,
+    required this.expanded,
+    required this.onSelectVariant,
+    required this.onSelectSize,
+    required this.onToggleDetails,
+    required this.onShow,
+    required this.onAdd,
+  });
+
+  final ScrollController scrollController;
+  final Product product;
+  final ProductVariant variant;
+  final String selectedVariantId;
+  final String selectedSize;
+  final bool connected;
+  final bool presentingThis;
+  final bool expanded;
+  final ValueChanged<String> onSelectVariant;
+  final ValueChanged<String> onSelectSize;
+  final VoidCallback onToggleDetails;
+  final VoidCallback onShow;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    final TextTheme t = Theme.of(context).textTheme;
+
+    final String showLabel = !connected
+        ? 'No screen connected'
+        : (presentingThis ? 'Showing live' : 'Show on Screen');
+    final IconData showIcon = !connected
+        ? AppIcons.disconnect
+        : (presentingThis ? AppIcons.connected : AppIcons.showOnScreen);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: c.border),
+      ),
+      child: ListView(
+        controller: scrollController,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.xxl,
+        ),
+        children: <Widget>[
+          // Grab handle.
+          Center(
+            child: Container(
+              width: 44,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              decoration: BoxDecoration(
+                color: c.border,
+                borderRadius: AppRadius.brPill,
+              ),
+            ),
+          ),
+
+          // Header: brand · name · price.
+          Text(product.brand, style: AppTypography.eyebrow(c.textTertiary)),
+          const SizedBox(height: AppSpacing.xxs),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(child: Text(product.name, style: t.headlineSmall)),
+              const SizedBox(width: AppSpacing.sm),
+              Text((variant.price ?? product.price).formatted, style: t.titleMedium),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          _Label(text: 'COLOR — ${variant.colorName}'),
+          const SizedBox(height: AppSpacing.xs),
+          _ColorSelector(
+            product: product,
+            selectedId: selectedVariantId,
+            onSelect: onSelectVariant,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const _Label(text: 'SIZE'),
+          const SizedBox(height: AppSpacing.xs),
+          _SizeSelector(
+            sizes: variant.sizes,
+            selected: selectedSize,
+            onSelect: onSelectSize,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Primary actions.
+          Row(
+            children: <Widget>[
+              Expanded(
+                flex: 3,
+                child: AppButton(
+                  label: showLabel,
+                  icon: showIcon,
+                  expand: true,
+                  onPressed: (!connected || presentingThis) ? null : onShow,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                flex: 2,
+                child: AppButton(
+                  label: 'Add',
+                  icon: AppIcons.add,
+                  variant: AppButtonVariant.outline,
+                  expand: true,
+                  onPressed: onAdd,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          // Drag-up affordance / toggle.
+          Center(
+            child: TextButton.icon(
+              onPressed: onToggleDetails,
+              icon: Icon(expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up),
+              label: Text(expanded ? 'Hide details' : 'View all details'),
+            ),
+          ),
+
+          Divider(color: c.divider, height: AppSpacing.lg),
+
+          if (product.description.isNotEmpty) ...<Widget>[
+            Text(
+              product.description,
+              style: t.bodyLarge?.copyWith(color: c.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+
+          if (product.aiHighlights.isNotEmpty) ...<Widget>[
+            Row(
+              children: <Widget>[
+                Icon(AppIcons.sparkle, size: 16, color: c.accent),
+                const SizedBox(width: AppSpacing.xs),
+                Text('STYLE NOTES', style: AppTypography.eyebrow(c.textSecondary)),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final String h in product.aiHighlights)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('—  ', style: t.bodyMedium?.copyWith(color: c.accent)),
+                    Expanded(child: Text(h, style: t.bodyMedium)),
+                  ],
+                ),
+              ),
+            const SizedBox(height: AppSpacing.lg),
+          ],
+
+          if (product.details.isNotEmpty) ...<Widget>[
+            Text('DETAILS', style: AppTypography.eyebrow(c.textSecondary)),
+            const SizedBox(height: AppSpacing.sm),
+            for (final ProductDetail d in product.details)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SizedBox(
+                      width: 120,
+                      child: Text(
+                        d.label.toUpperCase(),
+                        style: AppTypography.eyebrow(c.textTertiary),
+                      ),
+                    ),
+                    Expanded(child: Text(d.value, style: t.bodyMedium)),
+                  ],
+                ),
+              ),
+          ],
+
+          if (presentingThis) ...<Widget>[
+            const SizedBox(height: AppSpacing.lg),
+            _SyncControls(product: product),
+          ],
+        ],
       ),
     );
   }
@@ -278,7 +445,6 @@ class _GalleryState extends State<_Gallery> {
     if (!widget.interactive || widget.onTransform == null) return;
     final Matrix4 m = _tc.value;
     final double scale = m.getMaxScaleOnAxis();
-    // Normalize translation to roughly [-1, 1] against a nominal image extent.
     final double px = (m.getTranslation().x / 300).clamp(-1.0, 1.0);
     final double py = (m.getTranslation().y / 400).clamp(-1.0, 1.0);
     widget.onTransform!(scale, px, py);
@@ -301,8 +467,6 @@ class _GalleryState extends State<_Gallery> {
         PageView.builder(
           controller: widget.controller,
           onPageChanged: widget.onChanged,
-          // Keep paging enabled; InteractiveViewer captures the gesture only
-          // once the image is zoomed in, so swipe works at scale 1.
           physics: const PageScrollPhysics(),
           itemCount: images.length,
           itemBuilder: (_, int i) {
@@ -317,7 +481,7 @@ class _GalleryState extends State<_Gallery> {
           },
         ),
         Positioned(
-          bottom: AppSpacing.md,
+          bottom: MediaQuery.of(context).size.height * 0.44 + AppSpacing.md,
           left: 0,
           right: 0,
           child: Row(
@@ -434,7 +598,7 @@ class _SyncControls extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: c.surface,
+        color: c.background,
         borderRadius: AppRadius.brLg,
         border: Border.all(color: c.border),
       ),
@@ -503,68 +667,6 @@ class _Pill extends StatelessWidget {
   }
 }
 
-class _ActionBar extends StatelessWidget {
-  const _ActionBar({
-    required this.presentingThis,
-    required this.connected,
-    required this.onShow,
-    required this.onAdd,
-  });
-
-  final bool presentingThis;
-  final bool connected;
-  final VoidCallback onShow;
-  final VoidCallback onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
-    final String label = !connected
-        ? 'No screen connected'
-        : (presentingThis ? 'Showing live' : 'Show on Screen');
-    final IconData icon = !connected
-        ? AppIcons.disconnect
-        : (presentingThis ? AppIcons.connected : AppIcons.showOnScreen);
-    // Only allow "make it live" when a display is actually connected.
-    final VoidCallback? onShowPressed =
-        (!connected || presentingThis) ? null : onShow;
-
-    return Container(
-      color: c.background,
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.sm,
-        AppSpacing.md,
-        MediaQuery.of(context).padding.bottom + AppSpacing.sm,
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            flex: 3,
-            child: AppButton(
-              label: label,
-              icon: icon,
-              expand: true,
-              onPressed: onShowPressed,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            flex: 2,
-            child: AppButton(
-              label: 'Add',
-              icon: AppIcons.add,
-              variant: AppButtonVariant.outline,
-              expand: true,
-              onPressed: onAdd,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _Label extends StatelessWidget {
   const _Label({required this.text});
   final String text;
@@ -579,11 +681,10 @@ class _CircleBackButton extends StatelessWidget {
   const _CircleBackButton();
   @override
   Widget build(BuildContext context) {
-    // High-contrast dark scrim + white icon so it's visible over any image
-    // (including the light SVG placeholders).
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xs),
-      child: Center(
+      child: Align(
+        alignment: Alignment.topLeft,
         child: Material(
           color: Colors.black.withValues(alpha: 0.45),
           shape: const CircleBorder(),

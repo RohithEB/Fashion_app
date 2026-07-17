@@ -8,6 +8,8 @@ enum DisplayPhase {
   connecting,
   loading,
   welcome,
+  catalogue, // the full collection grid (pushed after onboarding)
+  cart, // the shortlist / cart page mirrored from the controller
   presenting, // a product is on screen (Presentation mode)
   thankYou,
   disconnected,
@@ -34,6 +36,7 @@ class ProductPresentation {
     this.videoPlaying = false,
     this.videoPositionMs = 0,
     this.videoMuted = false,
+    this.detailsExpanded = false,
   });
 
   final String productId;
@@ -49,6 +52,9 @@ class ProductPresentation {
   final int videoPositionMs;
   final bool videoMuted;
 
+  /// Whether the full product-details panel is expanded (synced from the sheet).
+  final bool detailsExpanded;
+
   ProductPresentation copyWith({
     String? productId,
     String? variantId,
@@ -62,6 +68,7 @@ class ProductPresentation {
     bool? videoPlaying,
     int? videoPositionMs,
     bool? videoMuted,
+    bool? detailsExpanded,
   }) => ProductPresentation(
     productId: productId ?? this.productId,
     variantId: variantId ?? this.variantId,
@@ -75,6 +82,7 @@ class ProductPresentation {
     videoPlaying: videoPlaying ?? this.videoPlaying,
     videoPositionMs: videoPositionMs ?? this.videoPositionMs,
     videoMuted: videoMuted ?? this.videoMuted,
+    detailsExpanded: detailsExpanded ?? this.detailsExpanded,
   );
 
   /// Reduce a realtime [event] into a new presentation state. Pure function —
@@ -119,6 +127,10 @@ class ProductPresentation {
       case WsEventType.showAIHighlights:
         return copyWith(
           showAIHighlights: (event.payload['visible'] as bool?) ?? true,
+        );
+      case WsEventType.showDetails:
+        return copyWith(
+          detailsExpanded: (event.payload['expanded'] as bool?) ?? !detailsExpanded,
         );
       case WsEventType.showRelatedMedia:
         return copyWith(

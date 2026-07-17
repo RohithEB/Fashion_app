@@ -27,6 +27,9 @@ export const config = {
   // Optional remote catalog to ingest when online (set later). null = seed locally only.
   ingestUrl: process.env.INGEST_URL || null,
 
+  // Tax rate applied to the order subtotal at checkout (0.08 = 8%).
+  taxRate: num(process.env.TAX_RATE, 0.08),
+
   serverRoot,
   repoRoot,
 };

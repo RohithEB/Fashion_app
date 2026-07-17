@@ -7,7 +7,10 @@ export const IN = {
   ACTIVITY: 'activity',
   KEEP_ALIVE: 'keep_alive',
   // command messages (relayed to the display, and each counts as activity):
+  SHOW_CATALOG: 'show_catalog',
+  SHOW_CART: 'show_cart',
   SHOW_PRODUCT: 'show_product',
+  SHOW_DETAILS: 'show_details',
   SHOW_RELATED: 'show_related',
   SHOW_MEDIA: 'show_media',
   ZOOM: 'zoom',
@@ -25,7 +28,8 @@ export const OUT = {
 
 // Command messages the server relays controller -> display.
 export const RELAY_TYPES = new Set([
-  IN.SHOW_PRODUCT, IN.SHOW_RELATED, IN.SHOW_MEDIA, IN.ZOOM, IN.CLEAR,
+  IN.SHOW_CATALOG, IN.SHOW_CART, IN.SHOW_PRODUCT, IN.SHOW_DETAILS,
+  IN.SHOW_RELATED, IN.SHOW_MEDIA, IN.ZOOM, IN.CLEAR,
 ]);
 
 export function encode(type, sessionId, payload = {}) {

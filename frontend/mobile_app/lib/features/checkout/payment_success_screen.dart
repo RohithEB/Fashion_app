@@ -7,13 +7,17 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../models/order.dart';
 import '../../widgets/app_button.dart';
 import '../presentation/presentation_controller.dart';
 
 /// Payment confirmation. The display simultaneously shows its Thank-You screen
-/// (driven by the `paymentSuccess` event).
+/// (driven by the `paymentSuccess` event). When an [order] is provided, its
+/// reference and total are shown as proof the sale was recorded.
 class PaymentSuccessScreen extends StatelessWidget {
-  const PaymentSuccessScreen({super.key});
+  const PaymentSuccessScreen({super.key, this.order});
+
+  final Order? order;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +51,35 @@ class PaymentSuccessScreen extends StatelessWidget {
                 style: t.bodyLarge?.copyWith(color: c.textSecondary),
                 textAlign: TextAlign.center,
               ),
+              if (order != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.xl),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: c.border),
+                  ),
+                  child: Column(
+                    children: <Widget>[
+                      _detailRow(context, 'Order', '#${order!.id}'),
+                      const SizedBox(height: AppSpacing.xs),
+                      _detailRow(context, 'Items', '${order!.itemCount}'),
+                      if (order!.customerName != null) ...<Widget>[
+                        const SizedBox(height: AppSpacing.xs),
+                        _detailRow(context, 'Customer', order!.customerName!),
+                      ],
+                      const SizedBox(height: AppSpacing.xs),
+                      _detailRow(
+                        context,
+                        'Total',
+                        order!.total.formatted,
+                        emphasize: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const Spacer(flex: 3),
               AppButton(
                 label: 'Return to the collection',
@@ -61,6 +94,28 @@ class PaymentSuccessScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _detailRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool emphasize = false,
+  }) {
+    final AppColors c = AppColors.of(context);
+    final TextTheme t = Theme.of(context).textTheme;
+    return Row(
+      children: <Widget>[
+        Text(label, style: t.bodyMedium?.copyWith(color: c.textSecondary)),
+        const Spacer(),
+        Text(
+          value,
+          style: emphasize
+              ? t.titleMedium
+              : t.bodyMedium?.copyWith(color: c.textPrimary),
+        ),
+      ],
     );
   }
 }

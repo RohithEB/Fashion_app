@@ -2,11 +2,14 @@
 import { getDb } from '../db/index.js';
 import { uuid, nowIso } from '../util/ids.js';
 
-export function logEvent({ customerId = null, sessionId = null, eventType, refId = null, meta = null }) {
+export function logEvent({
+  customerId = null, sessionId = null, salespersonId = null,
+  eventType, refId = null, meta = null,
+}) {
   getDb().prepare(
-    `INSERT INTO journey_events (id, customerId, sessionId, ts, eventType, refId, meta)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(uuid(), customerId, sessionId, nowIso(), eventType, refId,
+    `INSERT INTO journey_events (id, customerId, sessionId, salespersonId, ts, eventType, refId, meta)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(uuid(), customerId, sessionId, salespersonId, nowIso(), eventType, refId,
         meta == null ? null : JSON.stringify(meta));
 }
 

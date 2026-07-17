@@ -2,14 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/auth/auth_controller.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/register_screen.dart';
 import '../../features/cart/cart_screen.dart';
 import '../../features/catalog/home_screen.dart';
 import '../../features/checkout/checkout_screen.dart';
 import '../../features/checkout/payment_success_screen.dart';
 import '../../features/connection/connect_screen.dart';
 import '../../features/connection/connection_controller.dart';
+import '../../features/onboarding/onboarding_controller.dart';
+import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/product/product_detail_screen.dart';
+import '../../features/recommendations/recommendations_screen.dart';
+import '../../models/order.dart';
 import '../../models/product.dart';
 import '../theme/app_motion.dart';
 
@@ -17,10 +23,13 @@ import '../theme/app_motion.dart';
 /// browse**. Everything else is reachable once connected.
 abstract final class AppRoutes {
   static const String login = '/login';
+  static const String register = '/register';
   static const String connect = '/connect';
+  static const String onboarding = '/onboarding';
   static const String home = '/home';
   static const String product = '/product';
   static const String cart = '/cart';
+  static const String recommendations = '/recommendations';
   static const String checkout = '/checkout';
   static const String success = '/success';
 }
@@ -28,18 +37,32 @@ abstract final class AppRoutes {
 abstract final class AppRouter {
   static GoRouter build(BuildContext context) {
     final ConnectionController conn = context.read<ConnectionController>();
+    final AuthController auth = context.read<AuthController>();
+    final OnboardingController onboarding = context.read<OnboardingController>();
     return GoRouter(
       initialLocation: AppRoutes.login,
-      refreshListenable: conn,
+      refreshListenable: Listenable.merge(<Listenable>[conn, auth, onboarding]),
       redirect: (BuildContext ctx, GoRouterState state) {
-        final bool loggedIn = conn.salesperson != null;
+        final bool loggedIn = auth.isAuthenticated;
         final bool connected = conn.isConnected;
+        final bool onboarded =
+            onboarding.isCompletedFor(conn.session?.sessionId);
         final String loc = state.matchedLocation;
-        if (!loggedIn) return loc == AppRoutes.login ? null : AppRoutes.login;
+        const Set<String> authRoutes = <String>{
+          AppRoutes.login,
+          AppRoutes.register,
+        };
+        // log in → pair a display → onboard the guest → browse.
+        if (!loggedIn) return authRoutes.contains(loc) ? null : AppRoutes.login;
         if (!connected) {
           return loc == AppRoutes.connect ? null : AppRoutes.connect;
         }
-        if (loc == AppRoutes.login || loc == AppRoutes.connect) {
+        if (!onboarded) {
+          return loc == AppRoutes.onboarding ? null : AppRoutes.onboarding;
+        }
+        if (authRoutes.contains(loc) ||
+            loc == AppRoutes.connect ||
+            loc == AppRoutes.onboarding) {
           return AppRoutes.home;
         }
         return null;
@@ -50,8 +73,16 @@ abstract final class AppRouter {
           pageBuilder: (_, _) => _fade(const LoginScreen()),
         ),
         GoRoute(
+          path: AppRoutes.register,
+          pageBuilder: (_, _) => _fade(const RegisterScreen()),
+        ),
+        GoRoute(
           path: AppRoutes.connect,
           pageBuilder: (_, _) => _fade(const ConnectScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.onboarding,
+          pageBuilder: (_, _) => _fade(const OnboardingScreen()),
         ),
         GoRoute(
           path: AppRoutes.home,
@@ -67,12 +98,17 @@ abstract final class AppRouter {
           pageBuilder: (_, _) => _fade(const CartScreen()),
         ),
         GoRoute(
+          path: AppRoutes.recommendations,
+          pageBuilder: (_, _) => _fade(const RecommendationsScreen()),
+        ),
+        GoRoute(
           path: AppRoutes.checkout,
           pageBuilder: (_, _) => _fade(const CheckoutScreen()),
         ),
         GoRoute(
           path: AppRoutes.success,
-          pageBuilder: (_, _) => _fade(const PaymentSuccessScreen()),
+          pageBuilder: (_, GoRouterState state) =>
+              _fade(PaymentSuccessScreen(order: state.extra as Order?)),
         ),
       ],
     );

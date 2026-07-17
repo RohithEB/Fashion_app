@@ -58,4 +58,32 @@ class HttpCatalogRepository implements CatalogRepository {
     if (res.statusCode != 200) return null;
     return BackendDto.fromDetail(jsonDecode(res.body) as Map<String, dynamic>);
   }
+
+  @override
+  Future<List<Product>> recommendations({
+    String? gender,
+    String? ageRange,
+    String? personality,
+    String? customerId,
+    int limit = 12,
+  }) async {
+    final Map<String, dynamic> q = <String, dynamic>{
+      'limit': limit,
+      if (gender != null && gender.isNotEmpty) 'gender': gender,
+      if (ageRange != null && ageRange.isNotEmpty) 'ageRange': ageRange,
+      if (personality != null && personality.isNotEmpty) 'personality': personality,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+    };
+    final http.Response res = await _client
+        .get(AppConfig.http('/api/recommendations', q))
+        .timeout(_timeout);
+    if (res.statusCode != 200) return const <Product>[];
+    final Map<String, dynamic> body =
+        jsonDecode(res.body) as Map<String, dynamic>;
+    final List<dynamic> items =
+        (body['items'] as List<dynamic>?) ?? const <dynamic>[];
+    return items
+        .map((dynamic e) => BackendDto.fromListItem(e as Map<String, dynamic>))
+        .toList();
+  }
 }
