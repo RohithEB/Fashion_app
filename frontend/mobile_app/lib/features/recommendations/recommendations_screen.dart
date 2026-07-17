@@ -55,7 +55,10 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
   }
 
   void _present(Product product) {
-    context.read<PresentationController>().showProduct(product);
+    context.read<PresentationController>().showProduct(
+      product,
+      size: product.defaultVariant.sizes.firstOrNull,
+    );
     LivePreviewSheet.show(context);
   }
 

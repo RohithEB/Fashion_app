@@ -248,7 +248,10 @@ class _Grid extends StatelessWidget {
   final bool connected;
 
   void _present(BuildContext context, Product product) {
-    context.read<PresentationController>().showProduct(product);
+    context.read<PresentationController>().showProduct(
+      product,
+      size: product.defaultVariant.sizes.firstOrNull,
+    );
     LivePreviewSheet.show(context);
   }
 
@@ -264,34 +267,51 @@ class _Grid extends StatelessWidget {
       );
     }
     if (catalog.products.isEmpty) {
-      return const EmptyStateView(
-        title: 'Nothing found',
-        message: 'Try another search or category.',
-        icon: AppIcons.search,
+      // Still pullable so the associate can fetch newly added products.
+      return RefreshIndicator(
+        onRefresh: () => context.read<CatalogController>().refresh(),
+        child: LayoutBuilder(
+          builder: (BuildContext ctx, BoxConstraints constraints) =>
+              SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: const EmptyStateView(
+                    title: 'Nothing found',
+                    message: 'Pull down to refresh, or try another search.',
+                    icon: AppIcons.search,
+                  ),
+                ),
+              ),
+        ),
       );
     }
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.xs,
-        AppSpacing.md,
-        AppSpacing.xl,
+    return RefreshIndicator(
+      onRefresh: () => context.read<CatalogController>().refresh(),
+      child: GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.xs,
+          AppSpacing.md,
+          AppSpacing.xl,
+        ),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.56,
+          crossAxisSpacing: AppSpacing.md,
+          mainAxisSpacing: AppSpacing.lg,
+        ),
+        itemCount: catalog.products.length,
+        itemBuilder: (BuildContext ctx, int i) {
+          final Product product = catalog.products[i];
+          return ProductCard(
+            product: product,
+            onTap: () => ctx.push(AppRoutes.product, extra: product),
+            onPresent: connected ? () => _present(ctx, product) : null,
+          );
+        },
       ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.56,
-        crossAxisSpacing: AppSpacing.md,
-        mainAxisSpacing: AppSpacing.lg,
-      ),
-      itemCount: catalog.products.length,
-      itemBuilder: (BuildContext ctx, int i) {
-        final Product product = catalog.products[i];
-        return ProductCard(
-          product: product,
-          onTap: () => ctx.push(AppRoutes.product, extra: product),
-          onPresent: connected ? () => _present(ctx, product) : null,
-        );
-      },
     );
   }
 }

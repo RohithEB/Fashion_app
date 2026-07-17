@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_config.dart';
+import '../../core/restart_widget.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/app_button.dart';
+import '../settings/server_settings_sheet.dart';
 import 'auth_controller.dart';
 
 /// Boutique sign-in. Login gates the whole app — a successful sign-in lets the
@@ -38,6 +41,12 @@ class _LoginScreenState extends State<LoginScreen> {
     // On success the router guard redirects to the connect screen automatically.
   }
 
+  Future<void> _openSettings() async {
+    final bool? saved = await ServerSettingsSheet.show(context);
+    // Rebuild the app root so the repositories re-resolve (mock <-> backend).
+    if (saved == true && mounted) RestartWidget.restart(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
@@ -53,7 +62,20 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const SizedBox(height: AppSpacing.xxl),
+                const SizedBox(height: AppSpacing.lg),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: _openSettings,
+                    icon: const Icon(Icons.settings_outlined, size: 18),
+                    label: Text(
+                      AppConfig.backendMode
+                          ? 'Server: ${AppConfig.backendHost}'
+                          : 'Offline mode',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 Text('THE STUDIO', style: AppTypography.eyebrow(c.accent)),
                 const SizedBox(height: AppSpacing.sm),
                 Text('Ebani', style: t.displaySmall),

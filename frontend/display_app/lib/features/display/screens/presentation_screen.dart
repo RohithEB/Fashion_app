@@ -80,21 +80,6 @@ class PresentationScreen extends StatelessWidget {
             bottom: AppSpacing.xl,
             child: _ImageDots(count: images.length, index: p.imageIndex),
           ),
-        // Full labeled details are drawn ON TOP of the image when the associate
-        // expands them — they never resize the image or the info panel.
-        Positioned.fill(
-          child: AnimatedSwitcher(
-            duration: AppMotion.base,
-            switchInCurve: AppMotion.standard,
-            switchOutCurve: AppMotion.standard,
-            child: p.detailsExpanded && product.details.isNotEmpty
-                ? _DetailsOverlay(
-                    key: const ValueKey<String>('details-overlay'),
-                    product: product,
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ),
       ],
     );
 
@@ -103,6 +88,7 @@ class PresentationScreen extends StatelessWidget {
       variant: variant,
       size: p.size,
       showAI: p.showAIHighlights,
+      expanded: p.detailsExpanded,
     );
 
     return ColoredBox(
@@ -137,12 +123,14 @@ class _InfoPanel extends StatelessWidget {
     required this.variant,
     required this.size,
     required this.showAI,
+    required this.expanded,
   });
 
   final Product product;
   final ProductVariant variant;
   final String? size;
   final bool showAI;
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +239,51 @@ class _InfoPanel extends StatelessWidget {
                     )
                   : const SizedBox.shrink(),
             ),
+            // Full labeled details, revealed inside the (scrollable) info panel
+            // when the associate drags the details sheet up on their device.
+            AnimatedSize(
+              duration: AppMotion.base,
+              curve: AppMotion.standard,
+              alignment: Alignment.topLeft,
+              child: expanded && product.details.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xl),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'DETAILS',
+                            style: AppTypography.eyebrow(c.accent),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          for (final ProductDetail d in product.details)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.xs,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  SizedBox(
+                                    width: 150,
+                                    child: Text(
+                                      d.label.toUpperCase(),
+                                      style: AppTypography.eyebrow(
+                                        c.textTertiary,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(d.value, style: t.bodyLarge),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
       ),
@@ -259,65 +292,6 @@ class _InfoPanel extends StatelessWidget {
 
   Color _hex(String hex) =>
       Color(int.parse('FF${hex.replaceFirst('#', '')}', radix: 16));
-}
-
-/// The full labeled product details, drawn as a scrim panel ON TOP of the image
-/// when the associate expands the details sheet — it overlays the image rather
-/// than resizing it or the info panel below.
-class _DetailsOverlay extends StatelessWidget {
-  const _DetailsOverlay({required this.product, super.key});
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
-    final TextTheme t = Theme.of(context).textTheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        // Scrim so the image stays faintly visible behind the details.
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: <Color>[
-            c.background.withValues(alpha: 0.96),
-            c.background.withValues(alpha: 0.82),
-          ],
-        ),
-      ),
-      child: Align(
-        alignment: Alignment.bottomLeft,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.giant),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text('DETAILS', style: AppTypography.eyebrow(c.accent)),
-              const SizedBox(height: AppSpacing.md),
-              for (final ProductDetail d in product.details)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SizedBox(
-                        width: 180,
-                        child: Text(
-                          d.label.toUpperCase(),
-                          style: AppTypography.eyebrow(c.textTertiary),
-                        ),
-                      ),
-                      Expanded(child: Text(d.value, style: t.bodyLarge)),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Smooths the zoom/pan that arrives as discrete WebSocket updates (~16 Hz) into
