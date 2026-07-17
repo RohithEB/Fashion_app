@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Kiosk is portrait: lock to a single upright portrait orientation.
-  SystemChrome.setPreferredOrientations(<DeviceOrientation>[
-    DeviceOrientation.portraitUp,
-  ]);
+  // Follow the kiosk's real hardware orientation — forcing portrait on a
+  // landscape-only panel collapses the render surface (blank/white). The
+  // screens are fully responsive to whatever orientation the device reports,
+  // so a portrait-mounted kiosk renders portrait and a landscape TV renders
+  // landscape, both correctly.
   runApp(const DisplayApp());
 }

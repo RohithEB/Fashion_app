@@ -11,6 +11,7 @@ import '../../models/category.dart';
 import '../../models/product.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/state_views.dart';
+import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
 import '../presentation/presentation_controller.dart';
@@ -77,6 +78,13 @@ class HomeScreen extends StatelessWidget {
                     count: cart.cart.count,
                     onTap: () => context.push(AppRoutes.cart),
                   ),
+                  IconButton(
+                    icon: const Icon(AppIcons.logout),
+                    iconSize: 22,
+                    tooltip: 'Log out',
+                    color: c.textSecondary,
+                    onPressed: () => _confirmLogout(context),
+                  ),
                 ],
               ),
             ),
@@ -106,6 +114,34 @@ class HomeScreen extends StatelessWidget {
       bottomNavigationBar: conn.isConnected ? const NowShowingBar() : null,
     );
   }
+}
+
+Future<void> _confirmLogout(BuildContext context) async {
+  final bool ok =
+      await showDialog<bool>(
+        context: context,
+        builder: (BuildContext ctx) => AlertDialog(
+          title: const Text('Log out?'),
+          content: const Text(
+            'This ends the current session and signs you out.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Log out'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+  if (!ok || !context.mounted) return;
+  // End the live session (frees the display) then sign out → router → login.
+  context.read<ConnectionController>().disconnect();
+  await context.read<AuthController>().logout();
 }
 
 class _CartButton extends StatelessWidget {

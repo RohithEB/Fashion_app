@@ -63,6 +63,7 @@ class DisplayController extends ChangeNotifier {
   Timer? _countdownTimer;
   Timer? _idleTimer;
   Timer? _warningTimer;
+  Timer? _catalogTimer;
 
   Future<void> _boot() async {
     // Host the LAN server (native) and publish the real pairing URL.
@@ -73,6 +74,12 @@ class DisplayController extends ChangeNotifier {
       notifyListeners();
     }
     _cache = await _catalog.products(); // hydrate + cache the catalog
+    // Re-hydrate the cached catalogue every 2 min so it tracks CMS edits.
+    _catalogTimer = Timer.periodic(const Duration(minutes: 2), (_) async {
+      try {
+        _cache = await _catalog.products();
+      } catch (_) {}
+    });
     _phaseTimer = Timer(const Duration(milliseconds: 2200), () {
       phase = DisplayPhase.advertisement;
       notifyListeners();
@@ -400,6 +407,7 @@ class DisplayController extends ChangeNotifier {
   @override
   void dispose() {
     _cancelTimers();
+    _catalogTimer?.cancel();
     _sub?.cancel();
     super.dispose();
   }
