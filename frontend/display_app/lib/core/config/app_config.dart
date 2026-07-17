@@ -9,7 +9,12 @@
 ///   channel (`ws://<box>:3000/ws`). Enable with
 ///   `--dart-define=BACKEND=true --dart-define=BACKEND_HOST=10.0.1.12`.
 abstract final class AppConfig {
-  static const bool backendMode = bool.fromEnvironment('BACKEND');
+  // Backend mode is the DEFAULT now (real Node server + SQLite). Pass
+  // --dart-define=BACKEND=false only to run the offline mock demo.
+  static const bool backendMode = bool.fromEnvironment(
+    'BACKEND',
+    defaultValue: true,
+  );
 
   static const String backendHost = String.fromEnvironment(
     'BACKEND_HOST',

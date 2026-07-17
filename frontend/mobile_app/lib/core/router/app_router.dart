@@ -6,6 +6,7 @@ import '../../features/auth/auth_controller.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/cart/cart_screen.dart';
+import '../../features/catalog/catalog_controller.dart';
 import '../../features/catalog/home_screen.dart';
 import '../../features/checkout/checkout_screen.dart';
 import '../../features/checkout/payment_success_screen.dart';
@@ -40,6 +41,7 @@ abstract final class AppRouter {
     final AuthController auth = context.read<AuthController>();
     final OnboardingController onboarding = context
         .read<OnboardingController>();
+    final CatalogController catalog = context.read<CatalogController>();
     return GoRouter(
       initialLocation: AppRoutes.login,
       refreshListenable: Listenable.merge(<Listenable>[conn, auth, onboarding]),
@@ -92,8 +94,18 @@ abstract final class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.product,
-          pageBuilder: (_, GoRouterState state) =>
-              _fade(ProductDetailScreen(product: state.extra! as Product)),
+          pageBuilder: (_, GoRouterState state) {
+            // `state.extra` is NOT preserved across a go_router refresh (e.g. the
+            // idle `session_warning`/`session_end` notify). Recover the last
+            // product so a refresh never crashes into a blank page or bounces Home.
+            final Object? extra = state.extra;
+            final Product? product = extra is Product
+                ? extra
+                : catalog.lastViewedProduct;
+            if (product == null) return _fade(const HomeScreen());
+            catalog.lastViewedProduct = product;
+            return _fade(ProductDetailScreen(product: product));
+          },
         ),
         GoRoute(
           path: AppRoutes.cart,
