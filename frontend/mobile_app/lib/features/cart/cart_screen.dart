@@ -152,9 +152,19 @@ class _CartTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  '${item.variant.colorName}  ·  ${item.size}',
-                  style: t.bodySmall?.copyWith(color: c.textSecondary),
+                Row(
+                  children: <Widget>[
+                    Flexible(
+                      child: Text(
+                        item.variant.colorName,
+                        style: t.bodySmall?.copyWith(color: c.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    _SizePicker(item: item),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Row(
@@ -191,6 +201,7 @@ class _CartTile extends StatelessWidget {
                                           .showProduct(
                                             item.product,
                                             variantId: item.variantId,
+                                            size: item.size,
                                           );
                                       LivePreviewSheet.show(context);
                                     }),
@@ -208,6 +219,49 @@ class _CartTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Compact size selector for a cart line. Picking a size re-sizes the line via
+/// [CartController.setSize]; while the cart is mirrored, the change re-syncs to
+/// the display automatically on the next rebuild.
+class _SizePicker extends StatelessWidget {
+  const _SizePicker({required this.item});
+
+  final CartItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    final TextTheme t = Theme.of(context).textTheme;
+    final List<String> sizes = item.variant.sizes;
+    return PopupMenuButton<String>(
+      initialValue: item.size,
+      tooltip: 'Change size',
+      onSelected: (String s) =>
+          context.read<CartController>().setSize(item.lineId, s),
+      itemBuilder: (_) => <PopupMenuEntry<String>>[
+        for (final String s in sizes)
+          PopupMenuItem<String>(value: s, child: Text('Size $s')),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        decoration: BoxDecoration(
+          border: Border.all(color: c.border),
+          borderRadius: AppRadius.brPill,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              'Size ${item.size}',
+              style: t.bodySmall?.copyWith(color: c.textSecondary),
+            ),
+            Icon(Icons.arrow_drop_down, size: 16, color: c.textTertiary),
+          ],
+        ),
       ),
     );
   }

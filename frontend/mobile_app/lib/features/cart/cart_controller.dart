@@ -46,6 +46,30 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Change the size of an existing line. Because a line's identity includes its
+  /// size, switching to a size that already exists in the cart merges the two
+  /// lines (summing quantities); otherwise the line is re-sized in place.
+  void setSize(String lineId, String size) {
+    final List<CartItem> items = List<CartItem>.of(_cart.items);
+    final int idx = items.indexWhere((CartItem i) => i.lineId == lineId);
+    if (idx < 0) return;
+    final CartItem resized = items[idx].copyWith(size: size);
+    if (resized.lineId == lineId) return; // unchanged
+    final int existing = items.indexWhere(
+      (CartItem i) => i.lineId == resized.lineId,
+    );
+    if (existing >= 0) {
+      items[existing] = items[existing].copyWith(
+        quantity: items[existing].quantity + resized.quantity,
+      );
+      items.removeAt(idx);
+    } else {
+      items[idx] = resized;
+    }
+    _cart = _cart.copyWith(items: items);
+    notifyListeners();
+  }
+
   void removeItem(String lineId) {
     final List<CartItem> items = _cart.items
         .where((CartItem i) => i.lineId != lineId)

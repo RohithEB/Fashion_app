@@ -15,7 +15,9 @@ import '../../models/ws_event.dart';
 import '../../widgets/app_button.dart';
 import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
+import '../cart/cart_screen.dart' show cartPayload;
 import '../connection/connection_controller.dart';
+import '../onboarding/onboarding_controller.dart';
 
 /// Checkout summary + confirm. Confirming **persists the order** through the
 /// backend (`POST /api/cart/:sessionId/checkout`) — cart lines, quantities,
@@ -32,6 +34,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _customerName = TextEditingController();
   final TextEditingController _customerMobile = TextEditingController();
   bool _processing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mirror the order review onto the display as soon as the associate reaches
+    // checkout, so the client follows the purchase through on the big screen.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _mirrorToDisplay());
+  }
+
+  void _mirrorToDisplay() {
+    if (!mounted) return;
+    final CartController cart = context.read<CartController>();
+    if (cart.cart.isEmpty) return;
+    final String? sessionId = context
+        .read<ConnectionController>()
+        .session
+        ?.sessionId;
+    final String? customerName = context
+        .read<OnboardingController>()
+        .customer
+        ?.name;
+    context.read<RealtimeService>().emit(
+      WsEvent(
+        type: WsEventType.checkout,
+        sessionId: sessionId,
+        payload: cartPayload(cart.cart, customerName: customerName),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -57,9 +88,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     setState(() => _processing = true);
     final String sessionId = conn.session?.sessionId ?? 'no-session';
-
-    // Notify the display it is authorising (drives its thank-you sequence).
-    realtime.emit(WsEvent(type: WsEventType.checkout, sessionId: sessionId));
 
     try {
       final Order order = await repo.checkout(

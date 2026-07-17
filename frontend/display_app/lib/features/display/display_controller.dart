@@ -105,6 +105,8 @@ class DisplayController extends ChangeNotifier {
         _showCatalog();
       case WsEventType.showCart:
         _showCart(e);
+      case WsEventType.checkout:
+        _showCheckout(e);
       case WsEventType.showProduct:
         _showProduct(e);
       case WsEventType.hideProduct:
@@ -160,6 +162,9 @@ class DisplayController extends ChangeNotifier {
   /// The cart/shortlist payload mirrored from the controller (read-only).
   Map<String, dynamic>? cartView;
 
+  /// The checkout review payload mirrored from the controller (read-only).
+  Map<String, dynamic>? checkoutView;
+
   /// Show the full collection grid (pushed by the controller after onboarding).
   void _showCatalog() {
     _cancelTimers();
@@ -178,6 +183,18 @@ class DisplayController extends ChangeNotifier {
     product = null;
     cartView = e.payload;
     phase = DisplayPhase.cart;
+    notifyListeners();
+  }
+
+  /// Mirror the controller's checkout review (order summary + totals) so the
+  /// customer follows along as the associate completes the purchase — read-only.
+  void _showCheckout(WsEvent e) {
+    _cancelTimers();
+    _presentTargetId = null;
+    presentation = null;
+    product = null;
+    checkoutView = e.payload;
+    phase = DisplayPhase.checkout;
     notifyListeners();
   }
 
@@ -265,7 +282,8 @@ class DisplayController extends ChangeNotifier {
     if (phase != DisplayPhase.welcome &&
         phase != DisplayPhase.presenting &&
         phase != DisplayPhase.catalogue &&
-        phase != DisplayPhase.cart) {
+        phase != DisplayPhase.cart &&
+        phase != DisplayPhase.checkout) {
       return;
     }
     idleWarningActive = true;

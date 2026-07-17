@@ -10,6 +10,7 @@ enum DisplayPhase {
   welcome,
   catalogue, // the full collection grid (pushed after onboarding)
   cart, // the shortlist / cart page mirrored from the controller
+  checkout, // the checkout review mirrored from the controller
   presenting, // a product is on screen (Presentation mode)
   thankYou,
   disconnected,
@@ -26,6 +27,7 @@ class ProductPresentation {
   const ProductPresentation({
     required this.productId,
     this.variantId,
+    this.size,
     this.view = PresentationView.hero,
     this.imageIndex = 0,
     this.zoom = 1.0,
@@ -41,6 +43,9 @@ class ProductPresentation {
 
   final String productId;
   final String? variantId;
+
+  /// The size the salesperson has selected (mirrored onto the display).
+  final String? size;
   final PresentationView view;
   final int imageIndex;
   final double zoom;
@@ -58,6 +63,7 @@ class ProductPresentation {
   ProductPresentation copyWith({
     String? productId,
     String? variantId,
+    String? size,
     PresentationView? view,
     int? imageIndex,
     double? zoom,
@@ -72,6 +78,7 @@ class ProductPresentation {
   }) => ProductPresentation(
     productId: productId ?? this.productId,
     variantId: variantId ?? this.variantId,
+    size: size ?? this.size,
     view: view ?? this.view,
     imageIndex: imageIndex ?? this.imageIndex,
     zoom: zoom ?? this.zoom,
@@ -93,16 +100,20 @@ class ProductPresentation {
         return ProductPresentation(
           productId: event.productId ?? productId,
           variantId: event.variantId ?? variantId,
+          size: event.size ?? size,
         );
       case WsEventType.changeColor:
         return copyWith(
           variantId: event.variantId,
+          size: event.size ?? size,
           imageIndex: 0,
           zoom: 1,
           panX: 0,
           panY: 0,
           view: PresentationView.hero,
         );
+      case WsEventType.changeSize:
+        return copyWith(size: event.size ?? size);
       case WsEventType.changeImage:
         return copyWith(
           imageIndex: event.imageIndex ?? imageIndex,

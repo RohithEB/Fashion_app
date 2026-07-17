@@ -89,14 +89,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _selectVariant(String id) {
+    final String newSize = product.variantById(id).sizes.first;
     setState(() {
       _variantId = id;
       _imageIndex = 0;
-      _size = product.variantById(id).sizes.first;
+      _size = newSize;
     });
     _page.jumpToPage(0);
     final PresentationController pres = context.read<PresentationController>();
-    if (_isPresentingThis(pres)) pres.changeColor(id);
+    if (_isPresentingThis(pres)) pres.changeColor(id, size: newSize);
+  }
+
+  void _selectSize(String size) {
+    setState(() => _size = size);
+    final PresentationController pres = context.read<PresentationController>();
+    if (_isPresentingThis(pres)) pres.changeSize(size);
   }
 
   void _onImageChanged(int i) {
@@ -107,7 +114,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   void _showOnScreen() {
     final PresentationController pres = context.read<PresentationController>();
-    pres.showProduct(product, variantId: _variantId);
+    pres.showProduct(product, variantId: _variantId, size: _size);
     if (_detailsShown) pres.showDetails(true);
     LivePreviewSheet.show(context);
   }
@@ -193,7 +200,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   presentingThis: presentingThis,
                   expanded: _detailsShown,
                   onSelectVariant: _selectVariant,
-                  onSelectSize: (String s) => setState(() => _size = s),
+                  onSelectSize: _selectSize,
                   onToggleDetails: _toggleSheet,
                   onShow: _showOnScreen,
                   onAdd: _addToCart,

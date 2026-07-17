@@ -78,19 +78,22 @@ class PresentationController extends ChangeNotifier {
   // ---- Presentation gating --------------------------------------------------
 
   /// Enter Presentation mode with [product] (the "Show on Screen" action).
-  void showProduct(Product product, {String? variantId}) {
+  void showProduct(Product product, {String? variantId, String? size}) {
     _product = product;
     cartOnScreen = false;
+    final String resolvedVariant = variantId ?? product.defaultVariant.id;
     _presentation = ProductPresentation(
       productId: product.id,
-      variantId: variantId ?? product.defaultVariant.id,
+      variantId: resolvedVariant,
+      size: size,
     );
     _emit(
       WsEvent(
         type: WsEventType.showProduct,
         payload: <String, dynamic>{
           'productId': product.id,
-          'variantId': variantId ?? product.defaultVariant.id,
+          'variantId': resolvedVariant,
+          'size': ?size,
         },
       ),
     );
@@ -134,10 +137,18 @@ class PresentationController extends ChangeNotifier {
 
   // ---- Synchronized interactions -------------------------------------------
 
-  void changeColor(String variantId) => _apply(
+  void changeColor(String variantId, {String? size}) => _apply(
     WsEvent(
       type: WsEventType.changeColor,
-      payload: <String, dynamic>{'variantId': variantId},
+      payload: <String, dynamic>{'variantId': variantId, 'size': ?size},
+    ),
+  );
+
+  /// Mirror the salesperson's size selection onto the display.
+  void changeSize(String size) => _apply(
+    WsEvent(
+      type: WsEventType.changeSize,
+      payload: <String, dynamic>{'size': size},
     ),
   );
 

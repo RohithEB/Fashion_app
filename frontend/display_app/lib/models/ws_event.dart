@@ -113,6 +113,7 @@ class WsEvent {
   // Typed payload accessors used across the apps.
   String? get productId => payload['productId'] as String?;
   String? get variantId => payload['variantId'] as String?;
+  String? get size => payload['size'] as String?;
   String? get mediaId => payload['mediaId'] as String?;
   int? get imageIndex => (payload['imageIndex'] as num?)?.toInt();
   double? get scale => (payload['scale'] as num?)?.toDouble();
