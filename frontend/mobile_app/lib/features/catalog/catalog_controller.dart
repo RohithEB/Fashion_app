@@ -61,6 +61,10 @@ class CatalogController extends ChangeNotifier {
     await _refresh();
   }
 
+  /// Re-fetch the catalog with the current search/category filters — used by
+  /// pull-to-refresh so newly added CMS products appear without an app restart.
+  Future<void> refresh() => _refresh();
+
   Future<void> _refresh() async {
     state = LoadState.loading;
     notifyListeners();
