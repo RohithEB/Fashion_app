@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
@@ -59,8 +60,11 @@ class PresentationScreen extends StatelessWidget {
               : isVideo
               ? _VideoStage(
                   key: const ValueKey<String>('video'),
-                  poster: image,
+                  videoUrl: variant.video?.url,
+                  poster: variant.video?.thumbnailUrl ?? image,
                   playing: p.videoPlaying,
+                  muted: p.videoMuted,
+                  positionMs: p.videoPositionMs,
                 )
               : _SyncedTransform(
                   key: ValueKey<String>('${p.variantId}-${p.imageIndex}'),
@@ -402,18 +406,114 @@ class _SyncedTransformState extends State<_SyncedTransform>
   }
 }
 
-class _VideoStage extends StatelessWidget {
-  const _VideoStage({required this.poster, required this.playing, super.key});
+/// Plays the presented product's video, driven entirely by the synchronized
+/// [ProductPresentation] state (play/pause/seek/mute arrive as WebSocket events).
+/// Falls back to a postered play-button when no [videoUrl] is available.
+class _VideoStage extends StatefulWidget {
+  const _VideoStage({
+    required this.videoUrl,
+    required this.poster,
+    required this.playing,
+    required this.muted,
+    required this.positionMs,
+    super.key,
+  });
 
+  final String? videoUrl;
   final String? poster;
   final bool playing;
+  final bool muted;
+  final int positionMs;
+
+  @override
+  State<_VideoStage> createState() => _VideoStageState();
+}
+
+class _VideoStageState extends State<_VideoStage> {
+  VideoPlayerController? _controller;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final String? url = widget.videoUrl;
+    if (url == null || url.isEmpty) return;
+    final VideoPlayerController c = VideoPlayerController.networkUrl(
+      Uri.parse(url),
+    );
+    _controller = c;
+    try {
+      await c.initialize();
+      await c.setLooping(true);
+      await c.setVolume(widget.muted ? 0 : 1);
+      if (widget.positionMs > 0) {
+        await c.seekTo(Duration(milliseconds: widget.positionMs));
+      }
+      if (widget.playing) await c.play();
+      if (mounted) setState(() => _ready = true);
+    } catch (_) {
+      // Unplayable URL/codec → keep the postered fallback.
+      if (mounted) setState(() => _ready = false);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _VideoStage old) {
+    super.didUpdateWidget(old);
+    // Source changed → rebuild the controller from scratch.
+    if (widget.videoUrl != old.videoUrl) {
+      _controller?.dispose();
+      _controller = null;
+      _ready = false;
+      _init();
+      return;
+    }
+    final VideoPlayerController? c = _controller;
+    if (c == null || !_ready) return;
+    if (widget.playing != old.playing) {
+      widget.playing ? c.play() : c.pause();
+    }
+    if (widget.muted != old.muted) c.setVolume(widget.muted ? 0 : 1);
+    // Apply an external seek only when it diverges meaningfully from playback.
+    if (widget.positionMs != old.positionMs) {
+      final int current = c.value.position.inMilliseconds;
+      if ((widget.positionMs - current).abs() > 600) {
+        c.seekTo(Duration(milliseconds: widget.positionMs));
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final VideoPlayerController? c = _controller;
+    if (_ready && c != null) {
+      return ColoredBox(
+        color: Colors.black,
+        child: Center(
+          child: AspectRatio(
+            aspectRatio: c.value.aspectRatio == 0
+                ? 16 / 9
+                : c.value.aspectRatio,
+            child: VideoPlayer(c),
+          ),
+        ),
+      );
+    }
+    // Fallback (still loading, or no/failed video): poster + play affordance.
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
-        NetworkPhoto(url: poster),
+        NetworkPhoto(url: widget.poster),
         const DecoratedBox(decoration: BoxDecoration(color: Color(0x55000000))),
         Center(
           child: Container(
@@ -425,7 +525,7 @@ class _VideoStage extends StatelessWidget {
               border: Border.all(color: Colors.white54),
             ),
             child: Icon(
-              playing ? AppIcons.pause : AppIcons.play,
+              widget.playing ? AppIcons.pause : AppIcons.play,
               color: Colors.white,
               size: 48,
             ),

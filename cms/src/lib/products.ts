@@ -37,7 +37,8 @@ export interface ProductInput {
   highlights?: string[];         // -> product_enrichment rows
   sizes?: SizeStock[];           // size-wise quantity -> variants stock
   colors?: ColorVariant[];       // colours available -> variants
-  mediaUrls?: string[];          // additional image URLs -> product_media
+  mediaUrls?: string[];          // additional image URLs -> product_media (images)
+  videoUrls?: string[];          // video URLs -> product_media (videos)
 }
 
 // Structured attributes surfaced as enrichment rows (rendered on the display).
@@ -114,11 +115,20 @@ export function createProduct(input: ProductInput): string {
       if (h.trim()) insertEnrichment.run(prefixId('enr'), id, 'Highlight', h.trim(), order++);
     }
 
-    // Media: hero first, then extras.
+    // Media: hero image first, then extra images, then videos (postered by the hero).
     let mOrder = 0;
     const images = [input.heroImage, ...(input.mediaUrls || [])].filter(Boolean) as string[];
+    // De-dupe so a hero that also appears in mediaUrls isn't stored twice.
+    const seen = new Set<string>();
     for (const url of images) {
+      if (seen.has(url)) continue;
+      seen.add(url);
       insertMedia.run(prefixId('med'), id, 'image', url, null, null, mOrder++);
+    }
+    for (const url of input.videoUrls || []) {
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      insertMedia.run(prefixId('med'), id, 'video', url, input.heroImage || null, null, mOrder++);
     }
 
     // Variants: colour × size grid with per-size quantity as stock. When no colours

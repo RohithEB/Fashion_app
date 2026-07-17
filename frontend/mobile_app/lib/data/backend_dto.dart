@@ -108,21 +108,29 @@ abstract final class BackendDto {
           .toSet()
           .toList();
 
-      // Images: this colour's variant image + any media labelled for it.
+      // Images for this colour: the colour's own variant image(s), plus product
+      // media — those labelled for this colour AND any unlabelled (shared) media,
+      // so multi-image uploads from the CMS (which are product-level, label-less)
+      // all surface. Deduped by url so the per-size hero isn't repeated.
       final List<ProductMedia> images = <ProductMedia>[];
+      final Set<String> seenImg = <String>{};
+      void addImage(String? url) {
+        if (url == null || url.isEmpty || !seenImg.add(url)) return;
+        images.add(_image(url));
+      }
+
       for (final Map<String, dynamic> v in colorVariants) {
-        final String? url = v['mediaUrl'] as String?;
-        if (url != null) images.add(_image(url));
+        addImage(v['mediaUrl'] as String?);
       }
       for (final dynamic m in rawMedia) {
         final Map<String, dynamic> mm = m as Map<String, dynamic>;
-        if (mm['type'] == 'image' && mm['label'] == colorName) {
-          images.add(_image(mm['url'] as String));
+        if (mm['type'] != 'image') continue;
+        final String? label = mm['label'] as String?;
+        if (label == null || label.isEmpty || label == colorName) {
+          addImage(mm['url'] as String?);
         }
       }
-      if (images.isEmpty && json['heroImage'] != null) {
-        images.add(_image(json['heroImage'] as String));
-      }
+      if (images.isEmpty) addImage(json['heroImage'] as String?);
 
       return ProductVariant(
         id: colorVariants.isNotEmpty

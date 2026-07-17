@@ -10,11 +10,14 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Chip from '@mui/material/Chip';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import UploadIcon from '@mui/icons-material/CloudUpload';
+import CloseIcon from '@mui/icons-material/Close';
+import MovieIcon from '@mui/icons-material/Movie';
 import {
   GENDERS, CATEGORIES, SUBCATEGORIES, STYLE_ARCHETYPES, OCCASIONS, SEASONS, FITS,
   PATTERNS, MATERIALS, VIBES, AGE_GROUPS, type EnrichedProduct,
@@ -36,6 +39,14 @@ const EMPTY: FormState = {
   primaryColor: '', ageGroup: '', tags: '', sizes: 'S:5, M:8, L:5, XL:3', colors: '',
   highlights: '',
 };
+
+// A product can carry up to this many media items (images + videos combined).
+const MAX_MEDIA = 6;
+
+interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+}
 
 function SelectField(props: {
   label: string; value: string; options: readonly string[];
@@ -61,7 +72,7 @@ function SelectField(props: {
 export default function NewProductPage() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [media, setMedia] = useState<MediaItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [enriching, setEnriching] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,16 +81,32 @@ export default function NewProductPage() {
 
   const set = (k: keyof FormState) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  async function handleUpload(file: File) {
+  const images = media.filter((m) => m.type === 'image');
+  const videos = media.filter((m) => m.type === 'video');
+  const heroImage = images[0]?.url ?? null;
+
+  async function handleUpload(files: FileList) {
     setError(null);
+    const room = MAX_MEDIA - media.length;
+    if (room <= 0) {
+      setError(`You can add up to ${MAX_MEDIA} media items.`);
+      return;
+    }
+    const chosen = Array.from(files).slice(0, room);
+    if (files.length > room) {
+      setError(`Only ${room} more can be added (max ${MAX_MEDIA} total).`);
+    }
     setUploading(true);
     try {
-      const body = new FormData();
-      body.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Upload failed');
-      setImageUrl(json.url);
+      for (const file of chosen) {
+        const body = new FormData();
+        body.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Upload failed');
+        const type: MediaItem['type'] = file.type.startsWith('video/') ? 'video' : 'image';
+        setMedia((m) => (m.length >= MAX_MEDIA ? m : [...m, { url: json.url, type }]));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload failed');
     } finally {
@@ -87,15 +114,19 @@ export default function NewProductPage() {
     }
   }
 
+  function removeMedia(url: string) {
+    setMedia((m) => m.filter((x) => x.url !== url));
+  }
+
   async function handleEnrich() {
-    if (!imageUrl) return;
+    if (!heroImage) return;
     setError(null);
     setEnriching(true);
     try {
       const res = await fetch('/api/enrich', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ imageUrl }),
+        body: JSON.stringify({ imageUrl: heroImage }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Enrichment failed');
@@ -185,7 +216,9 @@ export default function NewProductPage() {
         vibe: form.vibe || undefined,
         primaryColor: form.primaryColor.trim() || undefined,
         ageGroup: form.ageGroup || undefined,
-        heroImage: imageUrl || undefined,
+        heroImage: heroImage || undefined,
+        mediaUrls: images.slice(1).map((m) => m.url),
+        videoUrls: videos.map((m) => m.url),
         aiEnriched,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
         sizes: parseSizes(),
@@ -216,44 +249,108 @@ export default function NewProductPage() {
         {/* Media + AI */}
         <Card sx={{ width: { xs: '100%', md: 340 }, flexShrink: 0 }}>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Image
-            </Typography>
-            <Box
-              sx={{
-                width: '100%', aspectRatio: '3 / 4', borderRadius: 2, overflow: 'hidden',
-                bgcolor: 'action.hover', border: '1px dashed', borderColor: 'divider',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2,
-              }}
-            >
-              {imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageUrl} alt="product" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  No image
-                </Typography>
-              )}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6">Media</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {media.length} / {MAX_MEDIA}
+              </Typography>
             </Box>
+
+            {media.length === 0 ? (
+              <Box
+                sx={{
+                  width: '100%', aspectRatio: '3 / 4', borderRadius: 2,
+                  bgcolor: 'action.hover', border: '1px dashed', borderColor: 'divider',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  No media yet
+                </Typography>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mb: 2,
+                }}
+              >
+                {media.map((m, i) => (
+                  <Box
+                    key={m.url}
+                    sx={{
+                      position: 'relative', aspectRatio: '1 / 1', borderRadius: 1.5,
+                      overflow: 'hidden', border: '1px solid', borderColor: 'divider',
+                      bgcolor: 'action.hover',
+                    }}
+                  >
+                    {m.type === 'video' ? (
+                      <video
+                        src={m.url} muted
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={m.url} alt={`media ${i + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    )}
+                    {m.type === 'video' && (
+                      <MovieIcon
+                        fontSize="small"
+                        sx={{ position: 'absolute', top: 4, left: 4, color: '#fff',
+                          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))' }}
+                      />
+                    )}
+                    {i === 0 && m.type === 'image' && (
+                      <Chip
+                        label="Hero" size="small" color="primary"
+                        sx={{ position: 'absolute', bottom: 4, left: 4, height: 20, fontSize: 11 }}
+                      />
+                    )}
+                    <IconButton
+                      size="small" onClick={() => removeMedia(m.url)}
+                      sx={{
+                        position: 'absolute', top: 2, right: 2, p: 0.25,
+                        bgcolor: 'rgba(0,0,0,0.55)', color: '#fff',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.75)' },
+                      }}
+                    >
+                      <CloseIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            )}
 
             <Button
               component="label" variant="outlined" fullWidth startIcon={<UploadIcon />}
-              disabled={uploading} sx={{ mb: 1.5 }}
+              disabled={uploading || media.length >= MAX_MEDIA} sx={{ mb: 1.5 }}
             >
-              {uploading ? 'Uploading…' : 'Upload image'}
+              {uploading
+                ? 'Uploading…'
+                : media.length >= MAX_MEDIA
+                  ? 'Limit reached'
+                  : 'Add images / videos'}
               <input
-                hidden type="file" accept="image/*"
-                onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+                hidden type="file" accept="image/*,video/*" multiple
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length) handleUpload(e.target.files);
+                  e.target.value = '';
+                }}
               />
             </Button>
 
             <Button
               variant="contained" fullWidth
               startIcon={enriching ? <CircularProgress size={18} /> : <AutoAwesomeIcon />}
-              disabled={!imageUrl || enriching} onClick={handleEnrich}
+              disabled={!heroImage || enriching} onClick={handleEnrich}
             >
               {enriching ? 'Analyzing…' : 'Enrich with AI'}
             </Button>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+              First image is the hero. Up to {MAX_MEDIA} images/videos. AI analyses the hero image.
+            </Typography>
             {aiEnriched && <Chip label="AI enriched" color="primary" size="small" sx={{ mt: 1.5 }} />}
           </CardContent>
         </Card>
@@ -335,7 +432,7 @@ export default function NewProductPage() {
                 </Button>
                 <Button
                   variant="text" color="inherit"
-                  onClick={() => { setForm(EMPTY); setImageUrl(null); setAiEnriched(false); }}
+                  onClick={() => { setForm(EMPTY); setMedia([]); setAiEnriched(false); }}
                 >
                   Reset
                 </Button>
