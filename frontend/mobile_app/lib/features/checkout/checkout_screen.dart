@@ -10,6 +10,7 @@ import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/checkout_repository.dart';
+import '../../models/customer.dart';
 import '../../models/order.dart';
 import '../../models/ws_event.dart';
 import '../../widgets/app_button.dart';
@@ -38,6 +39,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    // Pre-fill the customer fields with whatever was captured during onboarding
+    // (name + number) so the associate doesn't re-type it; still fully editable.
+    final Customer? guest = context.read<OnboardingController>().customer;
+    if (guest != null) {
+      if ((guest.name ?? '').isNotEmpty) _customerName.text = guest.name!;
+      if ((guest.mobile ?? '').isNotEmpty) _customerMobile.text = guest.mobile!;
+    }
     // Mirror the order review onto the display as soon as the associate reaches
     // checkout, so the client follows the purchase through on the big screen.
     WidgetsBinding.instance.addPostFrameCallback((_) => _mirrorToDisplay());

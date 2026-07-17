@@ -11,6 +11,7 @@ import '../../data/journey_logger.dart';
 import '../../models/product.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/network_photo.dart';
+import '../../widgets/price_tag.dart';
 import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
@@ -294,8 +295,9 @@ class _DetailsSheet extends StatelessWidget {
             children: <Widget>[
               Expanded(child: Text(product.name, style: t.headlineSmall)),
               const SizedBox(width: AppSpacing.sm),
-              Text(
-                (variant.price ?? product.price).formatted,
+              PriceTag(
+                base: product.price,
+                effective: variant.price ?? product.price,
                 style: t.titleMedium,
               ),
             ],

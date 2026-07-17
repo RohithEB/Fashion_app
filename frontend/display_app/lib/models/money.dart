@@ -27,7 +27,9 @@ class Money {
   Money percent(double pct) =>
       Money(minorUnits: (minorUnits * pct).round(), currency: currency);
 
-  /// Formatted for display, e.g. `$1,299.00`.
+  /// Formatted for display. INR uses the **Indian numbering system** (e.g.
+  /// `₹1,00,000`) with whole rupees; other currencies use Western grouping with
+  /// 2 decimals.
   String get formatted {
     final String symbol = switch (currency) {
       'USD' => r'$',
@@ -36,12 +38,33 @@ class Money {
       'INR' => '₹',
       _ => '$currency ',
     };
+    if (currency == 'INR') {
+      return '$symbol${_groupIndian(major.round())}';
+    }
     final List<String> parts = major.toStringAsFixed(2).split('.');
     final String intPart = parts[0].replaceAllMapped(
       RegExp(r'(\d)(?=(\d{3})+$)'),
       (Match m) => '${m[1]},',
     );
     return '$symbol$intPart.${parts[1]}';
+  }
+
+  /// Indian digit grouping: last 3 digits, then groups of 2 (12,34,56,789).
+  static String _groupIndian(int value) {
+    final bool neg = value < 0;
+    String s = value.abs().toString();
+    if (s.length > 3) {
+      final String last3 = s.substring(s.length - 3);
+      String rest = s.substring(0, s.length - 3);
+      final List<String> groups = <String>[];
+      while (rest.length > 2) {
+        groups.insert(0, rest.substring(rest.length - 2));
+        rest = rest.substring(0, rest.length - 2);
+      }
+      if (rest.isNotEmpty) groups.insert(0, rest);
+      s = '${groups.join(',')},$last3';
+    }
+    return neg ? '-$s' : s;
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{

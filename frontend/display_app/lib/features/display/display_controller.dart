@@ -209,19 +209,37 @@ class DisplayController extends ChangeNotifier {
     final String? id = e.productId;
     if (id == null) return;
     _presentTargetId = id;
+    final String? variantId = e.variantId;
+    final String? size = e.size;
+    final int imageIndex = e.imageIndex ?? 0;
+
+    // Same product already on screen → update colour/size/image IN PLACE so the
+    // slide/size/colour change reflects instantly (no re-fetch, no flicker).
+    if (product != null &&
+        product!.id == id &&
+        presentation != null &&
+        phase == DisplayPhase.presenting) {
+      presentation = presentation!.copyWith(
+        variantId: variantId ?? presentation!.variantId,
+        size: size ?? presentation!.size,
+        imageIndex: imageIndex,
+      );
+      notifyListeners();
+      return;
+    }
+
     final Product? cached = _cache.where((Product p) => p.id == id).firstOrNull;
     if (cached != null) {
-      // We have data → present immediately.
       product = cached;
       presentation = ProductPresentation(
         productId: id,
-        variantId: e.variantId ?? cached.defaultVariant.id,
+        variantId: variantId ?? cached.defaultVariant.id,
+        size: size,
+        imageIndex: imageIndex,
       );
       phase = DisplayPhase.presenting;
       notifyListeners();
     } else {
-      // Not cached yet → show the loading screen (never a blank presenting
-      // screen) while we fetch the detail.
       phase = DisplayPhase.loading;
       notifyListeners();
     }
@@ -231,7 +249,6 @@ class DisplayController extends ChangeNotifier {
           .productById(id)
           .then((Product? full) {
             if (full == null || _presentTargetId != id) {
-              // Detail unavailable and nothing to show → fall back to welcome.
               if (product == null && phase == DisplayPhase.loading) {
                 phase = DisplayPhase.welcome;
                 notifyListeners();
@@ -241,7 +258,9 @@ class DisplayController extends ChangeNotifier {
             product = full;
             presentation = ProductPresentation(
               productId: id,
-              variantId: e.variantId ?? full.defaultVariant.id,
+              variantId: variantId ?? full.defaultVariant.id,
+              size: size,
+              imageIndex: imageIndex,
             );
             phase = DisplayPhase.presenting;
             notifyListeners();

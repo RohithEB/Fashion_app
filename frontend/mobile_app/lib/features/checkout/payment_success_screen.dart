@@ -9,6 +9,7 @@ import '../../core/theme/app_motion.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../models/order.dart';
 import '../../widgets/app_button.dart';
+import '../connection/connection_controller.dart';
 import '../presentation/presentation_controller.dart';
 
 /// Payment confirmation. The display simultaneously shows its Thank-You screen
@@ -82,12 +83,27 @@ class PaymentSuccessScreen extends StatelessWidget {
               ],
               const Spacer(flex: 3),
               AppButton(
-                label: 'Return to the collection',
+                label: 'Go to QR screen',
+                icon: AppIcons.qrCode,
                 expand: true,
+                // End the session: the server frees the display and pushes a
+                // fresh pairing QR to the big screen, ready for the next guest.
+                // The router then returns this device to the pairing screen.
+                onPressed: () {
+                  context.read<PresentationController>().hideProduct();
+                  context.read<ConnectionController>().endSession();
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(
                 onPressed: () {
                   context.read<PresentationController>().hideProduct();
                   context.go(AppRoutes.home);
                 },
+                child: Text(
+                  'Continue with this guest',
+                  style: t.bodyMedium?.copyWith(color: c.textSecondary),
+                ),
               ),
               const SizedBox(height: AppSpacing.xl),
             ],

@@ -27,7 +27,13 @@ class BackendControllerRealtime extends RealtimeService {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   String? _sessionId;
+  // Full presented state, so colour/size/image changes re-send the complete
+  // show_product and the display mirrors every field (the frozen protocol only
+  // relays show_product, not per-field deltas).
   String? _currentProductId;
+  String? _currentVariantId;
+  String? _currentSize;
+  int _currentImageIndex = 0;
   bool _connected = false;
 
   @override
@@ -93,6 +99,18 @@ class BackendControllerRealtime extends RealtimeService {
     );
   }
 
+  /// Send the complete current product state so the display mirrors the exact
+  /// colour, size and image the salesperson is showing.
+  void _sendShowProduct() {
+    if (_currentProductId == null) return;
+    _send('show_product', <String, dynamic>{
+      'productId': _currentProductId,
+      if (_currentVariantId != null) 'variantId': _currentVariantId,
+      if (_currentSize != null) 'size': _currentSize,
+      'imageIndex': _currentImageIndex,
+    });
+  }
+
   @override
   void emit(WsEvent event) {
     switch (event.type) {
@@ -110,15 +128,20 @@ class BackendControllerRealtime extends RealtimeService {
         _send('show_cart', event.payload);
       case WsEventType.showProduct:
         _currentProductId = event.productId ?? _currentProductId;
-        _send('show_product', <String, dynamic>{
-          'productId': event.productId,
-          if (event.variantId != null) 'variantId': event.variantId,
-        });
+        _currentVariantId = event.variantId ?? _currentVariantId;
+        _currentSize = event.size ?? _currentSize;
+        _currentImageIndex = event.imageIndex ?? 0;
+        _sendShowProduct();
       case WsEventType.changeColor:
-        _send('show_product', <String, dynamic>{
-          'productId': _currentProductId,
-          'variantId': event.variantId,
-        });
+        _currentVariantId = event.variantId ?? _currentVariantId;
+        _currentImageIndex = 0; // new colour → first image
+        _sendShowProduct();
+      case WsEventType.changeSize:
+        _currentSize = event.size ?? _currentSize;
+        _sendShowProduct();
+      case WsEventType.changeImage:
+        _currentImageIndex = event.imageIndex ?? _currentImageIndex;
+        _sendShowProduct();
       case WsEventType.zoomImage:
         _send('zoom', <String, dynamic>{
           'assetId': _currentProductId,

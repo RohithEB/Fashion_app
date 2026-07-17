@@ -180,3 +180,62 @@ export function listProducts(limit = 200): ProductRow[] {
 export function countProducts(): number {
   return (getDb().prepare('SELECT COUNT(*) AS n FROM products').get() as { n: number }).n;
 }
+
+export interface ProductMediaRow {
+  id: string;
+  type: string;
+  url: string;
+  posterUrl: string | null;
+  label: string | null;
+}
+
+export interface ProductVariantRow {
+  id: string;
+  size: string | null;
+  color: string | null;
+  colorHex: string | null;
+  mediaUrl: string | null;
+  stock: number;
+}
+
+export interface ProductDetail extends ProductRow {
+  description: string | null;
+  tags: string[];
+  media: ProductMediaRow[];
+  variants: ProductVariantRow[];
+  enrichment: Array<{ key: string; value: string | null }>;
+}
+
+/// Full product detail for the CMS row-click popup: every column, plus media,
+/// colour/size variants, and enrichment rows.
+export function getProductDetail(id: string): ProductDetail | null {
+  const db = getDb();
+  const p = db.prepare('SELECT * FROM products WHERE id = ?').get(id) as
+    | (ProductRow & { description: string | null; tags: string | null })
+    | undefined;
+  if (!p) return null;
+
+  const media = db
+    .prepare(
+      'SELECT id, type, url, posterUrl, label FROM product_media WHERE productId = ? ORDER BY sortOrder',
+    )
+    .all(id) as ProductMediaRow[];
+  const variants = db
+    .prepare(
+      'SELECT id, size, color, colorHex, mediaUrl, stock FROM variants WHERE productId = ?',
+    )
+    .all(id) as ProductVariantRow[];
+  const enrichment = db
+    .prepare(
+      'SELECT key, value FROM product_enrichment WHERE productId = ? ORDER BY sortOrder',
+    )
+    .all(id) as Array<{ key: string; value: string | null }>;
+
+  let tags: string[] = [];
+  try {
+    tags = JSON.parse(p.tags || '[]');
+  } catch {
+    tags = [];
+  }
+  return { ...p, tags, media, variants, enrichment };
+}

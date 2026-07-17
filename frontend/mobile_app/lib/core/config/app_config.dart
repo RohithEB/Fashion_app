@@ -17,12 +17,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 abstract final class AppConfig {
   // Backend mode is the DEFAULT now (real Node server + SQLite). Pass
   // --dart-define=BACKEND=false only to run the offline mock demo.
-  static const bool backendMode = bool.fromEnvironment(
+  static const bool _envBackend = bool.fromEnvironment(
     'BACKEND',
     defaultValue: true,
   );
 
-  static const String backendHost = String.fromEnvironment(
+  static const String _envHost = String.fromEnvironment(
     'BACKEND_HOST',
     defaultValue: '10.0.1.12',
   );

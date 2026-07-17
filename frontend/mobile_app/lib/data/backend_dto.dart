@@ -12,10 +12,14 @@ abstract final class BackendDto {
     return Category(id: name, name: name);
   }
 
-  static Money _price(Map<String, dynamic> json) => Money(
-    minorUnits: (json['basePrice'] as num?)?.toInt() ?? 0,
-    currency: json['currency'] as String? ?? 'INR',
-  );
+  static Money _price(Map<String, dynamic> json) {
+    // The backend stores basePrice in WHOLE currency units (e.g. 8900 = ₹8,900),
+    // while Money holds minor units — so multiply by 100 to stay consistent with
+    // the CMS (which shows the raw whole number).
+    final num base = (json['basePrice'] as num?) ?? 0;
+    final String cur = json['currency'] as String? ?? 'INR';
+    return Money(minorUnits: (base * 100).round(), currency: cur);
+  }
 
   static ProductMedia _image(String url) => ProductMedia(
     id: url.hashCode.toString(),

@@ -11,6 +11,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../models/presentation_state.dart';
 import '../../../models/product.dart';
 import '../../../widgets/network_photo.dart';
+import '../../../widgets/price_tag.dart';
 import '../display_controller.dart';
 
 /// Renders the product currently presented by the salesperson, reproducing
@@ -149,8 +150,9 @@ class _InfoPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(product.name, style: t.displaySmall),
             const SizedBox(height: AppSpacing.sm),
-            Text(
-              (variant.price ?? product.price).formatted,
+            PriceTag(
+              base: product.price,
+              effective: variant.price ?? product.price,
               style: t.headlineSmall,
             ),
             const SizedBox(height: AppSpacing.xl),
