@@ -20,9 +20,10 @@ class CatalogScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
-    final List<Product> products = context.select<DisplayController, List<Product>>(
-      (DisplayController ctrl) => ctrl.catalog,
-    );
+    final List<Product> products = context
+        .select<DisplayController, List<Product>>(
+          (DisplayController ctrl) => ctrl.catalog,
+        );
 
     return Container(
       color: c.background,
@@ -50,11 +51,11 @@ class CatalogScreen extends StatelessWidget {
                           return GridView.builder(
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: columns,
-                              crossAxisSpacing: AppSpacing.md,
-                              mainAxisSpacing: AppSpacing.lg,
-                              childAspectRatio: 0.62,
-                            ),
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: AppSpacing.md,
+                                  mainAxisSpacing: AppSpacing.lg,
+                                  childAspectRatio: 0.62,
+                                ),
                             itemCount: products.length,
                             itemBuilder: (_, int i) =>
                                 _CatalogCard(product: products[i]),

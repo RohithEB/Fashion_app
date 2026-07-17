@@ -36,9 +36,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _continue() async {
-    final OnboardingController onboarding = context.read<OnboardingController>();
-    final String? sessionId =
-        context.read<ConnectionController>().session?.sessionId;
+    final OnboardingController onboarding = context
+        .read<OnboardingController>();
+    final String? sessionId = context
+        .read<ConnectionController>()
+        .session
+        ?.sessionId;
     final bool ok = await onboarding.submit(
       sessionId: sessionId,
       name: _name.text,
@@ -51,8 +54,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _skip() {
-    final String? sessionId =
-        context.read<ConnectionController>().session?.sessionId;
+    final String? sessionId = context
+        .read<ConnectionController>()
+        .session
+        ?.sessionId;
     context.read<OnboardingController>().skip(sessionId);
     _revealCatalogue();
   }
@@ -67,8 +72,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
-    final OnboardingController onboarding =
-        context.watch<OnboardingController>();
+    final OnboardingController onboarding = context
+        .watch<OnboardingController>();
 
     return Scaffold(
       body: SafeArea(
@@ -81,8 +86,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const SizedBox(height: AppSpacing.xl),
-                    Text('GUEST PROFILE',
-                        style: AppTypography.eyebrow(c.accent)),
+                    Text(
+                      'GUEST PROFILE',
+                      style: AppTypography.eyebrow(c.accent),
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text('Personalise the session', style: t.displaySmall),
                     const SizedBox(height: AppSpacing.sm),
@@ -128,8 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       label: 'STYLE PERSONALITY',
                       options: onboarding.options.personalities,
                       selected: _personality,
-                      onSelect: (String? v) =>
-                          setState(() => _personality = v),
+                      onSelect: (String? v) => setState(() => _personality = v),
                     ),
                     if (onboarding.error != null) ...<Widget>[
                       const SizedBox(height: AppSpacing.md),

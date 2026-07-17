@@ -12,15 +12,17 @@ import 'catalog_repository.dart';
 /// Selected when [AppConfig.backendMode] is on; otherwise the app uses
 /// [MockCatalogRepository]. The rest of the app is unaware which is in play.
 class HttpCatalogRepository implements CatalogRepository {
-  HttpCatalogRepository({http.Client? client}) : _client = client ?? http.Client();
+  HttpCatalogRepository({http.Client? client})
+    : _client = client ?? http.Client();
 
   final http.Client _client;
   static const Duration _timeout = Duration(seconds: 8);
 
   @override
   Future<List<Category>> categories() async {
-    final http.Response res =
-        await _client.get(AppConfig.http('/api/categories')).timeout(_timeout);
+    final http.Response res = await _client
+        .get(AppConfig.http('/api/categories'))
+        .timeout(_timeout);
     if (res.statusCode != 200) return const <Category>[];
     final Map<String, dynamic> body =
         jsonDecode(res.body) as Map<String, dynamic>;
@@ -38,8 +40,9 @@ class HttpCatalogRepository implements CatalogRepository {
       'category': ?categoryId,
       if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
     };
-    final http.Response res =
-        await _client.get(AppConfig.http('/api/products', q)).timeout(_timeout);
+    final http.Response res = await _client
+        .get(AppConfig.http('/api/products', q))
+        .timeout(_timeout);
     if (res.statusCode != 200) return const <Product>[];
     final Map<String, dynamic> body =
         jsonDecode(res.body) as Map<String, dynamic>;

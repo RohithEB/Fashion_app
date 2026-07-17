@@ -33,8 +33,10 @@ class Order {
       total: money('total'),
       createdAt: json['createdAt'] as String? ?? '',
       items: rawItems
-          .map((dynamic e) =>
-              OrderItem.fromJson(e as Map<String, dynamic>, currency))
+          .map(
+            (dynamic e) =>
+                OrderItem.fromJson(e as Map<String, dynamic>, currency),
+          )
           .toList(),
       customerName: customer?['name'] as String?,
     );
@@ -65,8 +67,10 @@ class OrderItem {
       OrderItem(
         name: json['name'] as String? ?? 'Item',
         quantity: (json['quantity'] as num?)?.toInt() ?? 1,
-        lineTotal:
-            Money.fromMajor((json['lineTotal'] as num?) ?? 0, currency: currency),
+        lineTotal: Money.fromMajor(
+          (json['lineTotal'] as num?) ?? 0,
+          currency: currency,
+        ),
         color: json['color'] as String?,
         size: json['size'] as String?,
       );

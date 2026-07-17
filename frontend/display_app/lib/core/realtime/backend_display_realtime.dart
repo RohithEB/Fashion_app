@@ -16,7 +16,8 @@ import 'display_realtime_base.dart';
 /// translated into the app's [WsEvent] vocabulary and fed to the display FSM,
 /// so the rest of the display app is unchanged.
 class BackendDisplayRealtime extends DisplayRealtimeService {
-  final StreamController<WsEvent> _events = StreamController<WsEvent>.broadcast();
+  final StreamController<WsEvent> _events =
+      StreamController<WsEvent>.broadcast();
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   String _pairingUrl = '';
@@ -36,8 +37,9 @@ class BackendDisplayRealtime extends DisplayRealtimeService {
   Future<void> start() async {
     _registered = Completer<void>();
     try {
-      final WebSocketChannel channel =
-          WebSocketChannel.connect(AppConfig.ws('display'));
+      final WebSocketChannel channel = WebSocketChannel.connect(
+        AppConfig.ws('display'),
+      );
       await channel.ready.timeout(const Duration(seconds: 5));
       _channel = channel;
       _sub = channel.stream.listen(
@@ -71,18 +73,23 @@ class BackendDisplayRealtime extends DisplayRealtimeService {
       case 'display_registered':
         final String? url = payload['controllerUrl'] as String?;
         final String? token = payload['pairingToken'] as String?;
-        _pairingUrl = url ??
+        _pairingUrl =
+            url ??
             (token != null
-                ? AppConfig.http('/pair', <String, dynamic>{'token': token}).toString()
+                ? AppConfig.http('/pair', <String, dynamic>{
+                    'token': token,
+                  }).toString()
                 : _pairingUrl);
         if (_registered != null && !_registered!.isCompleted) {
           _registered!.complete();
         }
       case 'paired':
-        _push(const WsEvent(
-          type: WsEventType.connectScreen,
-          payload: <String, dynamic>{'salespersonName': 'your advisor'},
-        ));
+        _push(
+          const WsEvent(
+            type: WsEventType.connectScreen,
+            payload: <String, dynamic>{'salespersonName': 'your advisor'},
+          ),
+        );
       case 'show_catalog':
         _push(WsEvent(type: WsEventType.showCatalog, payload: payload));
       case 'show_cart':
@@ -94,14 +101,16 @@ class BackendDisplayRealtime extends DisplayRealtimeService {
       case 'show_related':
         _push(WsEvent(type: WsEventType.showRelatedMedia, payload: payload));
       case 'zoom':
-        _push(WsEvent(
-          type: WsEventType.zoomImage,
-          payload: <String, dynamic>{
-            'scale': payload['level'],
-            'focalX': payload['x'],
-            'focalY': payload['y'],
-          },
-        ));
+        _push(
+          WsEvent(
+            type: WsEventType.zoomImage,
+            payload: <String, dynamic>{
+              'scale': payload['level'],
+              'focalX': payload['x'],
+              'focalY': payload['y'],
+            },
+          ),
+        );
       case 'clear':
         _push(const WsEvent(type: WsEventType.hideProduct));
       case 'session_end':

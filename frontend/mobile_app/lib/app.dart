@@ -65,7 +65,8 @@ class FashionControllerApp extends StatelessWidget {
               CatalogController(ctx.read<CatalogRepository>())..load(),
         ),
         ChangeNotifierProvider<AuthController>(
-          create: (BuildContext ctx) => AuthController(ctx.read<AuthRepository>()),
+          create: (BuildContext ctx) =>
+              AuthController(ctx.read<AuthRepository>()),
         ),
         ChangeNotifierProvider<OnboardingController>(
           create: (BuildContext ctx) =>

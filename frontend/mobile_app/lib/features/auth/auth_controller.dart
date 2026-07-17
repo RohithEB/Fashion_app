@@ -66,10 +66,8 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<bool> login({
-    required String username,
-    required String password,
-  }) => _run(() => _repo.login(username: username, password: password));
+  Future<bool> login({required String username, required String password}) =>
+      _run(() => _repo.login(username: username, password: password));
 
   Future<bool> register({
     required String name,

@@ -20,8 +20,9 @@ class AuthResult {
   const AuthResult({required this.salesperson, required this.token});
 
   factory AuthResult.fromJson(Map<String, dynamic> json) => AuthResult(
-    salesperson:
-        Salesperson.fromJson(json['salesperson'] as Map<String, dynamic>),
+    salesperson: Salesperson.fromJson(
+      json['salesperson'] as Map<String, dynamic>,
+    ),
     token: json['token'] as String,
   );
 
@@ -50,8 +51,7 @@ abstract interface class AuthRepository {
 
 /// [AuthRepository] backed by the Node backend (`/api/auth/*`).
 class HttpAuthRepository implements AuthRepository {
-  HttpAuthRepository({http.Client? client})
-    : _client = client ?? http.Client();
+  HttpAuthRepository({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
   static const Duration _timeout = Duration(seconds: 8);
@@ -103,7 +103,9 @@ class HttpAuthRepository implements AuthRepository {
           )
           .timeout(_timeout);
     } catch (_) {
-      throw const AuthException('Could not reach the server. Check the connection.');
+      throw const AuthException(
+        'Could not reach the server. Check the connection.',
+      );
     }
     final Map<String, dynamic> json =
         jsonDecode(res.body) as Map<String, dynamic>;

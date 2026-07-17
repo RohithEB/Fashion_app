@@ -34,10 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
     final AuthController auth = context.read<AuthController>();
-    await auth.login(
-      username: _username.text.trim(),
-      password: _password.text,
-    );
+    await auth.login(username: _username.text.trim(), password: _password.text);
     // On success the router guard redirects to the connect screen automatically.
   }
 
@@ -88,9 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: 'Password',
                     prefixIcon: Icon(Icons.lock_outline),
                   ),
-                  validator: (String? v) => (v == null || v.isEmpty)
-                      ? 'Enter your password'
-                      : null,
+                  validator: (String? v) =>
+                      (v == null || v.isEmpty) ? 'Enter your password' : null,
                 ),
                 if (auth.error != null) ...<Widget>[
                   const SizedBox(height: AppSpacing.md),

@@ -89,9 +89,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -143,8 +143,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          Text('CUSTOMER (OPTIONAL)',
-              style: AppTypography.eyebrow(c.textSecondary)),
+          Text(
+            'CUSTOMER (OPTIONAL)',
+            style: AppTypography.eyebrow(c.textSecondary),
+          ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Attach the client to this order for their records.',

@@ -13,16 +13,16 @@ abstract final class BackendDto {
   }
 
   static Money _price(Map<String, dynamic> json) => Money(
-        minorUnits: (json['basePrice'] as num?)?.toInt() ?? 0,
-        currency: json['currency'] as String? ?? 'INR',
-      );
+    minorUnits: (json['basePrice'] as num?)?.toInt() ?? 0,
+    currency: json['currency'] as String? ?? 'INR',
+  );
 
   static ProductMedia _image(String url) => ProductMedia(
-        id: url.hashCode.toString(),
-        type: ProductMediaType.image,
-        url: AppConfig.media(url),
-        thumbnailUrl: AppConfig.media(url),
-      );
+    id: url.hashCode.toString(),
+    type: ProductMediaType.image,
+    url: AppConfig.media(url),
+    thumbnailUrl: AppConfig.media(url),
+  );
 
   /// Summary product from `GET /api/products` list items (no variants/media).
   static Product fromListItem(Map<String, dynamic> json) {
@@ -151,7 +151,9 @@ abstract final class BackendDto {
       } else {
         // Everything else is a labeled attribute for the "all details" sheet.
         details.add(ProductDetail(label: key, value: value));
-        if (lk.contains('fabric') || lk.contains('material') || lk.contains('composition')) {
+        if (lk.contains('fabric') ||
+            lk.contains('material') ||
+            lk.contains('composition')) {
           materials.add(value);
         }
       }
@@ -159,12 +161,16 @@ abstract final class BackendDto {
     // Seeded products have no explicit 'Highlight' rows — surface a few attribute
     // values as style notes so the collapsed view isn't empty.
     if (highlights.isEmpty) {
-      highlights.addAll(details
-          .where((ProductDetail d) =>
-              !d.label.toLowerCase().contains('material') &&
-              !d.label.toLowerCase().contains('fabric'))
-          .map((ProductDetail d) => d.value)
-          .take(4));
+      highlights.addAll(
+        details
+            .where(
+              (ProductDetail d) =>
+                  !d.label.toLowerCase().contains('material') &&
+                  !d.label.toLowerCase().contains('fabric'),
+            )
+            .map((ProductDetail d) => d.value)
+            .take(4),
+      );
     }
 
     return Product(
@@ -181,7 +187,8 @@ abstract final class BackendDto {
                 colorHex: '#141210',
                 sizes: allSizes.isEmpty ? const <String>['One Size'] : allSizes,
                 media: <ProductMedia>[
-                  if (json['heroImage'] != null) _image(json['heroImage'] as String),
+                  if (json['heroImage'] != null)
+                    _image(json['heroImage'] as String),
                 ],
               ),
             ]

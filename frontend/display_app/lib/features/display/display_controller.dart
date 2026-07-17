@@ -185,9 +185,7 @@ class DisplayController extends ChangeNotifier {
     final String? id = e.productId;
     if (id == null) return;
     _presentTargetId = id;
-    final Product? cached = _cache
-        .where((Product p) => p.id == id)
-        .firstOrNull;
+    final Product? cached = _cache.where((Product p) => p.id == id).firstOrNull;
     if (cached != null) {
       // We have data → present immediately.
       product = cached;

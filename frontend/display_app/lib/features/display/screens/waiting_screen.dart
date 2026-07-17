@@ -67,8 +67,9 @@ class _Invitation extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment:
-          portrait ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: portrait
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: <Widget>[
         Text('EBANI', style: AppTypography.eyebrow(c.accent)),
         const SizedBox(height: AppSpacing.lg),

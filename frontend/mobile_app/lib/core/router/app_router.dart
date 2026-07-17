@@ -38,15 +38,17 @@ abstract final class AppRouter {
   static GoRouter build(BuildContext context) {
     final ConnectionController conn = context.read<ConnectionController>();
     final AuthController auth = context.read<AuthController>();
-    final OnboardingController onboarding = context.read<OnboardingController>();
+    final OnboardingController onboarding = context
+        .read<OnboardingController>();
     return GoRouter(
       initialLocation: AppRoutes.login,
       refreshListenable: Listenable.merge(<Listenable>[conn, auth, onboarding]),
       redirect: (BuildContext ctx, GoRouterState state) {
         final bool loggedIn = auth.isAuthenticated;
         final bool connected = conn.isConnected;
-        final bool onboarded =
-            onboarding.isCompletedFor(conn.session?.sessionId);
+        final bool onboarded = onboarding.isCompletedFor(
+          conn.session?.sessionId,
+        );
         final String loc = state.matchedLocation;
         const Set<String> authRoutes = <String>{
           AppRoutes.login,

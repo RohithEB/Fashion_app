@@ -22,7 +22,8 @@ class BackendControllerRealtime extends RealtimeService {
   @override
   final SenderRole role;
 
-  final StreamController<WsEvent> _events = StreamController<WsEvent>.broadcast();
+  final StreamController<WsEvent> _events =
+      StreamController<WsEvent>.broadcast();
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _sub;
   String? _sessionId;
@@ -67,10 +68,13 @@ class BackendControllerRealtime extends RealtimeService {
         (msg['payload'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
     switch (type) {
       case 'paired':
-        _sessionId = payload['sessionId'] as String? ?? msg['sessionId'] as String?;
+        _sessionId =
+            payload['sessionId'] as String? ?? msg['sessionId'] as String?;
         _events.add(WsEvent(type: WsEventType.paired, payload: payload));
       case 'session_warning':
-        _events.add(WsEvent(type: WsEventType.sessionWarning, payload: payload));
+        _events.add(
+          WsEvent(type: WsEventType.sessionWarning, payload: payload),
+        );
       case 'session_end':
         _events.add(WsEvent(type: WsEventType.sessionEnd, payload: payload));
       default:
@@ -80,11 +84,13 @@ class BackendControllerRealtime extends RealtimeService {
 
   void _send(String type, Map<String, dynamic> payload) {
     if (!_connected || _channel == null) return;
-    _channel!.sink.add(jsonEncode(<String, dynamic>{
-      'type': type,
-      if (_sessionId != null) 'sessionId': _sessionId,
-      'payload': payload,
-    }));
+    _channel!.sink.add(
+      jsonEncode(<String, dynamic>{
+        'type': type,
+        if (_sessionId != null) 'sessionId': _sessionId,
+        'payload': payload,
+      }),
+    );
   }
 
   @override

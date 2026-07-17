@@ -22,7 +22,8 @@ class NetworkPhoto extends StatelessWidget {
 
   bool get _isSvg {
     final String u = url ?? '';
-    return u.contains('/media/ph') || u.toLowerCase().endsWith('.svg') ||
+    return u.contains('/media/ph') ||
+        u.toLowerCase().endsWith('.svg') ||
         u.contains('image/svg');
   }
 
@@ -65,9 +66,9 @@ class NetworkPhoto extends StatelessWidget {
   }
 
   Widget _placeholder(AppColors c, {bool broken = false}) => ColoredBox(
-        color: c.skeleton,
-        child: broken
-            ? Center(child: Icon(AppIcons.gallery, color: c.textTertiary))
-            : null,
-      );
+    color: c.skeleton,
+    child: broken
+        ? Center(child: Icon(AppIcons.gallery, color: c.textTertiary))
+        : null,
+  );
 }

@@ -56,7 +56,9 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: <Widget>[
-                            Flexible(child: Text('Ebani', style: t.headlineMedium)),
+                            Flexible(
+                              child: Text('Ebani', style: t.headlineMedium),
+                            ),
                             const SizedBox(width: AppSpacing.sm),
                             _StatusBadge(connected: conn.liveLink),
                           ],
@@ -95,7 +97,9 @@ class HomeScreen extends StatelessWidget {
               selectedId: catalog.selectedCategoryId,
             ),
             const SizedBox(height: AppSpacing.xs),
-            Expanded(child: _Grid(catalog: catalog, connected: conn.liveLink)),
+            Expanded(
+              child: _Grid(catalog: catalog, connected: conn.liveLink),
+            ),
           ],
         ),
       ),
@@ -153,7 +157,10 @@ class _StatusBadge extends StatelessWidget {
     final AppColors c = AppColors.of(context);
     final Color color = connected ? c.success : c.textTertiary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),

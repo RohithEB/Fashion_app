@@ -132,132 +132,143 @@ class _InfoPanel extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.giant),
       alignment: Alignment.centerLeft,
       child: SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(product.brand, style: AppTypography.eyebrow(c.accent)),
-          const SizedBox(height: AppSpacing.md),
-          Text(product.name, style: t.displaySmall),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            (variant.price ?? product.price).formatted,
-            style: t.headlineSmall,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            product.description,
-            style: t.titleMedium?.copyWith(
-              color: c.textSecondary,
-              fontWeight: FontWeight.w400,
-              height: 1.5,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(product.brand, style: AppTypography.eyebrow(c.accent)),
+            const SizedBox(height: AppSpacing.md),
+            Text(product.name, style: t.displaySmall),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              (variant.price ?? product.price).formatted,
+              style: t.headlineSmall,
             ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            'COLOR — ${variant.colorName}',
-            style: AppTypography.eyebrow(c.textSecondary),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: <Widget>[
-              for (final ProductVariant v in product.variants)
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.sm),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _hex(v.colorHex),
-                      border: Border.all(
-                        color: v.id == variant.id ? c.accent : c.border,
-                        width: v.id == variant.id ? 2 : 1,
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              product.description,
+              style: t.titleMedium?.copyWith(
+                color: c.textSecondary,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              'COLOR — ${variant.colorName}',
+              style: AppTypography.eyebrow(c.textSecondary),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: <Widget>[
+                for (final ProductVariant v in product.variants)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.sm),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _hex(v.colorHex),
+                        border: Border.all(
+                          color: v.id == variant.id ? c.accent : c.border,
+                          width: v.id == variant.id ? 2 : 1,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
-          AnimatedSize(
-            duration: AppMotion.base,
-            curve: AppMotion.standard,
-            alignment: Alignment.topLeft,
-            child: showAI && product.aiHighlights.isNotEmpty
-                ? Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xl),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Icon(AppIcons.sparkle, size: 16, color: c.accent),
-                            const SizedBox(width: AppSpacing.xs),
-                            Text(
-                              'STYLE NOTES',
-                              style: AppTypography.eyebrow(c.accent),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        for (final String h in product.aiHighlights)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppSpacing.xs,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  '—  ',
-                                  style: t.bodyLarge?.copyWith(color: c.accent),
-                                ),
-                                Expanded(child: Text(h, style: t.bodyLarge)),
-                              ],
-                            ),
+              ],
+            ),
+            AnimatedSize(
+              duration: AppMotion.base,
+              curve: AppMotion.standard,
+              alignment: Alignment.topLeft,
+              child: showAI && product.aiHighlights.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xl),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Icon(AppIcons.sparkle, size: 16, color: c.accent),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                'STYLE NOTES',
+                                style: AppTypography.eyebrow(c.accent),
+                              ),
+                            ],
                           ),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          // Full labeled details, revealed when the associate expands the sheet.
-          AnimatedSize(
-            duration: AppMotion.base,
-            curve: AppMotion.standard,
-            alignment: Alignment.topLeft,
-            child: expanded && product.details.isNotEmpty
-                ? Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xl),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text('DETAILS', style: AppTypography.eyebrow(c.accent)),
-                        const SizedBox(height: AppSpacing.sm),
-                        for (final ProductDetail d in product.details)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                SizedBox(
-                                  width: 150,
-                                  child: Text(
-                                    d.label.toUpperCase(),
-                                    style: AppTypography.eyebrow(c.textTertiary),
+                          const SizedBox(height: AppSpacing.sm),
+                          for (final String h in product.aiHighlights)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.xs,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    '—  ',
+                                    style: t.bodyLarge?.copyWith(
+                                      color: c.accent,
+                                    ),
                                   ),
-                                ),
-                                Expanded(child: Text(d.value, style: t.bodyLarge)),
-                              ],
+                                  Expanded(child: Text(h, style: t.bodyLarge)),
+                                ],
+                              ),
                             ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            // Full labeled details, revealed when the associate expands the sheet.
+            AnimatedSize(
+              duration: AppMotion.base,
+              curve: AppMotion.standard,
+              alignment: Alignment.topLeft,
+              child: expanded && product.details.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xl),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'DETAILS',
+                            style: AppTypography.eyebrow(c.accent),
                           ),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
+                          const SizedBox(height: AppSpacing.sm),
+                          for (final ProductDetail d in product.details)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: AppSpacing.xs,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  SizedBox(
+                                    width: 150,
+                                    child: Text(
+                                      d.label.toUpperCase(),
+                                      style: AppTypography.eyebrow(
+                                        c.textTertiary,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(d.value, style: t.bodyLarge),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -306,11 +317,15 @@ class _SyncedTransformState extends State<_SyncedTransform>
   @override
   void didUpdateWidget(covariant _SyncedTransform old) {
     super.didUpdateWidget(old);
-    if (widget.scale == _toScale && widget.panX == _toX && widget.panY == _toY) {
+    if (widget.scale == _toScale &&
+        widget.panX == _toX &&
+        widget.panY == _toY) {
       return;
     }
     // Continue from the value currently on screen so bursts don't snap back.
-    final double t = _ctrl.isAnimating ? Curves.easeOut.transform(_ctrl.value) : 1;
+    final double t = _ctrl.isAnimating
+        ? Curves.easeOut.transform(_ctrl.value)
+        : 1;
     _fromScale = _lerp(_fromScale, _toScale, t);
     _fromX = _lerp(_fromX, _toX, t);
     _fromY = _lerp(_fromY, _toY, t);
@@ -334,8 +349,14 @@ class _SyncedTransformState extends State<_SyncedTransform>
       builder: (_, Widget? child) {
         final double t = Curves.easeOut.transform(_ctrl.value);
         return Transform.translate(
-          offset: Offset(_lerp(_fromX, _toX, t) * 60, _lerp(_fromY, _toY, t) * 60),
-          child: Transform.scale(scale: _lerp(_fromScale, _toScale, t), child: child),
+          offset: Offset(
+            _lerp(_fromX, _toX, t) * 60,
+            _lerp(_fromY, _toY, t) * 60,
+          ),
+          child: Transform.scale(
+            scale: _lerp(_fromScale, _toScale, t),
+            child: child,
+          ),
         );
       },
     );

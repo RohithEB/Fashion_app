@@ -54,8 +54,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _loadDetail() async {
-    final Product? full =
-        await context.read<CatalogRepository>().productById(widget.product.id);
+    final Product? full = await context.read<CatalogRepository>().productById(
+      widget.product.id,
+    );
     if (full != null && mounted) {
       setState(() {
         _product = full;
@@ -168,7 +169,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 alignment: Alignment.topRight,
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: _LiveBadge(onTap: () => LivePreviewSheet.show(context)),
+                  child: _LiveBadge(
+                    onTap: () => LivePreviewSheet.show(context),
+                  ),
                 ),
               ),
             ),
@@ -284,7 +287,10 @@ class _DetailsSheet extends StatelessWidget {
             children: <Widget>[
               Expanded(child: Text(product.name, style: t.headlineSmall)),
               const SizedBox(width: AppSpacing.sm),
-              Text((variant.price ?? product.price).formatted, style: t.titleMedium),
+              Text(
+                (variant.price ?? product.price).formatted,
+                style: t.titleMedium,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -337,7 +343,9 @@ class _DetailsSheet extends StatelessWidget {
           Center(
             child: TextButton.icon(
               onPressed: onToggleDetails,
-              icon: Icon(expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up),
+              icon: Icon(
+                expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
+              ),
               label: Text(expanded ? 'Hide details' : 'View all details'),
             ),
           ),
@@ -357,7 +365,10 @@ class _DetailsSheet extends StatelessWidget {
               children: <Widget>[
                 Icon(AppIcons.sparkle, size: 16, color: c.accent),
                 const SizedBox(width: AppSpacing.xs),
-                Text('STYLE NOTES', style: AppTypography.eyebrow(c.textSecondary)),
+                Text(
+                  'STYLE NOTES',
+                  style: AppTypography.eyebrow(c.textSecondary),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),

@@ -100,7 +100,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                 if (items.isEmpty) {
                   return const EmptyStateView(
                     title: 'No matches yet',
-                    message: 'Capture a guest profile or add enriched products.',
+                    message:
+                        'Capture a guest profile or add enriched products.',
                     icon: AppIcons.sparkle,
                   );
                 }

@@ -45,12 +45,14 @@ abstract interface class CheckoutRepository {
 
 /// Maps cart lines to the backend's checkout item shape.
 List<Map<String, dynamic>> _itemsPayload(Cart cart) => cart.items
-    .map((CartItem i) => <String, dynamic>{
-      'productId': i.product.id,
-      'variantId': i.variantId,
-      'size': i.size,
-      'quantity': i.quantity,
-    })
+    .map(
+      (CartItem i) => <String, dynamic>{
+        'productId': i.product.id,
+        'variantId': i.variantId,
+        'size': i.size,
+        'quantity': i.quantity,
+      },
+    )
     .toList();
 
 class HttpCheckoutRepository implements CheckoutRepository {
@@ -84,7 +86,9 @@ class HttpCheckoutRepository implements CheckoutRepository {
           )
           .timeout(_timeout);
     } catch (_) {
-      throw const CheckoutException('Could not reach the server. Check the connection.');
+      throw const CheckoutException(
+        'Could not reach the server. Check the connection.',
+      );
     }
     final Map<String, dynamic> json =
         jsonDecode(res.body) as Map<String, dynamic>;

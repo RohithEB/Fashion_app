@@ -130,7 +130,8 @@ class ProductPresentation {
         );
       case WsEventType.showDetails:
         return copyWith(
-          detailsExpanded: (event.payload['expanded'] as bool?) ?? !detailsExpanded,
+          detailsExpanded:
+              (event.payload['expanded'] as bool?) ?? !detailsExpanded,
         );
       case WsEventType.showRelatedMedia:
         return copyWith(

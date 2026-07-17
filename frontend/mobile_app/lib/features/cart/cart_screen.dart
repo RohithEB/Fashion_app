@@ -19,24 +19,28 @@ import 'cart_controller.dart';
 
 /// Serialise the cart into a display-friendly payload (formatted strings so the
 /// display renders it read-only without any Money logic).
-Map<String, dynamic> cartPayload(Cart cart, {String? customerName}) => <String, dynamic>{
-  'items': cart.items
-      .map((CartItem i) => <String, dynamic>{
-        'name': i.product.name,
-        'brand': i.product.brand,
-        'color': i.variant.colorName,
-        'size': i.size,
-        'quantity': i.quantity,
-        'lineTotal': i.lineTotal.formatted,
-        'image': i.variant.images.firstOrNull?.url,
-      })
-      .toList(),
-  'count': cart.count,
-  'subtotal': cart.subtotal.formatted,
-  'tax': cart.tax.formatted,
-  'total': cart.total.formatted,
-  if (customerName != null && customerName.isNotEmpty) 'customerName': customerName,
-};
+Map<String, dynamic> cartPayload(Cart cart, {String? customerName}) =>
+    <String, dynamic>{
+      'items': cart.items
+          .map(
+            (CartItem i) => <String, dynamic>{
+              'name': i.product.name,
+              'brand': i.product.brand,
+              'color': i.variant.colorName,
+              'size': i.size,
+              'quantity': i.quantity,
+              'lineTotal': i.lineTotal.formatted,
+              'image': i.variant.images.firstOrNull?.url,
+            },
+          )
+          .toList(),
+      'count': cart.count,
+      'subtotal': cart.subtotal.formatted,
+      'tax': cart.tax.formatted,
+      'total': cart.total.formatted,
+      if (customerName != null && customerName.isNotEmpty)
+        'customerName': customerName,
+    };
 
 /// The cart doubles as the salesperson's **shortlist and on-screen selector**:
 /// each line can be pushed to the display with one tap ("Present"), so the
@@ -51,13 +55,21 @@ class CartScreen extends StatelessWidget {
     final Cart data = cart.cart;
     final PresentationController pres = context.read<PresentationController>();
     final bool connected = context.watch<ConnectionController>().liveLink;
-    final String? customerName = context.read<OnboardingController>().customer?.name;
+    final String? customerName = context
+        .read<OnboardingController>()
+        .customer
+        ?.name;
 
     // While the cart is mirrored on the display, re-sync on every change
     // (quantity edits, deletions) after the frame settles.
     if (pres.cartOnScreen) {
-      final Map<String, dynamic> payload = cartPayload(data, customerName: customerName);
-      WidgetsBinding.instance.addPostFrameCallback((_) => pres.syncCart(payload));
+      final Map<String, dynamic> payload = cartPayload(
+        data,
+        customerName: customerName,
+      );
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => pres.syncCart(payload),
+      );
     }
 
     return Scaffold(

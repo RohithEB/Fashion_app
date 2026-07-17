@@ -11,31 +11,35 @@
 abstract final class AppConfig {
   static const bool backendMode = bool.fromEnvironment('BACKEND');
 
-  static const String backendHost =
-      String.fromEnvironment('BACKEND_HOST', defaultValue: '10.0.1.12');
+  static const String backendHost = String.fromEnvironment(
+    'BACKEND_HOST',
+    defaultValue: '10.0.1.12',
+  );
 
-  static const int backendPort =
-      int.fromEnvironment('BACKEND_PORT', defaultValue: 3000);
+  static const int backendPort = int.fromEnvironment(
+    'BACKEND_PORT',
+    defaultValue: 3000,
+  );
 
   /// Build an HTTP URL against the backend.
   static Uri http(String path, [Map<String, dynamic>? query]) => Uri(
-        scheme: 'http',
-        host: backendHost,
-        port: backendPort,
-        path: path,
-        queryParameters: query?.map(
-          (String k, dynamic v) => MapEntry<String, String>(k, '$v'),
-        ),
-      );
+    scheme: 'http',
+    host: backendHost,
+    port: backendPort,
+    path: path,
+    queryParameters: query?.map(
+      (String k, dynamic v) => MapEntry<String, String>(k, '$v'),
+    ),
+  );
 
   /// The realtime endpoint for a given role.
   static Uri ws(String role) => Uri(
-        scheme: 'ws',
-        host: backendHost,
-        port: backendPort,
-        path: '/ws',
-        queryParameters: <String, String>{'role': role},
-      );
+    scheme: 'ws',
+    host: backendHost,
+    port: backendPort,
+    path: '/ws',
+    queryParameters: <String, String>{'role': role},
+  );
 
   /// Absolutize a possibly-relative media path (`/media/...`) served by the
   /// backend so it can be loaded with `Image.network`.
