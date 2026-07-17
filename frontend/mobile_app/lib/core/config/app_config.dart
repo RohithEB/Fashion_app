@@ -15,9 +15,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///   channel (`ws://<box>:3000/ws`). Enable in-app under Server settings, or
 ///   with `--dart-define=BACKEND=true --dart-define=BACKEND_HOST=192.168.1.5`.
 abstract final class AppConfig {
-  // ── Compile-time defaults ────────────────────────────────────────────────
-  static const bool _envBackend = bool.fromEnvironment('BACKEND');
-  static const String _envHost = String.fromEnvironment(
+  // Backend mode is the DEFAULT now (real Node server + SQLite). Pass
+  // --dart-define=BACKEND=false only to run the offline mock demo.
+  static const bool backendMode = bool.fromEnvironment(
+    'BACKEND',
+    defaultValue: true,
+  );
+
+  static const String backendHost = String.fromEnvironment(
     'BACKEND_HOST',
     defaultValue: '10.0.1.12',
   );

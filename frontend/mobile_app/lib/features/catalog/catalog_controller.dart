@@ -22,6 +22,11 @@ class CatalogController extends ChangeNotifier {
   String query = '';
   String? error;
 
+  /// The last product opened in detail. Lets the router recover the product
+  /// screen when go_router drops `state.extra` on a refresh (e.g. the idle
+  /// warning), instead of crashing or bouncing to Home.
+  Product? lastViewedProduct;
+
   Future<void> load() async {
     state = LoadState.loading;
     notifyListeners();

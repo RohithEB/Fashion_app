@@ -19,7 +19,6 @@ import 'features/auth/auth_controller.dart';
 import 'features/cart/cart_controller.dart';
 import 'features/catalog/catalog_controller.dart';
 import 'features/connection/connection_controller.dart';
-import 'features/connection/idle_session_watcher.dart';
 import 'features/connection/idle_warning_overlay.dart';
 import 'features/onboarding/onboarding_controller.dart';
 import 'features/presentation/presentation_controller.dart';
@@ -97,10 +96,9 @@ class FashionControllerApp extends StatelessWidget {
               if (!context.watch<AuthController>().bootstrapped) {
                 return const _BootstrapSplash();
               }
-              return IdleSessionWatcher(
-                child: IdleWarningOverlay(
-                  child: child ?? const SizedBox.shrink(),
-                ),
+              // Auto-logout disabled for now (no client idle timeout).
+              return IdleWarningOverlay(
+                child: child ?? const SizedBox.shrink(),
               );
             },
           );
