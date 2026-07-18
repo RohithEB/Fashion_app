@@ -7,14 +7,18 @@ PRAGMA foreign_keys = ON;
 -- ─── Customer capture (P1) ─────────────────────────────────────────
 -- Salesperson optionally captures name + mobile at session start. Everything optional except id.
 CREATE TABLE IF NOT EXISTS customers (
-  id          TEXT PRIMARY KEY,
-  name        TEXT,
-  mobile      TEXT,
-  gender      TEXT,
-  age         INTEGER,
-  ageRange    TEXT,               -- onboarding choice, e.g. '25-34'
-  personality TEXT,               -- onboarding style archetype, e.g. 'Minimalist'
-  createdAt   TEXT NOT NULL
+  id            TEXT PRIMARY KEY,
+  name          TEXT,
+  mobile        TEXT,
+  gender        TEXT,
+  age           INTEGER,
+  ageRange      TEXT,             -- onboarding choice, e.g. '25-34'
+  personality   TEXT,             -- onboarding style archetype, e.g. 'Minimalist'
+  currentOutfit TEXT,             -- what the guest is wearing now (optional)
+  styling       TEXT,             -- how they're styling it (optional)
+  wearingColor  TEXT,             -- colour the guest currently has on (optional)
+  occasion      TEXT,             -- what they're shopping for (optional)
+  createdAt     TEXT NOT NULL
 );
 
 -- ─── Fashion catalog ───────────────────────────────────────────────

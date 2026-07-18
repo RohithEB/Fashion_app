@@ -36,6 +36,7 @@ class ProductPresentation {
     this.videoPositionMs = 0,
     this.videoMuted = false,
     this.detailsExpanded = false,
+    this.scrollFraction = 0,
   });
 
   final String productId;
@@ -57,6 +58,10 @@ class ProductPresentation {
   /// Whether the full product-details panel is expanded (synced from the sheet).
   final bool detailsExpanded;
 
+  /// Normalised scroll position (0..1) of the associate's product-detail sheet,
+  /// mirrored so the display's info panel scrolls in step.
+  final double scrollFraction;
+
   ProductPresentation copyWith({
     String? productId,
     String? variantId,
@@ -72,6 +77,7 @@ class ProductPresentation {
     int? videoPositionMs,
     bool? videoMuted,
     bool? detailsExpanded,
+    double? scrollFraction,
   }) => ProductPresentation(
     productId: productId ?? this.productId,
     variantId: variantId ?? this.variantId,
@@ -87,6 +93,7 @@ class ProductPresentation {
     videoPositionMs: videoPositionMs ?? this.videoPositionMs,
     videoMuted: videoMuted ?? this.videoMuted,
     detailsExpanded: detailsExpanded ?? this.detailsExpanded,
+    scrollFraction: scrollFraction ?? this.scrollFraction,
   );
 
   /// Reduce a realtime [event] into a new presentation state. Pure function —
@@ -111,6 +118,8 @@ class ProductPresentation {
         );
       case WsEventType.changeSize:
         return copyWith(size: event.size ?? size);
+      case WsEventType.scrollSync:
+        return copyWith(scrollFraction: event.fraction ?? scrollFraction);
       case WsEventType.changeImage:
         return copyWith(
           imageIndex: event.imageIndex ?? imageIndex,

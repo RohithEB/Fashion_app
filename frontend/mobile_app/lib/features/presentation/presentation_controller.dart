@@ -100,6 +100,31 @@ class PresentationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Push the top recommendations to the display as a grid. The picks stay
+  /// private on the phone until the associate opens the recommendations screen.
+  void showRecommendations(List<String> productIds) {
+    _presentation = null;
+    _product = null;
+    cartOnScreen = false;
+    _emit(
+      WsEvent(
+        type: WsEventType.showRecommendations,
+        payload: <String, dynamic>{'productIds': productIds},
+      ),
+    );
+    notifyListeners();
+  }
+
+  /// Mirror the associate's product-detail scroll (0..1) onto the display's info
+  /// panel so it scrolls in step. Throttled — only sent while presenting.
+  void syncScroll(double fraction) => _apply(
+    WsEvent(
+      type: WsEventType.scrollSync,
+      payload: <String, dynamic>{'fraction': fraction},
+    ),
+    throttled: true,
+  );
+
   /// Push the full catalogue to the display (used right after onboarding).
   /// Leaves single-product presentation mode; the display shows the grid.
   void showCatalog() {
@@ -180,6 +205,18 @@ class PresentationController extends ChangeNotifier {
   );
 
   void resetZoom() => _apply(const WsEvent(type: WsEventType.resetZoom));
+
+  /// Return the display to the normal single-image (hero) view from gallery or
+  /// video, resetting zoom/pan. This is the "reset view" action.
+  void resetView() {
+    final int idx = _presentation?.imageIndex ?? 0;
+    _apply(
+      WsEvent(
+        type: WsEventType.changeImage,
+        payload: <String, dynamic>{'imageIndex': idx},
+      ),
+    );
+  }
 
   /// Expand/collapse the full product-details panel on the display (driven by
   /// the draggable details sheet on the product screen).

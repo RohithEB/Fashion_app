@@ -22,8 +22,12 @@ class CatalogScreen extends StatelessWidget {
     final TextTheme t = Theme.of(context).textTheme;
     final List<Product> products = context
         .select<DisplayController, List<Product>>(
-          (DisplayController ctrl) => ctrl.catalog,
+          (DisplayController ctrl) => ctrl.catalogGrid,
         );
+    final String title = context.select<DisplayController, String>(
+      (DisplayController ctrl) => ctrl.catalogueTitle,
+    );
+    final bool curated = title != 'The Collection';
 
     return Container(
       color: c.background,
@@ -33,9 +37,15 @@ class CatalogScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text('THE COLLECTION', style: AppTypography.eyebrow(c.accent)),
+              Text(
+                title.toUpperCase(),
+                style: AppTypography.eyebrow(c.accent),
+              ),
               const SizedBox(height: AppSpacing.xs),
-              Text('Explore the atelier', style: t.displaySmall),
+              Text(
+                curated ? 'Handpicked for you' : 'Explore the atelier',
+                style: t.displaySmall,
+              ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: products.isEmpty

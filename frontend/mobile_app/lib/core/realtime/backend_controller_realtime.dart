@@ -126,6 +126,13 @@ class BackendControllerRealtime extends RealtimeService {
       case WsEventType.showCart:
         _currentProductId = null;
         _send('show_cart', event.payload);
+      case WsEventType.showRecommendations:
+        _currentProductId = null;
+        _send('show_recommendations', <String, dynamic>{
+          'productIds': event.productIds,
+        });
+      case WsEventType.scrollSync:
+        _send('scroll', <String, dynamic>{'fraction': event.fraction ?? 0});
       case WsEventType.showProduct:
         _currentProductId = event.productId ?? _currentProductId;
         _currentVariantId = event.variantId ?? _currentVariantId;

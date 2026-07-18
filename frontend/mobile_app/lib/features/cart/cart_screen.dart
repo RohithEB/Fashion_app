@@ -78,12 +78,12 @@ class CartScreen extends StatelessWidget {
           icon: const Icon(AppIcons.back, size: 18),
           onPressed: () => context.pop(),
         ),
-        title: Text('Cart & Shortlist', style: t.titleLarge),
+        title: Text('Saved outfits', style: t.titleLarge),
       ),
       body: data.isEmpty
           ? const EmptyStateView(
-              title: 'Your shortlist is empty',
-              message: 'Add pieces to compare them live on the display.',
+              title: 'No saved outfits yet',
+              message: 'Save pieces to compare them live on the display.',
               icon: AppIcons.cart,
             )
           : ListView.separated(
@@ -365,7 +365,9 @@ class _Summary extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           if (connected) ...<Widget>[
             AppButton(
-              label: showing ? 'Cart on screen' : 'Show cart on screen',
+              label: showing
+                  ? 'Outfits on screen'
+                  : 'Show saved outfits on screen',
               icon: showing ? AppIcons.connected : AppIcons.showOnScreen,
               variant: AppButtonVariant.secondary,
               expand: true,

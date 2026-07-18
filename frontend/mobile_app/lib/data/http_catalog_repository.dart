@@ -34,11 +34,16 @@ class HttpCatalogRepository implements CatalogRepository {
   }
 
   @override
-  Future<List<Product>> products({String? categoryId, String? query}) async {
+  Future<List<Product>> products({
+    String? categoryId,
+    String? query,
+    String? color,
+  }) async {
     final Map<String, dynamic> q = <String, dynamic>{
       'limit': 100,
       'category': ?categoryId,
       if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
+      if (color != null && color.trim().isNotEmpty) 'color': color.trim(),
     };
     final http.Response res = await _client
         .get(AppConfig.http('/api/products', q))
@@ -89,5 +94,32 @@ class HttpCatalogRepository implements CatalogRepository {
     return items
         .map((dynamic e) => BackendDto.fromListItem(e as Map<String, dynamic>))
         .toList();
+  }
+
+  @override
+  Future<String?> talkingPoint({
+    required String productId,
+    String? customerId,
+    String? personality,
+    String? name,
+  }) async {
+    final Map<String, dynamic> q = <String, dynamic>{
+      'productId': productId,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      if (personality != null && personality.isNotEmpty)
+        'personality': personality,
+      if (name != null && name.isNotEmpty) 'name': name,
+    };
+    try {
+      final http.Response res = await _client
+          .get(AppConfig.http('/api/talking-point', q))
+          .timeout(_timeout);
+      if (res.statusCode != 200) return null;
+      final Map<String, dynamic> body =
+          jsonDecode(res.body) as Map<String, dynamic>;
+      return body['compliment'] as String?;
+    } catch (_) {
+      return null;
+    }
   }
 }

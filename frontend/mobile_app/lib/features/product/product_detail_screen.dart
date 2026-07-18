@@ -15,6 +15,7 @@ import '../../widgets/price_tag.dart';
 import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
+import '../onboarding/onboarding_controller.dart';
 import '../presentation/presentation_controller.dart';
 import '../presentation/widgets/live_preview.dart';
 
@@ -41,6 +42,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final DraggableScrollableController _sheet = DraggableScrollableController();
   bool _detailsShown = false;
 
+  /// A private coaching cue for the associate (never mirrored to the display).
+  String? _talkingPoint;
+
   static const double _collapsed = 0.42;
   static const double _expanded = 0.92;
 
@@ -51,7 +55,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void initState() {
     super.initState();
     _loadDetail();
+    _loadTalkingPoint();
     _sheet.addListener(_onSheetMove);
+  }
+
+  /// Fetch the private, on-phone talking point from the backend (AI enrichment +
+  /// the captured guest profile). Silent on failure — it's an optional aid.
+  Future<void> _loadTalkingPoint() async {
+    final OnboardingController onboarding = context.read<OnboardingController>();
+    final String? tp = await context.read<CatalogRepository>().talkingPoint(
+      productId: widget.product.id,
+      customerId: onboarding.customer?.id,
+      personality: onboarding.customer?.personality,
+      name: onboarding.customer?.name,
+    );
+    if (tp != null && tp.isNotEmpty && mounted) {
+      setState(() => _talkingPoint = tp);
+    }
   }
 
   Future<void> _loadDetail() async {
@@ -113,6 +133,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (_isPresentingThis(pres)) pres.changeImage(i);
   }
 
+  /// Forward the detail sheet's scroll position (0..1) to the display while this
+  /// product is being presented, so the display's info panel scrolls in step.
+  void _onDetailScroll(double fraction) {
+    final PresentationController pres = context.read<PresentationController>();
+    if (_isPresentingThis(pres)) pres.syncScroll(fraction);
+  }
+
+  /// Open the fullscreen image viewer. Pinch-zoom there mirrors to the display
+  /// while this product is being presented; closing resets the display zoom.
+  void _openFullscreen() {
+    final PresentationController pres = context.read<PresentationController>();
+    final bool presenting = _isPresentingThis(pres);
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => _FullscreenViewer(
+          variant: variant,
+          initialIndex: _imageIndex,
+          presenting: presenting,
+          onImageChanged: _onImageChanged,
+          onTransform: presenting
+              ? (double s, double px, double py) =>
+                    pres.zoom(s, focalX: px, focalY: py)
+              : null,
+          onClosed: () {
+            if (_isPresentingThis(pres)) pres.resetZoom();
+          },
+        ),
+      ),
+    );
+  }
+
   void _showOnScreen() {
     final PresentationController pres = context.read<PresentationController>();
     pres.showProduct(product, variantId: _variantId, size: _size);
@@ -134,7 +186,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       meta: <String, dynamic>{'size': _size, 'variantId': _variantId},
     );
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${product.name} added to the cart')),
+      SnackBar(content: Text('${product.name} saved to outfits')),
     );
   }
 
@@ -155,34 +207,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          // Full-bleed gallery behind the sheet; pinch-zoom syncs while presenting.
+          // Tap the image to open the fullscreen zoom viewer (pinch there mirrors
+          // to the display). The background gallery just displays + swipes images.
           Positioned.fill(
-            child: _Gallery(
-              variant: variant,
-              controller: _page,
-              index: _imageIndex,
-              onChanged: _onImageChanged,
-              interactive: true,
-              onTransform: presentingThis
-                  ? (double scale, double px, double py) => context
-                        .read<PresentationController>()
-                        .zoom(scale, focalX: px, focalY: py)
-                  : null,
+            child: GestureDetector(
+              onTap: _openFullscreen,
+              child: _Gallery(
+                variant: variant,
+                controller: _page,
+                index: _imageIndex,
+                onChanged: _onImageChanged,
+              ),
             ),
           ),
           const SafeArea(child: _CircleBackButton()),
-          if (presentingThis)
-            SafeArea(
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: _LiveBadge(
-                    onTap: () => LivePreviewSheet.show(context),
-                  ),
-                ),
-              ),
-            ),
           DraggableScrollableSheet(
             controller: _sheet,
             initialChildSize: _collapsed,
@@ -200,11 +238,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   connected: connected,
                   presentingThis: presentingThis,
                   expanded: _detailsShown,
+                  talkingPoint: _talkingPoint,
                   onSelectVariant: _selectVariant,
                   onSelectSize: _selectSize,
                   onToggleDetails: _toggleSheet,
                   onShow: _showOnScreen,
                   onAdd: _addToCart,
+                  onScroll: _onDetailScroll,
                 ),
           ),
         ],
@@ -226,11 +266,13 @@ class _DetailsSheet extends StatelessWidget {
     required this.connected,
     required this.presentingThis,
     required this.expanded,
+    required this.talkingPoint,
     required this.onSelectVariant,
     required this.onSelectSize,
     required this.onToggleDetails,
     required this.onShow,
     required this.onAdd,
+    required this.onScroll,
   });
 
   final ScrollController scrollController;
@@ -241,11 +283,13 @@ class _DetailsSheet extends StatelessWidget {
   final bool connected;
   final bool presentingThis;
   final bool expanded;
+  final String? talkingPoint;
   final ValueChanged<String> onSelectVariant;
   final ValueChanged<String> onSelectSize;
   final VoidCallback onToggleDetails;
   final VoidCallback onShow;
   final VoidCallback onAdd;
+  final ValueChanged<double> onScroll;
 
   @override
   Widget build(BuildContext context) {
@@ -265,8 +309,16 @@ class _DetailsSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border.all(color: c.border),
       ),
-      child: ListView(
-        controller: scrollController,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification n) {
+          if (n.metrics.axis == Axis.vertical &&
+              n.metrics.maxScrollExtent > 0) {
+            onScroll((n.metrics.pixels / n.metrics.maxScrollExtent).clamp(0, 1));
+          }
+          return false;
+        },
+        child: ListView(
+          controller: scrollController,
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.xl,
           AppSpacing.sm,
@@ -303,6 +355,11 @@ class _DetailsSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
+
+          if (talkingPoint != null && talkingPoint!.isNotEmpty) ...<Widget>[
+            _TalkingPointCard(text: talkingPoint!),
+            const SizedBox(height: AppSpacing.lg),
+          ],
 
           _Label(text: 'COLOR — ${variant.colorName}'),
           const SizedBox(height: AppSpacing.xs),
@@ -422,83 +479,41 @@ class _DetailsSheet extends StatelessWidget {
             _SyncControls(product: product),
           ],
         ],
+        ),
       ),
     );
   }
 }
 
-/// Product gallery. When [interactive] (Presentation mode for this product),
-/// each image becomes pinch-zoom/pan enabled and reports its transform via
-/// [onTransform] as `(scale, panXNormalized, panYNormalized)`, which the
-/// controller emits as live-sync events to the display.
-class _Gallery extends StatefulWidget {
+/// Product gallery — a swipeable page view of the variant's images with a page
+/// indicator. Tapping opens the fullscreen viewer where pinch-zoom happens (and
+/// mirrors to the display while presenting).
+class _Gallery extends StatelessWidget {
   const _Gallery({
     required this.variant,
     required this.controller,
     required this.index,
     required this.onChanged,
-    this.interactive = false,
-    this.onTransform,
   });
 
   final ProductVariant variant;
   final PageController controller;
   final int index;
   final ValueChanged<int> onChanged;
-  final bool interactive;
-  final void Function(double scale, double panX, double panY)? onTransform;
-
-  @override
-  State<_Gallery> createState() => _GalleryState();
-}
-
-class _GalleryState extends State<_Gallery> {
-  final TransformationController _tc = TransformationController();
-
-  @override
-  void initState() {
-    super.initState();
-    _tc.addListener(_emit);
-  }
-
-  void _emit() {
-    if (!widget.interactive || widget.onTransform == null) return;
-    final Matrix4 m = _tc.value;
-    final double scale = m.getMaxScaleOnAxis();
-    final double px = (m.getTranslation().x / 300).clamp(-1.0, 1.0);
-    final double py = (m.getTranslation().y / 400).clamp(-1.0, 1.0);
-    widget.onTransform!(scale, px, py);
-  }
-
-  @override
-  void dispose() {
-    _tc.removeListener(_emit);
-    _tc.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
-    final List<ProductMedia> images = widget.variant.images;
+    final List<ProductMedia> images = variant.images;
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
         PageView.builder(
-          controller: widget.controller,
-          onPageChanged: widget.onChanged,
+          controller: controller,
+          onPageChanged: onChanged,
           physics: const PageScrollPhysics(),
           itemCount: images.length,
-          itemBuilder: (_, int i) {
-            final Widget photo = NetworkPhoto(url: images[i].url);
-            if (!widget.interactive) return photo;
-            return InteractiveViewer(
-              transformationController: _tc,
-              minScale: 1,
-              maxScale: 4,
-              child: photo,
-            );
-          },
+          itemBuilder: (_, int i) => NetworkPhoto(url: images[i].url),
         ),
         Positioned(
           bottom: MediaQuery.of(context).size.height * 0.44 + AppSpacing.md,
@@ -511,10 +526,10 @@ class _GalleryState extends State<_Gallery> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == widget.index ? 20 : 6,
+                  width: i == index ? 20 : 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: i == widget.index
+                    color: i == index
                         ? c.onPrimary
                         : c.onPrimary.withValues(alpha: 0.5),
                     borderRadius: AppRadius.brPill,
@@ -643,12 +658,6 @@ class _SyncControls extends StatelessWidget {
                 onTap: () =>
                     context.read<PresentationController>().showGallery(),
               ),
-              _Pill(
-                icon: AppIcons.zoomIn,
-                label: 'Focus',
-                onTap: () =>
-                    context.read<PresentationController>().focusImage(0),
-              ),
               if (product.defaultVariant.video != null)
                 _Pill(
                   icon: AppIcons.play,
@@ -659,7 +668,7 @@ class _SyncControls extends StatelessWidget {
               _Pill(
                 icon: AppIcons.close,
                 label: 'Reset view',
-                onTap: () => context.read<PresentationController>().resetZoom(),
+                onTap: () => context.read<PresentationController>().resetView(),
               ),
             ],
           ),
@@ -697,6 +706,174 @@ class _Label extends StatelessWidget {
   );
 }
 
+/// A PRIVATE, associate-only coaching cue (AI-generated from the guest profile +
+/// product enrichment). Marked clearly so it's never mistaken for on-screen copy
+/// — it stays on the phone; the customer never sees it.
+class _TalkingPointCard extends StatelessWidget {
+  const _TalkingPointCard({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    final TextTheme t = Theme.of(context).textTheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: c.accent.withValues(alpha: 0.08),
+        borderRadius: AppRadius.brLg,
+        border: Border.all(color: c.accent.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(AppIcons.sparkle, size: 16, color: c.accent),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  'FOR YOU ONLY · SAY TO YOUR GUEST',
+                  style: AppTypography.eyebrow(c.accent),
+                ),
+              ),
+              Icon(Icons.lock_outline, size: 14, color: c.accent),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            text,
+            style: t.bodyLarge?.copyWith(height: 1.4, color: c.textPrimary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fullscreen image viewer with pinch-zoom + swipe. While [presenting], pinch
+/// transforms mirror to the display via [onTransform]; [onClosed] fires on exit
+/// (used to reset the display's zoom).
+class _FullscreenViewer extends StatefulWidget {
+  const _FullscreenViewer({
+    required this.variant,
+    required this.initialIndex,
+    required this.presenting,
+    required this.onImageChanged,
+    this.onTransform,
+    this.onClosed,
+  });
+
+  final ProductVariant variant;
+  final int initialIndex;
+  final bool presenting;
+  final ValueChanged<int> onImageChanged;
+  final void Function(double scale, double panX, double panY)? onTransform;
+  final VoidCallback? onClosed;
+
+  @override
+  State<_FullscreenViewer> createState() => _FullscreenViewerState();
+}
+
+class _FullscreenViewerState extends State<_FullscreenViewer> {
+  late final PageController _page = PageController(
+    initialPage: widget.initialIndex,
+  );
+  late int _index = widget.initialIndex;
+  final TransformationController _tc = TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tc.addListener(_emit);
+  }
+
+  void _emit() {
+    if (widget.onTransform == null) return;
+    final Matrix4 m = _tc.value;
+    final Size size = MediaQuery.of(context).size;
+    final double scale = m.getMaxScaleOnAxis();
+    final double px = (m.getTranslation().x / (size.width == 0 ? 300 : size.width))
+        .clamp(-1.0, 1.0);
+    final double py =
+        (m.getTranslation().y / (size.height == 0 ? 400 : size.height))
+            .clamp(-1.0, 1.0);
+    widget.onTransform!(scale, px, py);
+  }
+
+  @override
+  void dispose() {
+    widget.onClosed?.call();
+    _tc.removeListener(_emit);
+    _tc.dispose();
+    _page.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<ProductMedia> images = widget.variant.images;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: <Widget>[
+          PageView.builder(
+            controller: _page,
+            onPageChanged: (int i) {
+              setState(() => _index = i);
+              _tc.value = Matrix4.identity();
+              widget.onImageChanged(i);
+            },
+            itemCount: images.length,
+            itemBuilder: (_, int i) => InteractiveViewer(
+              transformationController: i == _index ? _tc : null,
+              minScale: 1,
+              maxScale: 5,
+              child: Center(
+                child: NetworkPhoto(url: images[i].url, fit: BoxFit.contain),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                icon: const Icon(AppIcons.close, color: Colors.white, size: 26),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            ),
+          ),
+          if (widget.presenting)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: AppRadius.brPill,
+                    ),
+                    child: const Text(
+                      'Pinch to zoom · showing live',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CircleBackButton extends StatelessWidget {
   const _CircleBackButton();
   @override
@@ -723,32 +900,3 @@ class _CircleBackButton extends StatelessWidget {
   }
 }
 
-class _LiveBadge extends StatelessWidget {
-  const _LiveBadge({required this.onTap});
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: c.primary,
-          borderRadius: AppRadius.brPill,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(AppIcons.connected, size: 14, color: c.accent),
-            const SizedBox(width: 4),
-            Text('LIVE', style: AppTypography.eyebrow(c.onPrimary)),
-          ],
-        ),
-      ),
-    );
-  }
-}

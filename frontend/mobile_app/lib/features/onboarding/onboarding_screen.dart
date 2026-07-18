@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
@@ -24,6 +26,10 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _name = TextEditingController();
   final TextEditingController _mobile = TextEditingController();
+  final TextEditingController _currentOutfit = TextEditingController();
+  final TextEditingController _styling = TextEditingController();
+  final TextEditingController _wearingColor = TextEditingController();
+  final TextEditingController _occasion = TextEditingController();
   String? _gender;
   String? _ageRange;
   String? _personality;
@@ -32,6 +38,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void dispose() {
     _name.dispose();
     _mobile.dispose();
+    _currentOutfit.dispose();
+    _styling.dispose();
+    _wearingColor.dispose();
+    _occasion.dispose();
     super.dispose();
   }
 
@@ -49,8 +59,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       gender: _gender,
       ageRange: _ageRange,
       personality: _personality,
+      currentOutfit: _currentOutfit.text,
+      styling: _styling.text,
+      wearingColor: _wearingColor.text,
+      occasion: _occasion.text,
     );
-    if (ok && mounted) _revealCatalogue();
+    if (ok && mounted) {
+      _revealCatalogue();
+      // A profile was captured → open the curated top-6 recommendations first,
+      // so the associate leads with picks tailored to the guest.
+      context.go(AppRoutes.recommendations);
+    }
   }
 
   void _skip() {
@@ -81,7 +100,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: <Widget>[
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                // Extra bottom padding equal to the keyboard inset so a focused
+                // field is never hidden behind the keyboard.
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  0,
+                  AppSpacing.xl,
+                  AppSpacing.xl + MediaQuery.viewInsetsOf(context).bottom,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -96,7 +122,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       'Capture a few optional details to tailor the showing. '
                       'You can skip any of this.',
-                      style: t.bodyLarge?.copyWith(color: c.textSecondary),
+                      style: t.titleMedium?.copyWith(
+                        color: c.textSecondary,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     TextField(
@@ -136,6 +165,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       options: onboarding.options.personalities,
                       selected: _personality,
                       onSelect: (String? v) => setState(() => _personality = v),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      'WHAT ARE THEY WEARING?',
+                      style: AppTypography.eyebrow(c.textSecondary),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _currentOutfit,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'Current outfit (optional)',
+                        prefixIcon: Icon(Icons.checkroom_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: _wearingColor,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Colour they’re wearing (optional)',
+                        prefixIcon: Icon(Icons.palette_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: _styling,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'How they’re styling it (optional)',
+                        prefixIcon: Icon(Icons.auto_awesome_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextField(
+                      controller: _occasion,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: 'Occasion / looking for (optional)',
+                        prefixIcon: Icon(Icons.event_outlined),
+                      ),
                     ),
                     if (onboarding.error != null) ...<Widget>[
                       const SizedBox(height: AppSpacing.md),

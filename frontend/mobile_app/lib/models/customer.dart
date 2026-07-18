@@ -39,6 +39,10 @@ class Customer {
     this.gender,
     this.ageRange,
     this.personality,
+    this.currentOutfit,
+    this.styling,
+    this.wearingColor,
+    this.occasion,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
@@ -48,6 +52,10 @@ class Customer {
     gender: json['gender'] as String?,
     ageRange: json['ageRange'] as String?,
     personality: json['personality'] as String?,
+    currentOutfit: json['currentOutfit'] as String?,
+    styling: json['styling'] as String?,
+    wearingColor: json['wearingColor'] as String?,
+    occasion: json['occasion'] as String?,
   );
 
   final String id;
@@ -56,4 +64,10 @@ class Customer {
   final String? gender;
   final String? ageRange;
   final String? personality;
+
+  /// Richer, all-optional guest-profile notes captured at onboarding.
+  final String? currentOutfit;
+  final String? styling;
+  final String? wearingColor;
+  final String? occasion;
 }

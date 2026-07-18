@@ -7,6 +7,7 @@ import { prefixId, pairingToken as makeToken, nowIso } from '../util/ids.js';
 import { lanIp } from '../util/network.js';
 import { IN, OUT, encode } from './protocol.js';
 import { logEvent } from '../repositories/journey.repo.js';
+import { getSalespersonById } from '../repositories/salespeople.repo.js';
 
 // Controller commands worth journaling as the salesperson's presentation journey.
 const JOURNAL_TYPES = {
@@ -75,8 +76,16 @@ export class SessionManager {
     controllerWs._role = 'controller';
     controllerWs._sessionId = sessionId;
 
-    this._send(session.displayWs, OUT.PAIRED, sessionId, { sessionId, displayId });
-    this._send(session.controllerWs, OUT.PAIRED, sessionId, { sessionId, displayId });
+    // Look up the associate's display name so the screen can greet the guest with
+    // it ("You are now connected with <name>") instead of a generic label.
+    let salespersonName = null;
+    if (salespersonId) {
+      try { salespersonName = getSalespersonById(salespersonId)?.name ?? null; }
+      catch { salespersonName = null; }
+    }
+
+    this._send(session.displayWs, OUT.PAIRED, sessionId, { sessionId, displayId, salespersonName });
+    this._send(session.controllerWs, OUT.PAIRED, sessionId, { sessionId, displayId, salespersonName });
     this._armIdle(session);
     logEvent({ sessionId, salespersonId, eventType: 'session_start', refId: displayId });
     logger.info(`Paired session ${sessionId} (display ${displayId})`);

@@ -10,6 +10,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'data/auth_repository.dart';
+import 'data/bundled_catalog_repository.dart';
 import 'data/catalog_repository.dart';
 import 'data/checkout_repository.dart';
 import 'data/customer_repository.dart';
@@ -33,9 +34,11 @@ class FashionControllerApp extends StatelessWidget {
     return MultiProvider(
       providers: <SingleChildWidget>[
         Provider<CatalogRepository>(
+          // Offline / box-as-server mode reads the bundled real-catalog snapshot
+          // (instant, no network); backend mode reads the Node HTTP API.
           create: (_) => AppConfig.backendMode
               ? HttpCatalogRepository()
-              : const MockCatalogRepository(),
+              : BundledCatalogRepository(),
         ),
         Provider<AuthRepository>(
           create: (_) => AppConfig.backendMode

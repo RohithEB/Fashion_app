@@ -1,19 +1,20 @@
-/// App configuration and the backend/standalone mode switch.
+/// App configuration and the box-as-server / backend mode switch.
 ///
 /// All values are compile-time `--dart-define`s so the same binary can run in
 /// either mode:
 ///
-/// * **Standalone (default):** in-app mock catalog + the display-hosted LAN
-///   WebSocket server. No backend required — the offline demo.
+/// * **Box-as-server (DEFAULT):** the display box hosts the LAN WebSocket server
+///   and both apps read a bundled real-catalog snapshot. Runs fully offline over
+///   WiFi — no internet, no laptop, no Node/CMS.
 /// * **Backend:** the Node server owns the catalog (HTTP) and the realtime
 ///   channel (`ws://<box>:3000/ws`). Enable with
 ///   `--dart-define=BACKEND=true --dart-define=BACKEND_HOST=10.0.1.12`.
 abstract final class AppConfig {
-  // Backend mode is the DEFAULT now (real Node server + SQLite). Pass
-  // --dart-define=BACKEND=false only to run the offline mock demo.
+  // Box-as-server (offline) is the DEFAULT. Pass --dart-define=BACKEND=true to
+  // run against the Node backend instead.
   static const bool backendMode = bool.fromEnvironment(
     'BACKEND',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   static const String backendHost = String.fromEnvironment(

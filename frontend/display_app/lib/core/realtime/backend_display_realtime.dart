@@ -85,17 +85,24 @@ class BackendDisplayRealtime extends DisplayRealtimeService {
         }
       case 'paired':
         _push(
-          const WsEvent(
+          WsEvent(
             type: WsEventType.connectScreen,
-            payload: <String, dynamic>{'salespersonName': 'your advisor'},
+            payload: <String, dynamic>{
+              'salespersonName':
+                  payload['salespersonName'] as String? ?? 'your advisor',
+            },
           ),
         );
       case 'show_catalog':
         _push(WsEvent(type: WsEventType.showCatalog, payload: payload));
+      case 'show_recommendations':
+        _push(WsEvent(type: WsEventType.showRecommendations, payload: payload));
       case 'show_cart':
         _push(WsEvent(type: WsEventType.showCart, payload: payload));
       case 'show_product':
         _push(WsEvent(type: WsEventType.showProduct, payload: payload));
+      case 'scroll':
+        _push(WsEvent(type: WsEventType.scrollSync, payload: payload));
       case 'show_details':
         _push(WsEvent(type: WsEventType.showDetails, payload: payload));
       case 'show_related':

@@ -16,7 +16,8 @@ export function getOnboardingOptions() {
 }
 
 export function createCustomer({
-  name, mobile, gender, age, ageRange, personality, sessionId,
+  name, mobile, gender, age, ageRange, personality,
+  currentOutfit, styling, wearingColor, occasion, sessionId,
 } = {}) {
   if (age != null && age !== '' && Number.isNaN(Number(age))) {
     throw badRequest('age must be a number');
@@ -28,6 +29,10 @@ export function createCustomer({
     age: age == null || age === '' ? null : Number(age),
     ageRange: ageRange?.trim() || null,
     personality: personality?.trim() || null,
+    currentOutfit: currentOutfit?.trim() || null,
+    styling: styling?.trim() || null,
+    wearingColor: wearingColor?.trim() || null,
+    occasion: occasion?.trim() || null,
   });
 
   // Optionally link the customer to the session's cart so the journey ties together.

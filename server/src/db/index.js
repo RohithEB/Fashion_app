@@ -39,6 +39,14 @@ function migrate(db) {
   if (tableExists('customers') && !hasColumn('customers', 'personality')) {
     db.exec('ALTER TABLE customers ADD COLUMN personality TEXT');
   }
+  // Richer, all-optional guest-profile fields added to an existing table.
+  if (tableExists('customers')) {
+    for (const col of ['currentOutfit', 'styling', 'wearingColor', 'occasion']) {
+      if (!hasColumn('customers', col)) {
+        db.exec(`ALTER TABLE customers ADD COLUMN ${col} TEXT`);
+      }
+    }
+  }
 
   // Salesperson attribution added to an existing journey_events table.
   if (tableExists('journey_events') && !hasColumn('journey_events', 'salespersonId')) {

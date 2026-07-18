@@ -34,81 +34,108 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xl,
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          'THE COLLECTION',
-                          style: AppTypography.eyebrow(c.accent),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: <Widget>[
-                            Flexible(
-                              child: Text('Ebani', style: t.headlineMedium),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            _StatusBadge(connected: conn.liveLink),
-                          ],
-                        ),
-                      ],
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () => context.read<CatalogController>().refresh(),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            // Flipkart-style: the brand bar, search and filters scroll away when
+            // you scroll down to browse, and snap back the instant you scroll up.
+            slivers: <Widget>[
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                pinned: false,
+                backgroundColor: c.background,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                titleSpacing: AppSpacing.xl,
+                toolbarHeight: 64,
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'THE COLLECTION',
+                            style: AppTypography.eyebrow(c.accent),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: <Widget>[
+                              Flexible(
+                                child: Text('Ebani', style: t.headlineSmall),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              _StatusBadge(connected: conn.liveLink),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(AppIcons.sparkle),
+                      iconSize: 24,
+                      tooltip: 'Recommendations',
+                      color: c.accent,
+                      onPressed: () =>
+                          context.push(AppRoutes.recommendations),
+                    ),
+                    _CartButton(
+                      count: cart.cart.count,
+                      onTap: () => context.push(AppRoutes.cart),
+                    ),
+                    IconButton(
+                      icon: const Icon(AppIcons.logout),
+                      iconSize: 22,
+                      tooltip: 'Log out',
+                      color: c.textSecondary,
+                      onPressed: () => _confirmLogout(context),
+                    ),
+                  ],
+                ),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(58),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      0,
+                      AppSpacing.md,
+                      AppSpacing.sm,
+                    ),
+                    child: TextField(
+                      onChanged: (String q) =>
+                          context.read<CatalogController>().search(q),
+                      decoration: InputDecoration(
+                        hintText: 'Search the atelier…',
+                        prefixIcon: const Icon(AppIcons.search),
+                      ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(AppIcons.sparkle),
-                    iconSize: 24,
-                    tooltip: 'Recommendations',
-                    color: c.accent,
-                    onPressed: () => context.push(AppRoutes.recommendations),
-                  ),
-                  _CartButton(
-                    count: cart.cart.count,
-                    onTap: () => context.push(AppRoutes.cart),
-                  ),
-                  IconButton(
-                    icon: const Icon(AppIcons.logout),
-                    iconSize: 22,
-                    tooltip: 'Log out',
-                    color: c.textSecondary,
-                    onPressed: () => _confirmLogout(context),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: TextField(
-                onChanged: (String q) =>
-                    context.read<CatalogController>().search(q),
-                decoration: InputDecoration(
-                  hintText: 'Search the atelier…',
-                  prefixIcon: const Icon(AppIcons.search),
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _CategoryBar(
-              categories: catalog.categories,
-              selectedId: catalog.selectedCategoryId,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Expanded(
-              child: _Grid(catalog: catalog, connected: conn.liveLink),
-            ),
-          ],
+              SliverToBoxAdapter(
+                child: Column(
+                  children: <Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    _CategoryBar(
+                      categories: catalog.categories,
+                      selectedId: catalog.selectedCategoryId,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    _ColorExplorer(
+                      products: catalog.products,
+                      connected: conn.liveLink,
+                    ),
+                  ],
+                ),
+              ),
+              _ProductsSliver(catalog: catalog, connected: conn.liveLink),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: conn.isConnected ? const NowShowingBar() : null,
@@ -158,6 +185,7 @@ class _CartButton extends StatelessWidget {
         IconButton(
           icon: const Icon(AppIcons.cart),
           iconSize: 26,
+          tooltip: 'Saved outfits',
           onPressed: onTap,
         ),
         if (count > 0)
@@ -277,8 +305,190 @@ class _Chip extends StatelessWidget {
   }
 }
 
-class _Grid extends StatelessWidget {
-  const _Grid({required this.catalog, required this.connected});
+/// Colour selector: a row of swatches; picking one expands a panel listing every
+/// piece available in that colour (filtered from the loaded catalogue). Tap again
+/// to collapse.
+class _ColorExplorer extends StatefulWidget {
+  const _ColorExplorer({required this.products, required this.connected});
+
+  final List<Product> products;
+  final bool connected;
+
+  @override
+  State<_ColorExplorer> createState() => _ColorExplorerState();
+}
+
+class _ColorExplorerState extends State<_ColorExplorer> {
+  String? _selected;
+
+  void _present(BuildContext context, Product product) {
+    context.read<PresentationController>().showProduct(
+      product,
+      size: product.defaultVariant.sizes.firstOrNull,
+    );
+    LivePreviewSheet.show(context);
+  }
+
+  Color _hex(String hex) {
+    final String h = hex.replaceFirst('#', '').padLeft(6, '0');
+    return Color(int.parse('FF$h', radix: 16));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    final TextTheme t = Theme.of(context).textTheme;
+
+    // Distinct, real colours across the loaded catalogue (skip placeholders).
+    final Map<String, String> swatches = <String, String>{};
+    for (final Product p in widget.products) {
+      for (final ProductVariant v in p.variants) {
+        if (v.colorName.isEmpty || v.colorName.toLowerCase() == 'default') {
+          continue;
+        }
+        swatches.putIfAbsent(v.colorName, () => v.colorHex);
+      }
+    }
+    if (swatches.isEmpty) return const SizedBox.shrink();
+
+    final List<Product> matches = _selected == null
+        ? const <Product>[]
+        : widget.products
+              .where(
+                (Product p) => p.variants.any(
+                  (ProductVariant v) => v.colorName == _selected,
+                ),
+              )
+              .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SizedBox(
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            children: <Widget>[
+              for (final MapEntry<String, String> e in swatches.entries)
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: _Swatch(
+                    color: _hex(e.value),
+                    selected: _selected == e.key,
+                    onTap: () => setState(
+                      () => _selected = _selected == e.key ? null : e.key,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: _selected == null
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: Text(
+                          '$_selected · ${matches.length} '
+                          'piece${matches.length == 1 ? '' : 's'}',
+                          style: AppTypography.eyebrow(c.accent),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      SizedBox(
+                        height: 268,
+                        child: matches.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'No pieces in this colour',
+                                  style: t.bodyMedium?.copyWith(
+                                    color: c.textSecondary,
+                                  ),
+                                ),
+                              )
+                            : ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                ),
+                                itemCount: matches.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(width: AppSpacing.md),
+                                itemBuilder: (BuildContext ctx, int i) {
+                                  final Product product = matches[i];
+                                  return SizedBox(
+                                    width: 150,
+                                    child: ProductCard(
+                                      product: product,
+                                      onTap: () => ctx.push(
+                                        AppRoutes.product,
+                                        extra: product,
+                                      ),
+                                      onPresent: widget.connected
+                                          ? () => _present(ctx, product)
+                                          : null,
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  const _Swatch({
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected ? c.accent : c.border,
+            width: selected ? 3 : 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The product grid as a sliver, so it shares one scroll view with the
+/// collapsing header (Flipkart-style). Loading/error/empty render as a filled
+/// remaining region so pull-to-refresh still works.
+class _ProductsSliver extends StatelessWidget {
+  const _ProductsSliver({required this.catalog, required this.connected});
 
   final CatalogController catalog;
   final bool connected;
@@ -294,59 +504,52 @@ class _Grid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (catalog.state == LoadState.loading && catalog.products.isEmpty) {
-      return const LoadingView(label: 'Curating…');
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: LoadingView(label: 'Curating…'),
+      );
     }
     if (catalog.state == LoadState.error) {
-      return ErrorStateView(
-        message: catalog.error ?? 'Please try again.',
-        onRetry: () => context.read<CatalogController>().load(),
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: ErrorStateView(
+          message: catalog.error ?? 'Please try again.',
+          onRetry: () => context.read<CatalogController>().load(),
+        ),
       );
     }
     if (catalog.products.isEmpty) {
-      // Still pullable so the associate can fetch newly added products.
-      return RefreshIndicator(
-        onRefresh: () => context.read<CatalogController>().refresh(),
-        child: LayoutBuilder(
-          builder: (BuildContext ctx, BoxConstraints constraints) =>
-              SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: const EmptyStateView(
-                    title: 'Nothing found',
-                    message: 'Pull down to refresh, or try another search.',
-                    icon: AppIcons.search,
-                  ),
-                ),
-              ),
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: EmptyStateView(
+          title: 'Nothing found',
+          message: 'Pull down to refresh, or try another search.',
+          icon: AppIcons.search,
         ),
       );
     }
-    return RefreshIndicator(
-      onRefresh: () => context.read<CatalogController>().refresh(),
-      child: GridView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.xs,
-          AppSpacing.md,
-          AppSpacing.xl,
-        ),
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.xl,
+      ),
+      sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 0.56,
           crossAxisSpacing: AppSpacing.md,
           mainAxisSpacing: AppSpacing.lg,
         ),
-        itemCount: catalog.products.length,
-        itemBuilder: (BuildContext ctx, int i) {
+        delegate: SliverChildBuilderDelegate((BuildContext ctx, int i) {
           final Product product = catalog.products[i];
           return ProductCard(
             product: product,
             onTap: () => ctx.push(AppRoutes.product, extra: product),
             onPresent: connected ? () => _present(ctx, product) : null,
           );
-        },
+        }, childCount: catalog.products.length),
       ),
     );
   }

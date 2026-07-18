@@ -88,8 +88,7 @@ class PresentationScreen extends StatelessWidget {
       product: product,
       variant: variant,
       size: p.size,
-      showAI: p.showAIHighlights,
-      expanded: p.detailsExpanded,
+      scrollFraction: p.scrollFraction,
     );
 
     return ColoredBox(
@@ -118,30 +117,63 @@ class PresentationScreen extends StatelessWidget {
   }
 }
 
-class _InfoPanel extends StatelessWidget {
+class _InfoPanel extends StatefulWidget {
   const _InfoPanel({
     required this.product,
     required this.variant,
     required this.size,
-    required this.showAI,
-    required this.expanded,
+    required this.scrollFraction,
   });
 
   final Product product;
   final ProductVariant variant;
   final String? size;
-  final bool showAI;
-  final bool expanded;
+  final double scrollFraction;
+
+  @override
+  State<_InfoPanel> createState() => _InfoPanelState();
+}
+
+class _InfoPanelState extends State<_InfoPanel> {
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void didUpdateWidget(covariant _InfoPanel old) {
+    super.didUpdateWidget(old);
+    // Mirror the associate's scroll position onto this panel.
+    if (widget.scrollFraction != old.scrollFraction) _applyScroll();
+  }
+
+  void _applyScroll() {
+    if (!_scroll.hasClients) return;
+    final double target =
+        (widget.scrollFraction.clamp(0, 1)) * _scroll.position.maxScrollExtent;
+    _scroll.animateTo(
+      target,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
+    final Product product = widget.product;
+    final ProductVariant variant = widget.variant;
+    final String? size = widget.size;
     return Container(
       color: c.surface,
       padding: const EdgeInsets.all(AppSpacing.giant),
       alignment: Alignment.centerLeft,
       child: SingleChildScrollView(
+        controller: _scroll,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,11 +190,13 @@ class _InfoPanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             Text(
               product.description,
-              style: t.titleMedium?.copyWith(
-                color: c.textSecondary,
-                fontWeight: FontWeight.w400,
-                height: 1.5,
-              ),
+              style:
+                  t.titleLarge?.copyWith(
+                    color: c.textSecondary,
+                    fontWeight: FontWeight.w400,
+                    height: 1.5,
+                  ) ??
+                  const TextStyle(),
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
@@ -190,7 +224,7 @@ class _InfoPanel extends StatelessWidget {
                   ),
               ],
             ),
-            if (size != null && size!.isNotEmpty) ...<Widget>[
+            if (size != null && size.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'SIZE — $size',
@@ -201,7 +235,7 @@ class _InfoPanel extends StatelessWidget {
               duration: AppMotion.base,
               curve: AppMotion.standard,
               alignment: Alignment.topLeft,
-              child: showAI && product.aiHighlights.isNotEmpty
+              child: product.aiHighlights.isNotEmpty
                   ? Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.xl),
                       child: Column(
@@ -241,13 +275,13 @@ class _InfoPanel extends StatelessWidget {
                     )
                   : const SizedBox.shrink(),
             ),
-            // Full labeled details, revealed inside the (scrollable) info panel
-            // when the associate drags the details sheet up on their device.
+            // Full labeled details — always shown so the customer sees the same
+            // complete product information the associate has on their device.
             AnimatedSize(
               duration: AppMotion.base,
               curve: AppMotion.standard,
               alignment: Alignment.topLeft,
-              child: expanded && product.details.isNotEmpty
+              child: product.details.isNotEmpty
                   ? Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.xl),
                       child: Column(

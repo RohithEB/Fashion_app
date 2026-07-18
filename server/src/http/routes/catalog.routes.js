@@ -25,6 +25,12 @@ catalogRouter.get('/filters', (req, res) => {
   res.json(catalog.getFilters());
 });
 
+// GET /api/talking-point?productId=&customerId=&personality=&name=
+//   -> a private, on-phone coaching cue for the associate (never on the display).
+catalogRouter.get('/talking-point', (req, res) => {
+  res.json(catalog.getTalkingPoint(req.query));
+});
+
 // GET /api/products/:id -> full detail (enrichment + variants + media)
 catalogRouter.get('/products/:id', (req, res) => {
   res.json(catalog.getProductDetail(req.params.id));

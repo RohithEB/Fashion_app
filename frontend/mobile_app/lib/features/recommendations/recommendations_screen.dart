@@ -10,6 +10,7 @@ import '../../core/theme/app_typography.dart';
 import '../../data/catalog_repository.dart';
 import '../../data/journey_logger.dart';
 import '../../models/product.dart';
+import '../../widgets/app_button.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/state_views.dart';
 import '../auth/auth_controller.dart';
@@ -35,6 +36,15 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
   void initState() {
     super.initState();
     _future = _load();
+    // Push the curated picks to the display as a grid as soon as they resolve.
+    _future.then((List<Product> items) {
+      if (!mounted || items.isEmpty) return;
+      if (context.read<ConnectionController>().liveLink) {
+        context.read<PresentationController>().showRecommendations(
+          items.map((Product p) => p.id).toList(),
+        );
+      }
+    });
     // Record that the associate opened recommendations for this guest.
     context.read<JourneyLogger>().log(
       eventType: 'recommendations_opened',
@@ -44,6 +54,13 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     );
   }
 
+  /// Switch the display to the full collection grid and take the associate to the
+  /// browsing home to explore everything.
+  void _exploreAll() {
+    context.read<PresentationController>().showCatalog();
+    context.go(AppRoutes.home);
+  }
+
   Future<List<Product>> _load() {
     final customer = context.read<OnboardingController>().customer;
     return context.read<CatalogRepository>().recommendations(
@@ -51,6 +68,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
       gender: customer?.gender,
       ageRange: customer?.ageRange,
       personality: customer?.personality,
+      limit: 6, // top 6 picks for the guest
     );
   }
 
@@ -117,17 +135,20 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                   ),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.56,
+                    childAspectRatio: 0.49,
                     crossAxisSpacing: AppSpacing.md,
                     mainAxisSpacing: AppSpacing.lg,
                   ),
                   itemCount: items.length,
                   itemBuilder: (BuildContext _, int i) {
                     final Product product = items[i];
+                    // Tapping a recommendation opens its full detail; the clear
+                    // "Show on screen" button (when connected) presents it.
                     return ProductCard(
                       product: product,
                       onTap: () => ctx.push(AppRoutes.product, extra: product),
                       onPresent: connected ? () => _present(product) : null,
+                      ctaLabel: connected ? 'Show on screen' : null,
                     );
                   },
                 );
@@ -135,6 +156,21 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          MediaQuery.of(context).padding.bottom + AppSpacing.sm,
+        ),
+        child: AppButton(
+          label: 'Explore the full collection',
+          icon: AppIcons.showOnScreen,
+          variant: AppButtonVariant.secondary,
+          expand: true,
+          onPressed: _exploreAll,
+        ),
       ),
     );
   }

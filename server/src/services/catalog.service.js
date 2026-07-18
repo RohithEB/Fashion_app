@@ -137,3 +137,50 @@ export function getRecommendations(query = {}) {
     items: rows.map((p) => ({ ...toListItem(p, heroes, facets, videos), matchScore: p.score })),
   };
 }
+
+// A PRIVATE, on-phone talking point for the associate — a warm, specific line to
+// SAY to the guest, composed from the product's AI enrichment (highlight, fabric,
+// fit) + the guest profile. Deterministic (no external call) so it is instant and
+// demo-safe. Never shown on the customer display; strictly a coaching cue.
+export function getTalkingPoint(query = {}) {
+  const productId = query.productId;
+  const p = productId ? products.getProductById(productId) : null;
+  if (!p) throw notFound('Product not found');
+
+  let { personality, name } = query;
+  if (query.customerId) {
+    const c = customers.getCustomer(query.customerId);
+    if (c) { personality = personality || c.personality; name = name || c.name; }
+  }
+
+  const byKey = {};
+  for (const e of products.getEnrichment(productId)) {
+    byKey[String(e.key || '').toLowerCase()] = e.value;
+  }
+  const highlight = byKey['ai highlight'] || byKey['highlight'] || p.description || '';
+  const fabric = byKey['fabric'];
+  const fit = byKey['fit'];
+
+  const who = (name && name.trim()) ? name.trim() : null;
+  const persona = (personality && personality.trim())
+    ? personality.trim().toLowerCase() : null;
+
+  const detail = (fabric && fit)
+    ? `the ${fabric.toLowerCase()} and how the ${fit.toLowerCase()} cut will sit on them`
+    : fabric ? `the ${fabric.toLowerCase()}`
+    : fit ? `how the ${fit.toLowerCase()} cut will sit on them`
+    : 'the hand-finished detailing';
+
+  const lead = who
+    ? `${who}, the ${p.name} feels like it was made for you`
+    : `The ${p.name} suits you beautifully`;
+  const personaClause = persona
+    ? ` — exactly the kind of piece a ${persona} eye gravitates to`
+    : '';
+  const hl = highlight
+    ? ` ${highlight.charAt(0).toUpperCase()}${highlight.slice(1).replace(/\.+$/, '')}.`
+    : '';
+
+  const compliment = `Say this: “${lead}${personaClause}.”${hl} Then point out ${detail}.`;
+  return { productId, compliment };
+}

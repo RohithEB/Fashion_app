@@ -25,7 +25,11 @@ enum WsEventType {
   showCatalog,
   showCart,
   showProduct,
+  showRecommendations,
   hideProduct,
+
+  // Scroll sync (product detail -> display info panel)
+  scrollSync,
 
   // Image interaction sync
   zoomImage,
@@ -123,4 +127,10 @@ class WsEvent {
   double? get offsetY => (payload['offsetY'] as num?)?.toDouble();
   int? get positionMs => (payload['positionMs'] as num?)?.toInt();
   int? get secondsLeft => (payload['secondsLeft'] as num?)?.toInt();
+  double? get fraction => (payload['fraction'] as num?)?.toDouble();
+  List<String> get productIds =>
+      ((payload['productIds'] as List<dynamic>?) ?? const <dynamic>[])
+          .map((dynamic e) => '$e')
+          .toList();
+  String? get salespersonName => payload['salespersonName'] as String?;
 }

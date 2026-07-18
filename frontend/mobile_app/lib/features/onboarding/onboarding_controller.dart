@@ -48,9 +48,23 @@ class OnboardingController extends ChangeNotifier {
     String? gender,
     String? ageRange,
     String? personality,
+    String? currentOutfit,
+    String? styling,
+    String? wearingColor,
+    String? occasion,
   }) async {
     error = null;
-    if (!_hasAny(<String?>[name, mobile, gender, ageRange, personality])) {
+    if (!_hasAny(<String?>[
+      name,
+      mobile,
+      gender,
+      ageRange,
+      personality,
+      currentOutfit,
+      styling,
+      wearingColor,
+      occasion,
+    ])) {
       skip(sessionId);
       return true;
     }
@@ -64,6 +78,10 @@ class OnboardingController extends ChangeNotifier {
         gender: gender,
         ageRange: ageRange,
         personality: personality,
+        currentOutfit: currentOutfit,
+        styling: styling,
+        wearingColor: wearingColor,
+        occasion: occasion,
         sessionId: sessionId,
       );
       _completedForSessionId = sessionId;

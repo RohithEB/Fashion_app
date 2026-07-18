@@ -123,10 +123,13 @@ class _PairPanel extends StatelessWidget {
         Text(
           'A style advisor will pair their device to begin.',
           textAlign: portrait ? TextAlign.start : TextAlign.center,
-          style: t.titleSmall?.copyWith(
-            color: c.textSecondary,
-            fontWeight: FontWeight.w400,
-          ),
+          style:
+              t.titleLarge?.copyWith(
+                color: c.textSecondary,
+                fontWeight: FontWeight.w400,
+                height: 1.35,
+              ) ??
+              const TextStyle(),
         ),
       ],
     );

@@ -110,6 +110,8 @@ class DisplayController extends ChangeNotifier {
         _runConnectFlow();
       case WsEventType.showCatalog:
         _showCatalog();
+      case WsEventType.showRecommendations:
+        _showRecommendations(e);
       case WsEventType.showCart:
         _showCart(e);
       case WsEventType.checkout:
@@ -134,6 +136,7 @@ class DisplayController extends ChangeNotifier {
       case WsEventType.pauseVideo:
       case WsEventType.seekVideo:
       case WsEventType.muteVideo:
+      case WsEventType.scrollSync:
         if (presentation != null) {
           presentation = presentation!.applyEvent(e);
           notifyListeners();
@@ -166,6 +169,35 @@ class DisplayController extends ChangeNotifier {
   /// The hydrated catalog, shown as a grid on the [DisplayPhase.catalogue] screen.
   List<Product> get catalog => _cache;
 
+  /// Curated subset pushed by the controller (null → show the full collection).
+  List<Product>? _recommendations;
+
+  /// Title for the catalogue grid ('The Collection' or 'Curated for you').
+  String catalogueTitle = 'The Collection';
+
+  /// Products to render on the catalogue grid: the curated picks if set, else all.
+  List<Product> get catalogGrid => _recommendations ?? _cache;
+
+  /// Show the curated recommendations as a grid (pushed when the associate opens
+  /// the recommendations screen), preserving the order the controller sent.
+  void _showRecommendations(WsEvent e) {
+    _cancelTimers();
+    _presentTargetId = null;
+    presentation = null;
+    product = null;
+    final List<String> ids = e.productIds;
+    final List<Product> matches =
+        _cache.where((Product p) => ids.contains(p.id)).toList()
+          ..sort(
+            (Product a, Product b) =>
+                ids.indexOf(a.id).compareTo(ids.indexOf(b.id)),
+          );
+    _recommendations = matches.isEmpty ? null : matches;
+    catalogueTitle = matches.isEmpty ? 'The Collection' : 'Curated for you';
+    phase = DisplayPhase.catalogue;
+    notifyListeners();
+  }
+
   /// The cart/shortlist payload mirrored from the controller (read-only).
   Map<String, dynamic>? cartView;
 
@@ -178,6 +210,8 @@ class DisplayController extends ChangeNotifier {
     _presentTargetId = null;
     presentation = null;
     product = null;
+    _recommendations = null;
+    catalogueTitle = 'The Collection';
     phase = DisplayPhase.catalogue;
     notifyListeners();
   }

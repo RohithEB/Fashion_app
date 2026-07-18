@@ -17,12 +17,18 @@ class ProductCard extends StatelessWidget {
     required this.product,
     required this.onTap,
     this.onPresent,
+    this.ctaLabel,
     super.key,
   });
 
   final Product product;
   final VoidCallback onTap;
   final VoidCallback? onPresent;
+
+  /// When set (with [onPresent]), a clear full-width call-to-action button is
+  /// shown below the card instead of the small corner icon — used on the
+  /// recommendations screen so "show on screen" is unmistakable.
+  final String? ctaLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +68,7 @@ class ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (onPresent != null)
+                if (onPresent != null && ctaLabel == null)
                   Positioned(
                     top: AppSpacing.xs,
                     right: AppSpacing.xs,
@@ -88,10 +94,55 @@ class ProductCard extends StatelessWidget {
               _Swatches(product: product),
             ],
           ),
+          if (ctaLabel != null && onPresent != null) ...<Widget>[
+            const SizedBox(height: AppSpacing.xs),
+            _CtaButton(label: ctaLabel!, onTap: onPresent!),
+          ],
         ],
       ),
     );
   }
+}
+
+/// A clear, full-width "show on screen" call-to-action used on recommendation
+/// tiles so the primary action is unmistakable.
+class _CtaButton extends StatelessWidget {
+  const _CtaButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    return Material(
+      color: c.primary,
+      borderRadius: AppRadius.brPill,
+      child: InkWell(
+        borderRadius: AppRadius.brPill,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Icon(AppIcons.showOnScreen, size: 15, color: c.onPrimary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: t(context).labelLarge?.copyWith(
+                  color: c.onPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  TextTheme t(BuildContext context) => Theme.of(context).textTheme;
 }
 
 /// Compact overlay action to push this product to the display ("view on screen").

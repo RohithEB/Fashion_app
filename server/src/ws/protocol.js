@@ -13,7 +13,9 @@ export const IN = {
   SHOW_DETAILS: 'show_details',
   SHOW_RELATED: 'show_related',
   SHOW_MEDIA: 'show_media',
+  SHOW_RECOMMENDATIONS: 'show_recommendations',
   ZOOM: 'zoom',
+  SCROLL: 'scroll',
   CLEAR: 'clear',
 };
 
@@ -29,7 +31,8 @@ export const OUT = {
 // Command messages the server relays controller -> display.
 export const RELAY_TYPES = new Set([
   IN.SHOW_CATALOG, IN.SHOW_CART, IN.SHOW_PRODUCT, IN.SHOW_DETAILS,
-  IN.SHOW_RELATED, IN.SHOW_MEDIA, IN.ZOOM, IN.CLEAR,
+  IN.SHOW_RELATED, IN.SHOW_MEDIA, IN.SHOW_RECOMMENDATIONS, IN.ZOOM,
+  IN.SCROLL, IN.CLEAR,
 ]);
 
 export function encode(type, sessionId, payload = {}) {

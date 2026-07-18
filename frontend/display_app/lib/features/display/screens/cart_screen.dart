@@ -38,7 +38,9 @@ class CartScreen extends StatelessWidget {
               Text('YOUR SELECTION', style: AppTypography.eyebrow(c.accent)),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                customerName == null ? 'The cart' : "$customerName's cart",
+                customerName == null
+                    ? 'Saved outfits'
+                    : "$customerName's outfits",
                 style: t.displaySmall,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -46,7 +48,7 @@ class CartScreen extends StatelessWidget {
                 child: items.isEmpty
                     ? Center(
                         child: Text(
-                          'The cart is empty.',
+                          'No saved outfits yet.',
                           style: t.bodyLarge?.copyWith(color: c.textSecondary),
                         ),
                       )

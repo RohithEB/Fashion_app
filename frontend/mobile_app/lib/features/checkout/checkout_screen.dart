@@ -145,7 +145,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         title: Text('Checkout', style: t.titleLarge),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        // Add the keyboard inset so the customer fields stay visible when typing.
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl,
+          AppSpacing.xl + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         children: <Widget>[
           Text('ORDER', style: AppTypography.eyebrow(c.textSecondary)),
           const SizedBox(height: AppSpacing.sm),

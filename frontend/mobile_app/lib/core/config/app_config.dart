@@ -15,11 +15,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///   channel (`ws://<box>:3000/ws`). Enable in-app under Server settings, or
 ///   with `--dart-define=BACKEND=true --dart-define=BACKEND_HOST=192.168.1.5`.
 abstract final class AppConfig {
-  // Backend mode is the DEFAULT now (real Node server + SQLite). Pass
-  // --dart-define=BACKEND=false only to run the offline mock demo.
+  // Box-as-server (offline) is the DEFAULT: the display box hosts the LAN server
+  // and both apps use the bundled catalog snapshot — works over WiFi with no
+  // internet. Pass --dart-define=BACKEND=true to run against the Node backend.
   static const bool _envBackend = bool.fromEnvironment(
     'BACKEND',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   static const String _envHost = String.fromEnvironment(

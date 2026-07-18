@@ -16,6 +16,10 @@ abstract interface class CustomerRepository {
     String? gender,
     String? ageRange,
     String? personality,
+    String? currentOutfit,
+    String? styling,
+    String? wearingColor,
+    String? occasion,
     String? sessionId,
   });
 }
@@ -50,6 +54,10 @@ class HttpCustomerRepository implements CustomerRepository {
     String? gender,
     String? ageRange,
     String? personality,
+    String? currentOutfit,
+    String? styling,
+    String? wearingColor,
+    String? occasion,
     String? sessionId,
   }) async {
     final Map<String, dynamic> body = <String, dynamic>{
@@ -58,6 +66,10 @@ class HttpCustomerRepository implements CustomerRepository {
       if (_has(gender)) 'gender': gender,
       if (_has(ageRange)) 'ageRange': ageRange,
       if (_has(personality)) 'personality': personality,
+      if (_has(currentOutfit)) 'currentOutfit': currentOutfit!.trim(),
+      if (_has(styling)) 'styling': styling!.trim(),
+      if (_has(wearingColor)) 'wearingColor': wearingColor!.trim(),
+      if (_has(occasion)) 'occasion': occasion!.trim(),
       if (_has(sessionId)) 'sessionId': sessionId,
     };
     final http.Response res = await _client
@@ -101,6 +113,10 @@ class MockCustomerRepository implements CustomerRepository {
     String? gender,
     String? ageRange,
     String? personality,
+    String? currentOutfit,
+    String? styling,
+    String? wearingColor,
+    String? occasion,
     String? sessionId,
   }) async => Customer(
     id: 'mock_customer',
@@ -109,5 +125,9 @@ class MockCustomerRepository implements CustomerRepository {
     gender: gender,
     ageRange: ageRange,
     personality: personality,
+    currentOutfit: currentOutfit,
+    styling: styling,
+    wearingColor: wearingColor,
+    occasion: occasion,
   );
 }

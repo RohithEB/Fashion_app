@@ -7,6 +7,7 @@ import 'core/realtime/backend_display_realtime.dart';
 import 'core/realtime/display_realtime.dart';
 import 'core/realtime/realtime_service.dart';
 import 'core/theme/app_theme.dart';
+import 'data/bundled_catalog_repository.dart';
 import 'data/catalog_repository.dart';
 import 'data/http_catalog_repository.dart';
 import 'features/display/display_controller.dart';
@@ -22,9 +23,11 @@ class DisplayApp extends StatelessWidget {
     return MultiProvider(
       providers: <SingleChildWidget>[
         Provider<CatalogRepository>(
+          // Offline / box-as-server mode hydrates from the bundled real-catalog
+          // snapshot; backend mode reads the Node HTTP API.
           create: (_) => AppConfig.backendMode
               ? HttpCatalogRepository()
-              : const MockCatalogRepository(),
+              : BundledCatalogRepository(),
         ),
         Provider<RealtimeService>(
           create: (_) => AppConfig.backendMode

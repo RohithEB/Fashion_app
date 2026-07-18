@@ -53,10 +53,13 @@ class WelcomeScreen extends StatelessWidget {
                   'Share your requirements, and our fashion experts will help '
                   'you find the perfect piece.',
                   textAlign: TextAlign.center,
-                  style: t.titleMedium?.copyWith(
-                    color: c.textSecondary,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style:
+                      t.titleLarge?.copyWith(
+                        color: c.textSecondary,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ) ??
+                      const TextStyle(),
                 ),
               ],
             ),
