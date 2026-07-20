@@ -15,7 +15,6 @@ import '../catalog/catalog_controller.dart';
 import '../connection/connection_controller.dart';
 import '../customer/customer_directory_controller.dart';
 import '../customer/widgets/customer_form.dart';
-import '../presentation/presentation_controller.dart';
 import 'onboarding_controller.dart';
 
 /// Shown right after the display is paired: the guest's details, so the
@@ -52,7 +51,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         await context.read<CustomerDirectoryController>().save(saved);
       }
       if (!mounted) return;
-      _revealCatalogue();
       // A profile was captured → open the curated picks tailored to the guest.
       context.go(AppRoutes.recommendations);
     }
@@ -64,13 +62,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         .session
         ?.sessionId;
     context.read<OnboardingController>().skip(sessionId);
-    _revealCatalogue();
-  }
-
-  /// Push the catalogue to the display; the router guard then advances the
-  /// associate to the browsing home now that onboarding is complete.
-  void _revealCatalogue() {
-    context.read<PresentationController>().showCatalog();
   }
 
   @override

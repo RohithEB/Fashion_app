@@ -36,15 +36,6 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
   void initState() {
     super.initState();
     _future = _load();
-    // Push the curated picks to the display as a grid as soon as they resolve.
-    _future.then((List<Product> items) {
-      if (!mounted || items.isEmpty) return;
-      if (context.read<ConnectionController>().liveLink) {
-        // Recommendations stay private to the associate; the guest keeps
-        // browsing the collection on the display.
-        context.read<PresentationController>().showCatalog();
-      }
-    });
     // Record that the associate opened recommendations for this guest.
     context.read<JourneyLogger>().log(
       eventType: 'recommendations_opened',
@@ -54,10 +45,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     );
   }
 
-  /// Switch the display to the full collection grid and take the associate to the
-  /// browsing home to explore everything.
+  /// Take the associate to the browsing home. Nothing is pushed to the display —
+  /// the guest only sees a piece once it is explicitly shown on screen.
   void _exploreAll() {
-    context.read<PresentationController>().showCatalog();
     context.go(AppRoutes.home);
   }
 
