@@ -40,9 +40,9 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     _future.then((List<Product> items) {
       if (!mounted || items.isEmpty) return;
       if (context.read<ConnectionController>().liveLink) {
-        context.read<PresentationController>().showRecommendations(
-          items.map((Product p) => p.id).toList(),
-        );
+        // Recommendations stay private to the associate; the guest keeps
+        // browsing the collection on the display.
+        context.read<PresentationController>().showCatalog();
       }
     });
     // Record that the associate opened recommendations for this guest.

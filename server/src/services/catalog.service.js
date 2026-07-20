@@ -248,9 +248,14 @@ export function getRecommendations(query = {}) {
   const limit = Math.min(Number(query.limit) || 12, 50);
 
   const all = products.queryProducts({ limit: 1000, offset: 0 }).rows;
-  const facets = products.getVariantFacetsFor(all.map((p) => p.id));
+  // A guest's gender is a hard constraint — never recommend womenswear to a man
+  // because the colour/style happened to match. Unisex always stays eligible.
+  const pool = profile.gender
+    ? all.filter((p) => p.gender === profile.gender || p.gender === 'unisex')
+    : all;
+  const facets = products.getVariantFacetsFor(pool.map((p) => p.id));
 
-  const scored = all
+  const scored = pool
     .map((p) => ({ p, ...scoreProduct(p, profile, facets[p.id]) }))
     .sort((a, b) => b.score - a.score || (b.p.createdAt > a.p.createdAt ? 1 : -1));
 

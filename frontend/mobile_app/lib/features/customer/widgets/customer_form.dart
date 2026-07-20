@@ -61,6 +61,12 @@ class _CustomerFormState extends State<CustomerForm> {
   String? _occasion;
   String? _budget;
   bool _repeat = false;
+  String? _shoppingFor;
+  int? _familySize;
+  int? _boys;
+  int? _girls;
+  late List<String> _familyMembers;
+  late List<String> _childAges;
   late List<String> _styles;
   late List<String> _colors;
   late List<String> _brands;
@@ -92,6 +98,12 @@ class _CustomerFormState extends State<CustomerForm> {
     _occasion = c.occasion;
     _budget = c.budgetRange;
     _repeat = c.isRepeatCustomer;
+    _shoppingFor = c.shoppingFor;
+    _familySize = c.familySize;
+    _boys = c.boysCount;
+    _girls = c.girlsCount;
+    _familyMembers = List<String>.of(c.familyMembers);
+    _childAges = List<String>.of(c.childAgeRanges);
     _styles = List<String>.of(c.fashionStyles);
     _colors = List<String>.of(c.favoriteColors);
     _brands = List<String>.of(c.preferredBrands);
@@ -143,6 +155,12 @@ class _CustomerFormState extends State<CustomerForm> {
         preferredFabrics: _fabrics,
         notes: _trim(_notes),
         isRepeatCustomer: _repeat,
+        shoppingFor: _shoppingFor,
+        familySize: _familySize,
+        familyMembers: _familyMembers,
+        boysCount: _boys,
+        girlsCount: _girls,
+        childAgeRanges: _childAges,
       ),
     );
   }
@@ -242,6 +260,66 @@ class _CustomerFormState extends State<CustomerForm> {
           selected: _occupation,
           onSelect: (String? v) => _set(() => _occupation = v),
         ),
+
+        // ── Who they're shopping for ─────────────────────────────────────
+        _Section(title: 'SHOPPING FOR'),
+        _Single(
+          label: 'WHO ARE WE STYLING',
+          options: CustomerOptions.shoppingFor,
+          selected: _shoppingFor,
+          onSelect: (String? v) => _set(() => _shoppingFor = v),
+        ),
+        // Family details unfold only when shopping for a family.
+        if (_shoppingFor == 'Family') ...<Widget>[
+          _Counter(
+            label: 'HOW MANY PEOPLE',
+            value: _familySize,
+            max: 12,
+            onChanged: (int? v) => _set(() => _familySize = v),
+          ),
+          _Multi(
+            label: 'WHO ARE THEY',
+            options: CustomerOptions.familyMembers,
+            selected: _familyMembers,
+            onToggle: (String v) => _set(
+              () => _familyMembers.contains(v)
+                  ? _familyMembers.remove(v)
+                  : _familyMembers.add(v),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: _Counter(
+                  label: 'BOYS',
+                  value: _boys,
+                  max: 8,
+                  onChanged: (int? v) => _set(() => _boys = v),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: _Counter(
+                  label: 'GIRLS',
+                  value: _girls,
+                  max: 8,
+                  onChanged: (int? v) => _set(() => _girls = v),
+                ),
+              ),
+            ],
+          ),
+          _Multi(
+            label: 'CHILDREN’S AGES',
+            options: CustomerOptions.childAgeRanges,
+            selected: _childAges,
+            onToggle: (String v) => _set(
+              () => _childAges.contains(v)
+                  ? _childAges.remove(v)
+                  : _childAges.add(v),
+            ),
+          ),
+        ],
 
         // ── Fashion preferences ──────────────────────────────────────────
         _Section(title: 'FASHION PREFERENCES'),
@@ -515,6 +593,72 @@ class _Multi extends StatelessWidget {
                   ),
                 )
                 .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A compact 0..[max] stepper for family counts. Tapping the value clears it,
+/// keeping every field optional.
+class _Counter extends StatelessWidget {
+  const _Counter({
+    required this.label,
+    required this.value,
+    required this.max,
+    required this.onChanged,
+  });
+
+  final String label;
+  final int? value;
+  final int max;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    final TextTheme t = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _Label(text: label),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: c.border),
+              borderRadius: AppRadius.brLg,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                IconButton(
+                  icon: const Icon(Icons.remove, size: 18),
+                  tooltip: 'Fewer',
+                  onPressed: (value ?? 0) <= 0
+                      ? null
+                      : () => onChanged(value == 1 ? null : (value! - 1)),
+                ),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    value?.toString() ?? '–',
+                    textAlign: TextAlign.center,
+                    style: t.titleMedium?.copyWith(
+                      color: value == null ? c.textTertiary : c.textPrimary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 18),
+                  tooltip: 'More',
+                  onPressed: (value ?? 0) >= max
+                      ? null
+                      : () => onChanged((value ?? 0) + 1),
+                ),
+              ],
+            ),
           ),
         ],
       ),

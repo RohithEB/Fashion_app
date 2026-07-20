@@ -249,6 +249,18 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             _Card(
+              title: 'SHOPPING FOR',
+              rows: <_Row>[
+                _Row('Styling for', guest.shoppingFor),
+                _Row('Group size', guest.familySize?.toString()),
+                _Row('Family', _join(guest.familyMembers)),
+                _Row('Boys', guest.boysCount?.toString()),
+                _Row('Girls', guest.girlsCount?.toString()),
+                _Row('Children ages', _join(guest.childAgeRanges)),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            _Card(
               title: 'TODAY',
               rows: <_Row>[
                 _Row('Current outfit', guest.currentOutfit),
