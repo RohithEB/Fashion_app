@@ -4,18 +4,24 @@ import 'package:provider/provider.dart';
 
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
+import '../../models/category.dart';
+import '../../models/customer.dart';
+import '../../models/product.dart';
 import '../../widgets/app_button.dart';
+import '../catalog/catalog_controller.dart';
 import '../connection/connection_controller.dart';
+import '../customer/widgets/customer_form.dart';
 import '../presentation/presentation_controller.dart';
 import 'onboarding_controller.dart';
 
-/// Shown right after the display is paired: a light guest profile so the
+/// Shown right after the display is paired: the guest's details, so the
 /// associate can tailor the session. Everything is optional — Continue saves
 /// whatever was entered (or skips if blank); Skip proceeds without saving.
 /// On completion the catalogue is pushed to the display and the associate lands
-/// on the browsing home.
+/// on the curated recommendations.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -24,26 +30,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _mobile = TextEditingController();
-  final TextEditingController _currentOutfit = TextEditingController();
-  final TextEditingController _styling = TextEditingController();
-  final TextEditingController _wearingColor = TextEditingController();
-  final TextEditingController _occasion = TextEditingController();
-  String? _gender;
-  String? _ageRange;
-  String? _personality;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _mobile.dispose();
-    _currentOutfit.dispose();
-    _styling.dispose();
-    _wearingColor.dispose();
-    _occasion.dispose();
-    super.dispose();
-  }
+  Customer _draft = const Customer(id: 'draft');
 
   Future<void> _continue() async {
     final OnboardingController onboarding = context
@@ -54,20 +41,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ?.sessionId;
     final bool ok = await onboarding.submit(
       sessionId: sessionId,
-      name: _name.text,
-      mobile: _mobile.text,
-      gender: _gender,
-      ageRange: _ageRange,
-      personality: _personality,
-      currentOutfit: _currentOutfit.text,
-      styling: _styling.text,
-      wearingColor: _wearingColor.text,
-      occasion: _occasion.text,
+      draft: _draft,
     );
     if (ok && mounted) {
       _revealCatalogue();
-      // A profile was captured → open the curated top-6 recommendations first,
-      // so the associate leads with picks tailored to the guest.
+      // A profile was captured → open the curated picks tailored to the guest.
       context.go(AppRoutes.recommendations);
     }
   }
@@ -93,119 +71,56 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final TextTheme t = Theme.of(context).textTheme;
     final OnboardingController onboarding = context
         .watch<OnboardingController>();
+    final CatalogController catalog = context.watch<CatalogController>();
+    final List<String> brands = _brandsFrom(catalog.products);
+    final List<String> categories = catalog.categories
+        .map((Category c) => c.name)
+        .toList();
 
     return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Text('Customer profile', style: t.titleLarge),
+        actions: <Widget>[
+          TextButton(
+            onPressed: onboarding.submitting ? null : _skip,
+            child: Text(
+              'Skip',
+              style: t.titleSmall?.copyWith(color: c.accent),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: <Widget>[
             Expanded(
               child: SingleChildScrollView(
-                // Extra bottom padding equal to the keyboard inset so a focused
-                // field is never hidden behind the keyboard.
-                padding: EdgeInsets.fromLTRB(
-                  AppSpacing.xl,
-                  0,
-                  AppSpacing.xl,
-                  AppSpacing.xl + MediaQuery.viewInsetsOf(context).bottom,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const SizedBox(height: AppSpacing.xl),
-                    Text(
-                      'GUEST PROFILE',
-                      style: AppTypography.eyebrow(c.accent),
-                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text('GUEST PROFILE', style: AppTypography.eyebrow(c.accent)),
                     const SizedBox(height: AppSpacing.sm),
                     Text('Personalise the session', style: t.displaySmall),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
-                      'Capture a few optional details to tailor the showing. '
-                      'You can skip any of this.',
-                      style: t.titleMedium?.copyWith(
-                        color: c.textSecondary,
-                        height: 1.4,
-                      ),
+                      'All optional — anything you capture sharpens the '
+                      'recommendations for this guest. Skip to start browsing '
+                      'straight away.',
+                      style: t.bodyLarge?.copyWith(color: c.textSecondary),
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    TextField(
-                      controller: _name,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Name (optional)',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      controller: _mobile,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Mobile (optional)',
-                        prefixIcon: Icon(Icons.phone_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _ChipGroup(
-                      label: 'GENDER',
-                      options: onboarding.options.genders,
-                      selected: _gender,
-                      onSelect: (String? v) => setState(() => _gender = v),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _ChipGroup(
-                      label: 'AGE RANGE',
-                      options: onboarding.options.ageRanges,
-                      selected: _ageRange,
-                      onSelect: (String? v) => setState(() => _ageRange = v),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _ChipGroup(
-                      label: 'STYLE PERSONALITY',
-                      options: onboarding.options.personalities,
-                      selected: _personality,
-                      onSelect: (String? v) => setState(() => _personality = v),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'WHAT ARE THEY WEARING?',
-                      style: AppTypography.eyebrow(c.textSecondary),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    TextField(
-                      controller: _currentOutfit,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Current outfit (optional)',
-                        prefixIcon: Icon(Icons.checkroom_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      controller: _wearingColor,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Colour they’re wearing (optional)',
-                        prefixIcon: Icon(Icons.palette_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      controller: _styling,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'How they’re styling it (optional)',
-                        prefixIcon: Icon(Icons.auto_awesome_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    TextField(
-                      controller: _occasion,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Occasion / looking for (optional)',
-                        prefixIcon: Icon(Icons.event_outlined),
-                      ),
+                    CustomerForm(
+                      initial: onboarding.customer ?? const Customer(id: 'draft'),
+                      genders: onboarding.options.genders,
+                      ageRanges: onboarding.options.ageRanges,
+                      personalities: onboarding.options.personalities,
+                      brands: brands,
+                      categories: categories,
+                      onChanged: (Customer v) => _draft = v,
                     ),
                     if (onboarding.error != null) ...<Widget>[
                       const SizedBox(height: AppSpacing.md),
@@ -231,18 +146,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   AppButton(
                     label: onboarding.submitting
                         ? 'Saving…'
-                        : 'Continue to collection',
+                        : 'Show recommendations',
+                    icon: AppIcons.sparkle,
                     expand: true,
                     isLoading: onboarding.submitting,
                     onPressed: onboarding.submitting ? null : _continue,
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  TextButton(
+                  AppButton(
+                    label: 'Skip for now',
+                    variant: AppButtonVariant.outline,
+                    expand: true,
                     onPressed: onboarding.submitting ? null : _skip,
-                    child: Text(
-                      'Skip for now',
-                      style: t.bodyMedium?.copyWith(color: c.textSecondary),
-                    ),
                   ),
                 ],
               ),
@@ -252,45 +167,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
     );
   }
-}
 
-class _ChipGroup extends StatelessWidget {
-  const _ChipGroup({
-    required this.label,
-    required this.options,
-    required this.selected,
-    required this.onSelect,
-  });
-
-  final String label;
-  final List<String> options;
-  final String? selected;
-  final ValueChanged<String?> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
-    if (options.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(label, style: AppTypography.eyebrow(c.textSecondary)),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
-          children: options.map((String option) {
-            final bool isSelected = option == selected;
-            return ChoiceChip(
-              label: Text(option),
-              selected: isSelected,
-              showCheckmark: false,
-              // Tapping the selected chip clears it (all optional).
-              onSelected: (_) => onSelect(isSelected ? null : option),
-            );
-          }).toList(),
-        ),
-      ],
-    );
+  /// Distinct catalogue brands, offered as preferred-brand chips.
+  static List<String> _brandsFrom(List<Product> products) {
+    final Set<String> seen = <String>{};
+    for (final Product p in products) {
+      if (p.brand.trim().isNotEmpty) seen.add(p.brand.trim());
+    }
+    final List<String> list = seen.toList()..sort();
+    return list;
   }
 }

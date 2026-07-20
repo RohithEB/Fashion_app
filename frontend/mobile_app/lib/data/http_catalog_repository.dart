@@ -74,6 +74,7 @@ class HttpCatalogRepository implements CatalogRepository {
     String? personality,
     String? customerId,
     int limit = 12,
+    List<String> styleHints = const <String>[],
   }) async {
     final Map<String, dynamic> q = <String, dynamic>{
       'limit': limit,

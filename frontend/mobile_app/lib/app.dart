@@ -19,6 +19,7 @@ import 'data/journey_logger.dart';
 import 'features/auth/auth_controller.dart';
 import 'features/cart/cart_controller.dart';
 import 'features/catalog/catalog_controller.dart';
+import 'features/customer/customer_directory_controller.dart';
 import 'features/connection/connection_controller.dart';
 import 'features/connection/idle_warning_overlay.dart';
 import 'features/onboarding/onboarding_controller.dart';
@@ -75,6 +76,10 @@ class FashionControllerApp extends StatelessWidget {
               OnboardingController(ctx.read<CustomerRepository>()),
         ),
         ChangeNotifierProvider<CartController>(create: (_) => CartController()),
+        // Locally-saved book of customer profiles (multi-guest).
+        ChangeNotifierProvider<CustomerDirectoryController>(
+          create: (_) => CustomerDirectoryController(),
+        ),
         ChangeNotifierProvider<ConnectionController>(
           create: (BuildContext ctx) =>
               ConnectionController(ctx.read<RealtimeService>()),

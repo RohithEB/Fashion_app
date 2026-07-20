@@ -14,7 +14,9 @@ import '../../features/connection/connect_screen.dart';
 import '../../features/connection/connection_controller.dart';
 import '../../features/onboarding/onboarding_controller.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/customer/customer_profile_screen.dart';
 import '../../features/product/product_detail_screen.dart';
+import '../../features/profile/profile_screen.dart';
 import '../../features/recommendations/recommendations_screen.dart';
 import '../../models/order.dart';
 import '../../models/product.dart';
@@ -27,6 +29,8 @@ abstract final class AppRoutes {
   static const String register = '/register';
   static const String connect = '/connect';
   static const String onboarding = '/onboarding';
+  static const String profile = '/profile';
+  static const String customerProfile = '/customer-profile';
   static const String home = '/home';
   static const String product = '/product';
   static const String cart = '/cart';
@@ -44,7 +48,11 @@ abstract final class AppRouter {
     final CatalogController catalog = context.read<CatalogController>();
     return GoRouter(
       initialLocation: AppRoutes.login,
-      refreshListenable: Listenable.merge(<Listenable>[conn, auth, onboarding]),
+      refreshListenable: Listenable.merge(<Listenable>[
+        conn,
+        auth,
+        onboarding,
+      ]),
       redirect: (BuildContext ctx, GoRouterState state) {
         final bool loggedIn = auth.isAuthenticated;
         final bool connected = conn.isConnected;
@@ -56,7 +64,7 @@ abstract final class AppRouter {
           AppRoutes.login,
           AppRoutes.register,
         };
-        // log in → pair a display → onboard the guest → browse.
+        // log in → pair a display → capture the guest → browse.
         if (!loggedIn) return authRoutes.contains(loc) ? null : AppRoutes.login;
         if (!connected) {
           return loc == AppRoutes.connect ? null : AppRoutes.connect;
@@ -87,6 +95,14 @@ abstract final class AppRouter {
         GoRoute(
           path: AppRoutes.onboarding,
           pageBuilder: (_, _) => _fade(const OnboardingScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.profile,
+          pageBuilder: (_, _) => _fade(const ProfileScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.customerProfile,
+          pageBuilder: (_, _) => _fade(const CustomerProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.home,

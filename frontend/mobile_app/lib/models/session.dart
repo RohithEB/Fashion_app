@@ -1,21 +1,31 @@
 /// The signed-in sales associate.
 class Salesperson {
-  const Salesperson({required this.id, required this.name, this.title});
+  const Salesperson({
+    required this.id,
+    required this.name,
+    this.title,
+    this.username,
+  });
 
   factory Salesperson.fromJson(Map<String, dynamic> json) => Salesperson(
     id: json['id'] as String,
     name: json['name'] as String,
     title: json['title'] as String?,
+    username: json['username'] as String?,
   );
 
   final String id;
   final String name;
   final String? title;
 
+  /// Login handle returned by the auth API; used to pre-fill the profile.
+  final String? username;
+
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id': id,
     'name': name,
     'title': title,
+    if (username != null) 'username': username,
   };
 }
 
