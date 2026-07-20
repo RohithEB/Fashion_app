@@ -83,6 +83,9 @@ class HttpCatalogRepository implements CatalogRepository {
       if (personality != null && personality.isNotEmpty)
         'personality': personality,
       if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
+      // Style, colours, brands, occasion, fit … sharpen the picks. Sent as a
+      // comma-joined `hints` param the backend folds into the match score.
+      if (styleHints.isNotEmpty) 'hints': styleHints.join(','),
     };
     final http.Response res = await _client
         .get(AppConfig.http('/api/recommendations', q))

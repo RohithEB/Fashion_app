@@ -54,25 +54,16 @@ class OnboardingController extends ChangeNotifier {
     submitting = true;
     notifyListeners();
     try {
-      final Customer? created = await _repo.create(
-        name: draft.name,
-        mobile: draft.mobile,
-        gender: draft.gender,
-        ageRange: draft.ageRange,
-        personality: draft.personality,
-        currentOutfit: draft.currentOutfit,
-        styling: draft.styling,
-        wearingColor: draft.wearingColor,
-        occasion: draft.occasion,
-        sessionId: sessionId,
-      );
+      // The whole profile is persisted now (all fields optional), so the record
+      // the API returns is complete — no client-side field merge needed.
+      final Customer? created = await _repo.create(draft, sessionId: sessionId);
       if (created == null) {
         error = 'Could not save the guest profile. Try again or skip.';
         submitting = false;
         notifyListeners();
         return false;
       }
-      customer = _mergeSessionFields(created, draft);
+      customer = created;
       _completedForSessionId = sessionId;
       submitting = false;
       notifyListeners();
@@ -85,31 +76,33 @@ class OnboardingController extends ChangeNotifier {
     }
   }
 
-  /// Carry the session-only styling fields from [draft] onto the persisted
-  /// [saved] record returned by the API.
-  Customer _mergeSessionFields(Customer saved, Customer draft) => saved.copyWith(
-    dateOfBirth: draft.dateOfBirth,
-    occupation: draft.occupation,
-    fashionStyles: draft.fashionStyles,
-    favoriteColors: draft.favoriteColors,
-    preferredFit: draft.preferredFit,
-    topSize: draft.topSize,
-    bottomSize: draft.bottomSize,
-    shoeSize: draft.shoeSize,
-    favoriteCategories: draft.favoriteCategories,
-    preferredFabrics: draft.preferredFabrics,
-    budgetRange: draft.budgetRange,
-    preferredBrands: draft.preferredBrands,
-    notes: draft.notes,
-    isRepeatCustomer: draft.isRepeatCustomer,
-  );
-
-  /// Replace the session's customer profile (used by the Customer Profile page).
-  /// Applies immediately so recommendations improve straight away; API-backed
-  /// fields are left as saved until an update endpoint exists.
+  /// Set the active in-session guest **locally** (switching to a saved profile,
+  /// or starting a blank draft). No network — recommendations sharpen at once.
   void updateProfile(Customer next) {
     customer = next;
     notifyListeners();
+  }
+
+  /// Persist a partial edit of the active guest to the backend: PUTs only the
+  /// changed fields (falls back to a create if there's no server id yet), so the
+  /// associate can fill the form across multiple saves. Returns true on a
+  /// successful persist; the in-session profile updates either way so
+  /// recommendations still sharpen even if the network hiccups.
+  Future<bool> persistProfileUpdate(Customer draft, {String? sessionId}) async {
+    submitting = true;
+    notifyListeners();
+    try {
+      final Customer? saved = await _repo.update(draft, sessionId: sessionId);
+      customer = saved ?? draft;
+      submitting = false;
+      notifyListeners();
+      return saved != null;
+    } catch (_) {
+      customer = draft;
+      submitting = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Proceed without saving a profile.

@@ -18,6 +18,23 @@ CREATE TABLE IF NOT EXISTS customers (
   styling       TEXT,             -- how they're styling it (optional)
   wearingColor  TEXT,             -- colour the guest currently has on (optional)
   occasion      TEXT,             -- what they're shopping for (optional)
+  -- Full guest profile captured by the mobile customer form. Every field optional;
+  -- the associate can fill parts across multiple saves (PUT /api/customers/:id).
+  dateOfBirth        TEXT,        -- ISO date string
+  occupation         TEXT,
+  preferredFit       TEXT,        -- Slim/Regular/Relaxed/Oversized
+  topSize            TEXT,
+  bottomSize         TEXT,
+  shoeSize           TEXT,
+  budgetRange        TEXT,        -- e.g. '₹5,000 – ₹15,000'
+  notes              TEXT,        -- free-form observations
+  isRepeatCustomer   INTEGER NOT NULL DEFAULT 0,
+  fashionStyles      TEXT,        -- JSON array string
+  favoriteColors     TEXT,        -- JSON array string
+  preferredBrands    TEXT,        -- JSON array string
+  favoriteCategories TEXT,        -- JSON array string
+  preferredFabrics   TEXT,        -- JSON array string
+  updatedAt          TEXT,        -- last profile update (PUT)
   createdAt     TEXT NOT NULL
 );
 

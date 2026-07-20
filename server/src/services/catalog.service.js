@@ -2,6 +2,7 @@
 import * as products from '../repositories/products.repo.js';
 import * as customers from '../repositories/customers.repo.js';
 import { notFound } from '../util/errors.js';
+import { logger } from '../util/logger.js';
 
 // Map the onboarding profile onto the enriched product vocabulary.
 const GENDER_MAP = { female: 'women', male: 'men', women: 'women', men: 'men' };
@@ -107,34 +108,180 @@ export function getCategories() {
   return products.getCategories();
 }
 
-// Recommendations for a customer's onboarding profile (gender + personality + age).
-// Accepts an explicit profile or a customerId to look one up. Direct attribute match.
-export function getRecommendations(query = {}) {
-  let { gender, ageRange, personality } = query;
-  if (query.customerId) {
-    const c = customers.getCustomer(query.customerId);
-    if (c) {
-      gender = gender || c.gender;
-      ageRange = ageRange || c.ageRange;
-      personality = personality || c.personality;
-    }
-  }
+const lc = (s) => String(s ?? '').toLowerCase().trim();
 
-  const mappedGender = GENDER_MAP[String(gender || '').toLowerCase()] || null;
-  const ageGroup = query.ageGroup || AGE_RANGE_TO_GROUP[ageRange] || null;
-  const limit = Math.min(Number(query.limit) || 12, 50);
+// The mobile customer form and the CMS product attributes use different (richer)
+// vocabularies. These bridge them so a guest's choice still matches the enriched
+// catalog — e.g. a guest shopping for a "Wedding" matches "Formal"/"Party" pieces.
+const OCCASION_SYNONYMS = {
+  office: ['work', 'formal'],
+  'business meeting': ['work', 'formal'],
+  wedding: ['formal', 'party'],
+  'date night': ['party', 'formal'],
+  festival: ['party', 'casual'],
+  travel: ['vacation', 'athleisure', 'casual'],
+  party: ['party'],
+  casual: ['casual', 'athleisure'],
+};
+// Guest "fashion style" -> product vibe / styleArchetype tokens.
+const FASHION_STYLE_SYNONYMS = {
+  'smart casual': ['sophisticated', 'classic', 'relaxed'],
+  formal: ['sophisticated', 'elegant', 'classic'],
+  luxury: ['elegant', 'sophisticated', 'bold'],
+  streetwear: ['streetwear', 'edgy'],
+  casual: ['relaxed', 'playful'],
+  ethnic: ['romantic', 'elegant'],
+  minimalist: ['minimalist'],
+  sporty: ['sporty'],
+};
+const COLOR_SYNONYMS = {
+  navy: ['navy', 'blue'],
+  grey: ['grey', 'gray'],
+  gray: ['grey', 'gray'],
+  gold: ['gold', 'camel', 'beige'],
+  beige: ['beige', 'camel', 'tan'],
+  brown: ['brown', 'tan', 'camel'],
+};
 
-  const rows = products.getRecommendations({
-    gender: mappedGender, ageGroup, personality: personality || null, limit,
+// A value plus its synonyms, as a lowercased set.
+function expand(value, map) {
+  const v = lc(value);
+  if (!v) return new Set();
+  return new Set([v, ...(map[v] || [])]);
+}
+
+// True when any guest value (expanded via `map`) equals any product value.
+function anyExpandedMatch(guestVals, productVals, map) {
+  const prod = productVals.filter(Boolean).map(lc);
+  if (!prod.length) return false;
+  return guestVals.some((gv) => {
+    const set = expand(gv, map);
+    return prod.some((pv) => set.has(pv));
   });
-  const ids = rows.map((r) => r.id);
-  const heroes = products.getHeroImages(ids);
-  const facets = products.getVariantFacetsFor(ids);
-  const videos = products.hasVideoFor(ids);
+}
+
+// Highest number in a budget band ('₹5,000 – ₹15,000' -> 15000). "Above …" = no cap.
+function parseBudgetMax(band) {
+  if (!band) return null;
+  const s = String(band);
+  if (/above/i.test(s)) return null;
+  const nums = (s.match(/[\d,]+/g) || [])
+    .map((n) => Number(n.replace(/,/g, '')))
+    .filter((n) => !Number.isNaN(n) && n > 0);
+  return nums.length ? Math.max(...nums) : null;
+}
+
+// Resolve the effective profile from explicit query params, the persisted customer
+// (via customerId), and free-text hints — query wins, then the stored profile.
+function resolveProfile(query = {}) {
+  const cust = query.customerId ? customers.getCustomer(query.customerId) : null;
+  const pick = (k) => (query[k] != null && query[k] !== '' ? query[k] : (cust ? cust[k] : null));
+  const list = (k) => {
+    if (Array.isArray(query[k])) return query[k];
+    if (typeof query[k] === 'string' && query[k].trim()) {
+      return query[k].split(',').map((s) => s.trim()).filter(Boolean);
+    }
+    if (cust && Array.isArray(cust[k])) return cust[k];
+    return [];
+  };
+  const hintsRaw = query.hints;
+  const hints = Array.isArray(hintsRaw)
+    ? hintsRaw.filter(Boolean)
+    : (typeof hintsRaw === 'string' ? hintsRaw.split(',').map((s) => s.trim()).filter(Boolean) : []);
 
   return {
-    profile: { gender: mappedGender, ageGroup, personality: personality || null },
-    items: rows.map((p) => ({ ...toListItem(p, heroes, facets, videos), matchScore: p.score })),
+    gender: GENDER_MAP[lc(pick('gender'))] || null,
+    ageGroup: query.ageGroup || AGE_RANGE_TO_GROUP[pick('ageRange')] || null,
+    personality: pick('personality') || null,
+    occasion: pick('occasion') || null,
+    preferredFit: pick('preferredFit') || null,
+    favoriteColors: list('favoriteColors'),
+    favoriteCategories: list('favoriteCategories'),
+    preferredFabrics: list('preferredFabrics'),
+    preferredBrands: list('preferredBrands'),
+    fashionStyles: list('fashionStyles'),
+    budgetMax: parseBudgetMax(pick('budgetRange')),
+    hints,
+  };
+}
+
+// Score one product against the guest profile. Deterministic, offline, weighted
+// so the strongest signals (personality, occasion, category) dominate.
+function scoreProduct(p, profile, facet) {
+  let score = 0;
+  const reasons = [];
+  const add = (pts, label) => { score += pts; reasons.push(label); };
+  const has = (arr, val) => !!val && arr.some((x) => lc(x) === lc(val));
+
+  if (profile.gender && p.gender === profile.gender) add(3, 'gender');
+  else if (p.gender === 'unisex') add(1, 'versatile');
+  if (profile.ageGroup && lc(p.ageGroup) === lc(profile.ageGroup)) add(2, 'age group');
+  if (profile.personality && lc(p.styleArchetype) === lc(profile.personality)) add(4, 'style personality');
+  if (profile.occasion && expand(profile.occasion, OCCASION_SYNONYMS).has(lc(p.occasion))) add(3, 'occasion');
+  if (profile.preferredFit && lc(p.fit) === lc(profile.preferredFit)) add(2, 'fit');
+
+  if (profile.favoriteColors.length) {
+    const variantColors = (facet?.colors || []).map((c) => c.name);
+    if (anyExpandedMatch(profile.favoriteColors, [p.primaryColor, ...variantColors], COLOR_SYNONYMS)) add(2, 'colour');
+  }
+  if (profile.favoriteCategories.length && (has(profile.favoriteCategories, p.category) || has(profile.favoriteCategories, p.subCategory))) add(3, 'category');
+  if (profile.preferredFabrics.length && (has(profile.preferredFabrics, p.fabric) || has(profile.preferredFabrics, p.material))) add(2, 'fabric');
+  if (profile.preferredBrands.length && has(profile.preferredBrands, p.brand)) add(3, 'brand');
+  if (profile.fashionStyles.length) {
+    const tags = parseTags(p.tags);
+    if (anyExpandedMatch(profile.fashionStyles, [p.vibe, p.styleArchetype, ...tags], FASHION_STYLE_SYNONYMS)) add(2, 'fashion style');
+  }
+  if (profile.budgetMax != null && Number(p.basePrice) <= profile.budgetMax) add(1, 'within budget');
+  if (profile.hints.length) {
+    const hay = [p.styleArchetype, p.occasion, p.fit, p.vibe, p.primaryColor, p.category, p.subCategory, p.fabric, p.material, p.brand, ...parseTags(p.tags)];
+    const matched = profile.hints.filter((h) => hay.some((v) => lc(v) === lc(h))).length;
+    if (matched) add(Math.min(matched, 3), 'preferences');
+  }
+  return { score, reasons };
+}
+
+// Recommendations for a customer's full profile. Accepts explicit query params,
+// a customerId to load the stored profile, and/or free-text `hints`. Products are
+// scored across every captured signal; a fuller profile yields sharper picks.
+export function getRecommendations(query = {}) {
+  const profile = resolveProfile(query);
+  const limit = Math.min(Number(query.limit) || 12, 50);
+
+  const all = products.queryProducts({ limit: 1000, offset: 0 }).rows;
+  const facets = products.getVariantFacetsFor(all.map((p) => p.id));
+
+  const scored = all
+    .map((p) => ({ p, ...scoreProduct(p, profile, facets[p.id]) }))
+    .sort((a, b) => b.score - a.score || (b.p.createdAt > a.p.createdAt ? 1 : -1));
+
+  const positive = scored.filter((s) => s.score > 0);
+  // Fall back to newest when nothing matched, so the screen is never empty.
+  const picks = (positive.length ? positive : scored).slice(0, limit);
+
+  const ids = picks.map((s) => s.p.id);
+  const heroes = products.getHeroImages(ids);
+  const videos = products.hasVideoFor(ids);
+
+  const signals = [
+    profile.gender, profile.ageGroup, profile.personality, profile.occasion,
+    profile.preferredFit,
+    ...profile.favoriteColors, ...profile.favoriteCategories,
+    ...profile.preferredFabrics, ...profile.preferredBrands, ...profile.fashionStyles,
+    profile.budgetMax ? `≤${profile.budgetMax}` : null,
+  ].filter(Boolean);
+  logger.info(
+    `[recommendations] ${query.customerId ? `customer=${query.customerId}` : 'profile'} ` +
+    `signals=[${signals.join(',')}] -> ${picks.length} picks` +
+    `${picks[0] ? ` top="${picks[0].p.name}"(score=${picks[0].score})` : ''}`,
+  );
+
+  return {
+    profile,
+    items: picks.map((s) => ({
+      ...toListItem(s.p, heroes, facets, videos),
+      matchScore: s.score,
+      matchReasons: s.reasons,
+    })),
   };
 }
 

@@ -7,21 +7,16 @@ import '../models/customer.dart';
 
 /// Customer onboarding data access: the option lists and customer capture.
 /// Swapped for [MockCustomerRepository] in standalone mode.
+///
+/// [create] persists the full (all-optional) profile once; [update] applies a
+/// partial change to an existing record — so the associate can fill parts of the
+/// form across multiple saves (sizes now, colours later) without losing anything.
 abstract interface class CustomerRepository {
   Future<OnboardingOptions> options();
 
-  Future<Customer?> create({
-    String? name,
-    String? mobile,
-    String? gender,
-    String? ageRange,
-    String? personality,
-    String? currentOutfit,
-    String? styling,
-    String? wearingColor,
-    String? occasion,
-    String? sessionId,
-  });
+  Future<Customer?> create(Customer draft, {String? sessionId});
+
+  Future<Customer?> update(Customer draft, {String? sessionId});
 }
 
 /// [CustomerRepository] backed by the Node backend (`/api/customers*`).
@@ -47,35 +42,14 @@ class HttpCustomerRepository implements CustomerRepository {
     }
   }
 
+  /// POST the full profile (partial bodies are fine — every field is optional).
   @override
-  Future<Customer?> create({
-    String? name,
-    String? mobile,
-    String? gender,
-    String? ageRange,
-    String? personality,
-    String? currentOutfit,
-    String? styling,
-    String? wearingColor,
-    String? occasion,
-    String? sessionId,
-  }) async {
-    final Map<String, dynamic> body = <String, dynamic>{
-      if (_has(name)) 'name': name!.trim(),
-      if (_has(mobile)) 'mobile': mobile!.trim(),
-      if (_has(gender)) 'gender': gender,
-      if (_has(ageRange)) 'ageRange': ageRange,
-      if (_has(personality)) 'personality': personality,
-      if (_has(currentOutfit)) 'currentOutfit': currentOutfit!.trim(),
-      if (_has(styling)) 'styling': styling!.trim(),
-      if (_has(wearingColor)) 'wearingColor': wearingColor!.trim(),
-      if (_has(occasion)) 'occasion': occasion!.trim(),
-      if (_has(sessionId)) 'sessionId': sessionId,
-    };
+  Future<Customer?> create(Customer draft, {String? sessionId}) async {
+    final Map<String, dynamic> body = _body(draft, sessionId);
     final http.Response res = await _client
         .post(
           AppConfig.http('/api/customers'),
-          headers: <String, String>{'content-type': 'application/json'},
+          headers: _jsonHeaders,
           body: jsonEncode(body),
         )
         .timeout(_timeout);
@@ -85,7 +59,39 @@ class HttpCustomerRepository implements CustomerRepository {
     return Customer.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
-  bool _has(String? v) => v != null && v.trim().isNotEmpty;
+  /// PUT a partial update onto an existing record. Only the fields present on
+  /// [draft] change server-side; untouched fields are preserved.
+  @override
+  Future<Customer?> update(Customer draft, {String? sessionId}) async {
+    if (draft.id.isEmpty || draft.id == 'draft') {
+      // No server id yet — fall back to a create so nothing is lost.
+      return create(draft, sessionId: sessionId);
+    }
+    final Map<String, dynamic> body = _body(draft, sessionId);
+    final http.Response res = await _client
+        .put(
+          AppConfig.http('/api/customers/${draft.id}'),
+          headers: _jsonHeaders,
+          body: jsonEncode(body),
+        )
+        .timeout(_timeout);
+    if (res.statusCode != 200) {
+      throw Exception('Failed to update customer (${res.statusCode})');
+    }
+    return Customer.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  static const Map<String, String> _jsonHeaders = <String, String>{
+    'content-type': 'application/json',
+  };
+
+  /// The customer's partial JSON plus an optional sessionId link. [Customer.toJson]
+  /// already omits null/empty fields, giving us a clean partial body.
+  Map<String, dynamic> _body(Customer draft, String? sessionId) {
+    final Map<String, dynamic> body = draft.toJson();
+    if (sessionId != null && sessionId.isNotEmpty) body['sessionId'] = sessionId;
+    return body;
+  }
 }
 
 /// Offline/demo customer capture: local option lists, synthetic customer id.
@@ -107,27 +113,11 @@ class MockCustomerRepository implements CustomerRepository {
   );
 
   @override
-  Future<Customer?> create({
-    String? name,
-    String? mobile,
-    String? gender,
-    String? ageRange,
-    String? personality,
-    String? currentOutfit,
-    String? styling,
-    String? wearingColor,
-    String? occasion,
-    String? sessionId,
-  }) async => Customer(
-    id: 'mock_customer',
-    name: name,
-    mobile: mobile,
-    gender: gender,
-    ageRange: ageRange,
-    personality: personality,
-    currentOutfit: currentOutfit,
-    styling: styling,
-    wearingColor: wearingColor,
-    occasion: occasion,
-  );
+  Future<Customer?> create(Customer draft, {String? sessionId}) async =>
+      draft.id.isEmpty || draft.id == 'draft'
+      ? draft.copyWith(id: 'mock_customer')
+      : draft;
+
+  @override
+  Future<Customer?> update(Customer draft, {String? sessionId}) async => draft;
 }
