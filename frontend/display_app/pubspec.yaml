@@ -54,6 +54,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -69,6 +71,7 @@ flutter:
   # Bundled offline catalog snapshot (box-as-server / offline mode).
   assets:
     - assets/catalog_snapshot.json
+    - assets/icon/app_icon.png
 
   # To add assets to your application, add an assets section, like this:
   #   - images/a_dot_burr.jpeg
@@ -99,3 +102,32 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# ─── App icon (Maison Ébani monogram) ───────────────────────────────────
+# Regenerate with:  dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FBF7F3"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#FBF7F3"
+    theme_color: "#FBF7F3"
+
+# ─── Native splash ──────────────────────────────────────────────────────
+# The brand mark opens on a clean white field, matching the in-app SplashScreen
+# so there is no colour flash at launch.
+# Regenerate with:  dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/icon/app_icon.png
+  android_12:
+    color: "#FFFFFF"
+    image: assets/icon/app_icon_foreground.png
+  android: true
+  ios: true
+  web: false
