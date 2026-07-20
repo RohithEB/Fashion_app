@@ -11,6 +11,12 @@ const ONE_SIZE = ['One Size'];
 const enrich = (obj) =>
   Object.entries(obj).map(([key, value], i) => ({ key, value, sortOrder: i }));
 
+// Local offline placeholder image URL, rendered by the /media/ph SVG generator
+// (see http/placeholder.js). Keeps seeded media fully offline: text is the label,
+// bg is the variant colour (hex, no leading '#').
+const img = (text, hex) =>
+  `/media/ph?text=${encodeURIComponent(text)}&bg=${String(hex || '').replace(/^#/, '')}`;
+
 // ─── Real public media (free, no API key) ──────────────────────────
 // Images: loremflickr returns real photos matched to keywords (garment + colour).
 // `lock` pins a stable image per URL so it doesn't change between requests.

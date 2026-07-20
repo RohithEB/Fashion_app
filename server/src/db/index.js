@@ -39,6 +39,25 @@ function migrate(db) {
   if (tableExists('customers') && !hasColumn('customers', 'personality')) {
     db.exec('ALTER TABLE customers ADD COLUMN personality TEXT');
   }
+
+  // Full customer-profile fields captured by the mobile form (partial, repeatable
+  // saves). Added to an existing customers table; JSON-array fields hold lists.
+  if (tableExists('customers')) {
+    const customerCols = [
+      ['currentOutfit', 'TEXT'], ['styling', 'TEXT'], ['wearingColor', 'TEXT'],
+      ['occasion', 'TEXT'], ['dateOfBirth', 'TEXT'], ['occupation', 'TEXT'],
+      ['preferredFit', 'TEXT'], ['topSize', 'TEXT'], ['bottomSize', 'TEXT'],
+      ['shoeSize', 'TEXT'], ['budgetRange', 'TEXT'], ['notes', 'TEXT'],
+      ['isRepeatCustomer', 'INTEGER NOT NULL DEFAULT 0'],
+      ['fashionStyles', 'TEXT'], ['favoriteColors', 'TEXT'], ['preferredBrands', 'TEXT'],
+      ['favoriteCategories', 'TEXT'], ['preferredFabrics', 'TEXT'], ['updatedAt', 'TEXT'],
+    ];
+    for (const [col, type] of customerCols) {
+      if (!hasColumn('customers', col)) {
+        db.exec(`ALTER TABLE customers ADD COLUMN ${col} ${type}`);
+      }
+    }
+  }
   // Richer, all-optional guest-profile fields added to an existing table.
   if (tableExists('customers')) {
     for (const col of ['currentOutfit', 'styling', 'wearingColor', 'occasion']) {

@@ -77,18 +77,32 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       );
       return;
     }
-    // Keep the associate's saved book in step with the session profile.
-    final Customer stored = await context
-        .read<CustomerDirectoryController>()
-        .save(_draft);
-    onboarding.updateProfile(stored);
+    // Existing guest: PUT a partial update to the backend (only changed fields),
+    // then keep the associate's local book in step with the canonical record.
+    final String? sessionId = context
+        .read<ConnectionController>()
+        .session
+        ?.sessionId;
+    final bool ok = await onboarding.persistProfileUpdate(
+      _draft,
+      sessionId: sessionId,
+    );
+    if (!mounted) return;
+    final Customer canonical = onboarding.customer ?? _draft;
+    await context.read<CustomerDirectoryController>().save(canonical);
     if (!mounted) return;
     setState(() {
       _editing = false;
       _savedThisVisit = true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Customer profile updated.')),
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Customer profile updated.'
+              : 'Saved on device — could not reach the server.',
+        ),
+      ),
     );
   }
 
