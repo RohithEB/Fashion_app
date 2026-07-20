@@ -119,6 +119,10 @@ class BackendControllerRealtime extends RealtimeService {
           'pairingToken': event.payload['token'],
           if (event.payload['salespersonId'] != null)
             'salespersonId': event.payload['salespersonId'],
+          // Sent so the display can greet by name even if this box's DB has no
+          // record for the id (e.g. signed in against another backend).
+          if (event.payload['salespersonName'] != null)
+            'salespersonName': event.payload['salespersonName'],
         });
       case WsEventType.showCatalog:
         _currentProductId = null;

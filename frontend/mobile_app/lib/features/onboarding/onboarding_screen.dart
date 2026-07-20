@@ -13,6 +13,7 @@ import '../../models/product.dart';
 import '../../widgets/app_button.dart';
 import '../catalog/catalog_controller.dart';
 import '../connection/connection_controller.dart';
+import '../customer/customer_directory_controller.dart';
 import '../customer/widgets/customer_form.dart';
 import '../presentation/presentation_controller.dart';
 import 'onboarding_controller.dart';
@@ -44,6 +45,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       draft: _draft,
     );
     if (ok && mounted) {
+      // Keep the associate's saved-customers book in step with the guest we just
+      // captured, so they show up under Profile → Customers for future visits.
+      final Customer? saved = onboarding.customer;
+      if (saved != null && !saved.isEmpty) {
+        await context.read<CustomerDirectoryController>().save(saved);
+      }
+      if (!mounted) return;
       _revealCatalogue();
       // A profile was captured → open the curated picks tailored to the guest.
       context.go(AppRoutes.recommendations);

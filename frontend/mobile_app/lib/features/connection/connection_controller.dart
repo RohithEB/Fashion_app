@@ -118,6 +118,7 @@ class ConnectionController extends ChangeNotifier {
         payload: <String, dynamic>{
           'token': info.token,
           'salespersonId': person.id,
+          'salespersonName': person.name,
         },
       ),
     );
