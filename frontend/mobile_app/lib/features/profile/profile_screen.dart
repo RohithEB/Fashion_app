@@ -16,6 +16,7 @@ import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
 import '../customer/customer_directory_controller.dart';
+import '../presentation/presentation_controller.dart';
 import '../onboarding/onboarding_controller.dart';
 
 /// The associate's home base: their account details, the book of saved customer
@@ -151,6 +152,12 @@ class ProfileScreen extends StatelessWidget {
             label: 'Recommendations',
             subtitle: 'Curated picks for the active guest',
             onTap: () => context.push(AppRoutes.recommendations),
+          ),
+          _HubTile(
+            icon: AppIcons.qrCode,
+            label: 'Close session',
+            subtitle: 'Finish with this guest — the display returns to the QR',
+            onTap: () => _confirmCloseSession(context),
           ),
           _HubTile(
             icon: AppIcons.logout,
@@ -410,4 +417,34 @@ Future<void> _confirmLogout(BuildContext context) async {
   if (!ok || !context.mounted) return;
   context.read<ConnectionController>().disconnect();
   await context.read<AuthController>().logout();
+}
+
+/// End the customer session without signing out: the server frees the display,
+/// which shows a closing beat and then a fresh pairing QR for the next guest.
+Future<void> _confirmCloseSession(BuildContext context) async {
+  final bool ok =
+      await showDialog<bool>(
+        context: context,
+        builder: (BuildContext ctx) => AlertDialog(
+          title: const Text('Close this session?'),
+          content: const Text(
+            'The display returns to the pairing QR, ready for the next guest. '
+            'You stay signed in.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Close session'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+  if (!ok || !context.mounted) return;
+  context.read<PresentationController>().hideProduct();
+  await context.read<ConnectionController>().endSession();
 }

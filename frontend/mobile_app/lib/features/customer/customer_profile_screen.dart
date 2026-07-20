@@ -190,23 +190,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   .toList(),
               onChanged: (Customer v) => _draft = v,
             ),
-            const SizedBox(height: AppSpacing.xl),
-            AppButton(
-              label: onboarding.submitting ? 'Saving…' : 'Save changes',
-              expand: true,
-              isLoading: onboarding.submitting,
-              onPressed: onboarding.submitting ? null : _save,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            TextButton(
-              onPressed: onboarding.submitting
-                  ? null
-                  : () => setState(() => _editing = false),
-              child: Text(
-                'Cancel',
-                style: t.bodyMedium?.copyWith(color: c.textSecondary),
-              ),
-            ),
+            // Save/Cancel live in the pinned bottom bar so they stay reachable
+            // however long the form gets.
           ] else ...<Widget>[
             // Recommendations are refreshed only when the associate asks — never
             // automatically after an edit.
@@ -281,6 +266,44 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           ],
         ],
       ),
+      // Pinned actions — always reachable, however long the form runs.
+      bottomNavigationBar: _editing
+          ? SafeArea(
+              child: Container(
+                color: c.background,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.sm,
+                  AppSpacing.xl,
+                  AppSpacing.sm,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    TextButton(
+                      onPressed: onboarding.submitting
+                          ? null
+                          : () => setState(() => _editing = false),
+                      child: Text(
+                        'Cancel',
+                        style: t.bodyMedium?.copyWith(color: c.textSecondary),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: AppButton(
+                        label: onboarding.submitting
+                            ? 'Saving…'
+                            : 'Save changes',
+                        expand: true,
+                        isLoading: onboarding.submitting,
+                        onPressed: onboarding.submitting ? null : _save,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 

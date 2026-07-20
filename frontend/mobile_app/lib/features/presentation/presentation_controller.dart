@@ -204,6 +204,15 @@ class PresentationController extends ChangeNotifier {
     throttled: true,
   );
 
+  /// Mirror the associate's full-screen image view onto the display, so the
+  /// customer sees exactly the same full-bleed shot.
+  void setFullscreen(bool on) => _apply(
+    WsEvent(
+      type: WsEventType.fullscreen,
+      payload: <String, dynamic>{'fullscreen': on},
+    ),
+  );
+
   void resetZoom() => _apply(const WsEvent(type: WsEventType.resetZoom));
 
   /// Return the display to the normal single-image (hero) view from gallery or

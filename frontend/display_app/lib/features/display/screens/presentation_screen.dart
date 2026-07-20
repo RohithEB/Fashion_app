@@ -89,7 +89,14 @@ class PresentationScreen extends StatelessWidget {
       variant: variant,
       size: p.size,
       scrollFraction: p.scrollFraction,
+      detailsExpanded: p.detailsExpanded,
     );
+
+    // Full-screen on the phone => full-bleed here: drop the info panel entirely
+    // so the customer sees the same uninterrupted image.
+    if (p.fullscreen) {
+      return ColoredBox(color: c.background, child: stage);
+    }
 
     return ColoredBox(
       color: c.background,
@@ -123,12 +130,17 @@ class _InfoPanel extends StatefulWidget {
     required this.variant,
     required this.size,
     required this.scrollFraction,
+    required this.detailsExpanded,
   });
 
   final Product product;
   final ProductVariant variant;
   final String? size;
   final double scrollFraction;
+
+  /// True when the associate drags their details sheet up — the panel scrolls
+  /// down to the full specification so the customer can read it.
+  final bool detailsExpanded;
 
   @override
   State<_InfoPanel> createState() => _InfoPanelState();
@@ -142,6 +154,21 @@ class _InfoPanelState extends State<_InfoPanel> {
     super.didUpdateWidget(old);
     // Mirror the associate's scroll position onto this panel.
     if (widget.scrollFraction != old.scrollFraction) _applyScroll();
+    // The associate just opened the details sheet -> reveal the full spec.
+    if (widget.detailsExpanded && !old.detailsExpanded) _revealDetails();
+  }
+
+  /// Glide the panel down to the labelled specification section.
+  void _revealDetails() {
+    if (!_scroll.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOutCubic,
+      );
+    });
   }
 
   void _applyScroll() {

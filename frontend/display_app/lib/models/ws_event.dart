@@ -32,6 +32,7 @@ enum WsEventType {
   scrollSync,
 
   // Image interaction sync
+  fullscreen,
   zoomImage,
   panImage,
   resetZoom,
@@ -127,6 +128,8 @@ class WsEvent {
   double? get offsetY => (payload['offsetY'] as num?)?.toDouble();
   int? get positionMs => (payload['positionMs'] as num?)?.toInt();
   int? get secondsLeft => (payload['secondsLeft'] as num?)?.toInt();
+  bool? get isFullscreen => payload['fullscreen'] as bool?;
+
   double? get fraction => (payload['fraction'] as num?)?.toDouble();
   List<String> get productIds =>
       ((payload['productIds'] as List<dynamic>?) ?? const <dynamic>[])

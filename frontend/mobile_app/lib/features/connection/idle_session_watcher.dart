@@ -13,7 +13,7 @@ class IdleSessionWatcher extends StatefulWidget {
 
   final Widget child;
 
-  static const Duration idleTimeout = Duration(minutes: 5);
+  static const Duration idleTimeout = Duration(minutes: 1);
 
   @override
   State<IdleSessionWatcher> createState() => _IdleSessionWatcherState();
