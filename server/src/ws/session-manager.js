@@ -53,7 +53,7 @@ export class SessionManager {
   }
 
   // ─── Pairing ─────────────────────────────────────────────────────
-  pair(controllerWs, pairingToken, salespersonId = null) {
+  pair(controllerWs, pairingToken, salespersonId = null, salespersonNameHint = null) {
     const displayId = this.tokens.get(pairingToken);
     const display = displayId && this.displays.get(displayId);
     if (!display) {
@@ -78,11 +78,15 @@ export class SessionManager {
 
     // Look up the associate's display name so the screen can greet the guest with
     // it ("You are now connected with <name>") instead of a generic label.
+    // Prefer the stored record; fall back to the name the controller sent so the
+    // display still greets by name when the id isn't in this box's DB (e.g. the
+    // associate signed in against another backend).
     let salespersonName = null;
     if (salespersonId) {
       try { salespersonName = getSalespersonById(salespersonId)?.name ?? null; }
       catch { salespersonName = null; }
     }
+    if (!salespersonName && salespersonNameHint) salespersonName = salespersonNameHint;
 
     this._send(session.displayWs, OUT.PAIRED, sessionId, { sessionId, displayId, salespersonName });
     this._send(session.controllerWs, OUT.PAIRED, sessionId, { sessionId, displayId, salespersonName });
