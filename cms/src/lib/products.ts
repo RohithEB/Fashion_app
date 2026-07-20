@@ -1,4 +1,5 @@
 import { getDb, prefixId, nowIso } from './db';
+import { boxApiUrl, boxFetch, boxFetchOrNull } from './box';
 
 export interface ColorVariant {
   color: string;
@@ -167,7 +168,10 @@ export interface ProductRow {
   createdAt: string;
 }
 
-export function listProducts(limit = 200): ProductRow[] {
+export async function listProducts(limit = 200): Promise<ProductRow[]> {
+  if (boxApiUrl()) {
+    return (await boxFetch<{ items: ProductRow[] }>(`/api/admin/products?limit=${limit}`)).items;
+  }
   return getDb()
     .prepare(
       `SELECT id, name, category, subCategory, gender, basePrice, currency, brand, heroImage,
@@ -208,7 +212,9 @@ export interface ProductDetail extends ProductRow {
 
 /// Full product detail for the CMS row-click popup: every column, plus media,
 /// colour/size variants, and enrichment rows.
-export function getProductDetail(id: string): ProductDetail | null {
+export async function getProductDetail(id: string): Promise<ProductDetail | null> {
+  if (boxApiUrl()) return boxFetchOrNull<ProductDetail>(`/api/admin/products/${id}`);
+
   const db = getDb();
   const p = db.prepare('SELECT * FROM products WHERE id = ?').get(id) as
     | (ProductRow & { description: string | null; tags: string | null })

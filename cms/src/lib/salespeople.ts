@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { boxApiUrl, boxFetch, boxFetchOrNull } from './box';
 
 function tableExists(name: string): boolean {
   return Boolean(
@@ -19,7 +20,10 @@ export interface SalespersonRow {
 }
 
 // One row per salesperson with aggregate sales stats (orders/customers/items/revenue).
-export function listSalespeople(): SalespersonRow[] {
+export async function listSalespeople(): Promise<SalespersonRow[]> {
+  if (boxApiUrl()) {
+    return (await boxFetch<{ items: SalespersonRow[] }>('/api/admin/salespeople')).items;
+  }
   if (!tableExists('salespeople')) return [];
   const hasOrders = tableExists('orders');
   const orderAgg = hasOrders
@@ -117,9 +121,11 @@ function salesStrategy(id: string): SalespersonDetail['strategy'] {
   };
 }
 
-export function getSalesperson(id: string): SalespersonDetail | null {
+export async function getSalesperson(id: string): Promise<SalespersonDetail | null> {
+  if (boxApiUrl()) return boxFetchOrNull<SalespersonDetail>(`/api/admin/salespeople/${id}`);
+
   if (!tableExists('salespeople')) return null;
-  const row = listSalespeople().find((s) => s.id === id);
+  const row = (await listSalespeople()).find((s) => s.id === id);
   if (!row) {
     const base = getDb().prepare('SELECT * FROM salespeople WHERE id = ?').get(id) as
       | { id: string; name: string; title: string | null; username: string; createdAt: string }

@@ -12,6 +12,7 @@ import { cartRouter } from './routes/cart.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { checkoutRouter } from './routes/checkout.routes.js';
 import { journeyRouter } from './routes/journey.routes.js';
+import { adminRouter } from './routes/admin.routes.js';
 import { systemRouter } from './routes/health.routes.js';
 
 export function createApp() {
@@ -34,6 +35,7 @@ export function createApp() {
   app.use('/api', cartRouter);
   app.use('/api', checkoutRouter);
   app.use('/api', journeyRouter);
+  app.use('/api', adminRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

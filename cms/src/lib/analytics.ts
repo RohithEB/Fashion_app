@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { boxApiUrl, boxFetch } from './box';
 
 function tableExists(name: string): boolean {
   return Boolean(
@@ -21,7 +22,9 @@ export interface DashboardMetrics {
   topProducts: Array<{ name: string; quantity: number; revenue: number }>;
 }
 
-export function getDashboardMetrics(): DashboardMetrics {
+export async function getDashboardMetrics(): Promise<DashboardMetrics> {
+  if (boxApiUrl()) return boxFetch<DashboardMetrics>('/api/admin/dashboard');
+
   const db = getDb();
   const hasOrders = tableExists('orders');
 

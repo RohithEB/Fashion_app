@@ -179,7 +179,56 @@
 
   ---
 
-  ## 7. Security TODO (not done yet)
+  ## 8. Starting all 4 services — two ways
+
+The 4 services: **(1) backend server** (:3000), **(2) CMS** (:4000), **(3) display app** (TV),
+**(4) controller app** (phone). There are two deployment modes.
+
+### Way A — LOCAL (dev; server + CMS hosted on the laptop)
+Everything runs on the laptop; the apps point at the **laptop's LAN IP**. Best for development.
+Phone + TV must be on the same WiFi as the laptop.
+
+```sh
+# find laptop LAN IP: ipconfig -> IPv4 (e.g. 10.0.1.12). Call it LAPTOP_IP.
+
+# (1) backend server — terminal 1
+cd server && npm install && npm start          # http://LAPTOP_IP:3000
+
+# (2) CMS — terminal 2  (reads ../server/data/showcase.sqlite = same DB the server owns)
+cd cms && npm install && npm run dev           # http://localhost:4000
+
+# (3)+(4) build both apps against the laptop and install them
+powershell -ExecutionPolicy Bypass -File scripts/run-backend.ps1 -BackendHost LAPTOP_IP
+# (installs display_app on the box, mobile_app on the phone, both BACKEND=true)
+```
+Then open the apps → TV shows the QR → phone scans → paired. Data saves to the laptop's SQLite;
+the CMS (:4000) reflects it live because it reads the **same file**.
+
+### Way B — BOX (production-like; server on the box, offline)
+The server runs on the box; apps point at **10.0.1.45**. Best for the real showcase.
+
+```sh
+# (1) backend server — already on the box; just verify / restart
+adb connect 10.0.1.45:5555
+curl http://10.0.1.45:3000/api/health
+# if down: adb -s 10.0.1.45:5555 shell su 10085 sh /data/data/com.termux/files/home/restart.sh
+
+# (3) display app — on the box (rebuild only if display_app changed; else already installed)
+# (4) controller app — build against the box, install on the phone
+cd frontend/mobile_app       # (relax SDK pin — §3)
+flutter build apk --debug --dart-define=BACKEND=true --dart-define=BACKEND_HOST=10.0.1.45
+adb -s <PHONE_ID> install -r build/app/outputs/flutter-apk/app-debug.apk
+```
+Open the apps → pair via QR → runs fully offline against the box.
+
+**(2) CMS in box mode — the one caveat.** The CMS still reads the SQLite **file** directly
+(`DB_PATH`), so on a laptop it can't see the **box's** DB over the network. Until the
+CMS-reads-via-`BOX_API_URL` wiring is done, author/view products by running the CMS in **Way A**
+(co-located with a local DB), or add that API wiring. The other 3 services run fully in box mode.
+
+---
+
+## 7. Security TODO (not done yet)
   - `cms/env.local` (tracked, no leading dot) contains **real R2 keys** in a **public repo** — rotate
     the keys and `git rm --cached cms/env.local`; keep secrets only in a real `.env.local` (dot,
     gitignored). Next.js loads `.env.local` (with the dot), not `env.local`.

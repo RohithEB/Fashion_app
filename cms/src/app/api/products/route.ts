@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 
 // GET /api/products -> recent products
 export async function GET() {
-  return NextResponse.json({ items: listProducts() });
+  return NextResponse.json({ items: await listProducts() });
 }
 
 // POST /api/products  (ProductInput) -> { id }

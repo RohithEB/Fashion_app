@@ -9,8 +9,8 @@ import ProductsTable from './ProductsTable';
 
 export const dynamic = 'force-dynamic';
 
-export default function ProductsPage() {
-  const products = listProducts();
+export default async function ProductsPage() {
+  const products = await listProducts();
 
   return (
     <Stack spacing={3}>
