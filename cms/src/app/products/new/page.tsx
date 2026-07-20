@@ -19,6 +19,7 @@ import UploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
 import MovieIcon from '@mui/icons-material/Movie';
 import {
+import { mediaSrc } from '@/lib/media';
   GENDERS, CATEGORIES, SUBCATEGORIES, STYLE_ARCHETYPES, OCCASIONS, SEASONS, FITS,
   PATTERNS, MATERIALS, VIBES, AGE_GROUPS, type EnrichedProduct,
 } from '@/lib/attributes';
@@ -285,13 +286,13 @@ export default function NewProductPage() {
                   >
                     {m.type === 'video' ? (
                       <video
-                        src={m.url} muted
+                        src={mediaSrc(m.url)} muted
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={m.url} alt={`media ${i + 1}`}
+                        src={mediaSrc(m.url)} alt={`media ${i + 1}`}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     )}

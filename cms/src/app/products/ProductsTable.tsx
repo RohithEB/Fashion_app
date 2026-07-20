@@ -19,13 +19,7 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import CloseIcon from '@mui/icons-material/Close';
 import type { ProductRow } from '@/lib/products';
-
-// Resolve a media path: absolute (R2) URLs pass through; relative /media/* paths
-// are served by the Node backend (same machine as the CMS in this setup).
-function mediaSrc(u: string | null | undefined): string {
-  if (!u) return '';
-  return u.startsWith('http') ? u : `http://localhost:3000${u}`;
-}
+import { mediaSrc } from '@/lib/media';
 
 function money(n: number): string {
   return Math.round(n).toLocaleString('en-IN');
