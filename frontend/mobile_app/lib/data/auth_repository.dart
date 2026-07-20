@@ -131,7 +131,12 @@ class MockAuthRepository implements AuthRepository {
     required String username,
     required String password,
   }) async => AuthResult(
-    salesperson: Salesperson(id: 'mock_$username', name: name, title: title),
+    salesperson: Salesperson(
+      id: 'mock_$username',
+      name: name,
+      title: title,
+      username: username,
+    ),
     token: 'mock-token-$username',
   );
 
@@ -144,6 +149,7 @@ class MockAuthRepository implements AuthRepository {
       id: 'mock_$username',
       name: username.isEmpty ? 'Associate' : username,
       title: 'Studio Associate',
+      username: username,
     ),
     token: 'mock-token-$username',
   );

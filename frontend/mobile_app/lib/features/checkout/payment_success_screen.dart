@@ -95,6 +95,16 @@ class PaymentSuccessScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: AppSpacing.sm),
+              // Saving your profile is independent of ending the session — this
+              // opens your profile without touching the customer session.
+              AppButton(
+                label: 'Save profile changes',
+                icon: Icons.person_outline,
+                variant: AppButtonVariant.outline,
+                expand: true,
+                onPressed: () => context.push(AppRoutes.profile),
+              ),
+              const SizedBox(height: AppSpacing.sm),
               TextButton(
                 onPressed: () {
                   context.read<PresentationController>().hideProduct();

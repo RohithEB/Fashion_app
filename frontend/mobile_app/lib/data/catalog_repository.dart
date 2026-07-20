@@ -18,6 +18,7 @@ abstract interface class CatalogRepository {
     String? personality,
     String? customerId,
     int limit,
+    List<String> styleHints,
   });
 
   /// A PRIVATE coaching cue for the associate (never shown on the display): a
@@ -84,6 +85,7 @@ class MockCatalogRepository implements CatalogRepository {
     String? personality,
     String? customerId,
     int limit = 12,
+    List<String> styleHints = const <String>[],
   }) async {
     await Future<void>.delayed(_latency);
     return MockCatalog.products.take(limit).toList();

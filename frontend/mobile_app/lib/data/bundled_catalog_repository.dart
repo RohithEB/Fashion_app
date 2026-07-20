@@ -91,11 +91,18 @@ class BundledCatalogRepository implements CatalogRepository {
     String? personality,
     String? customerId,
     int limit = 12,
+    List<String> styleHints = const <String>[],
   }) async {
     final List<_Entry> list = await _ensure();
     final String? wantGender =
         _genderMap[(gender ?? '').toLowerCase()];
     final String persona = (personality ?? '').trim().toLowerCase();
+    // Guest preferences (fashion style, colours, brands, occasion, fit …) each
+    // add weight, so a richer customer profile yields sharper picks.
+    final List<String> hints = styleHints
+        .map((String h) => h.trim().toLowerCase())
+        .where((String h) => h.isNotEmpty)
+        .toList();
 
     final List<_Entry> scored = List<_Entry>.of(list);
     int scoreOf(_Entry e) {
@@ -105,6 +112,9 @@ class BundledCatalogRepository implements CatalogRepository {
         s += 3;
       }
       if (persona.isNotEmpty && e.searchText.contains(persona)) s += 2;
+      for (final String h in hints) {
+        if (e.searchText.contains(h)) s += 2;
+      }
       if (e.hasHighlights) s += 1;
       return s;
     }

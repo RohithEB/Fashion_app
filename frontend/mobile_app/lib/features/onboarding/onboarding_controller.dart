@@ -34,37 +34,19 @@ class OnboardingController extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _hasAny(List<String?> values) =>
-      values.any((String? v) => v != null && v.trim().isNotEmpty);
-
   /// Capture the guest and mark onboarding complete for [sessionId]. If nothing
   /// was entered this behaves like [skip] (no pointless empty record). Returns
   /// true when the flow may advance; false only when a save was attempted and
   /// failed (so the associate can retry or skip).
+  /// Only the fields the customers API supports are POSTed; the richer styling
+  /// preferences on [draft] are merged back onto the saved record and live for
+  /// the duration of the shopping session.
   Future<bool> submit({
     required String? sessionId,
-    String? name,
-    String? mobile,
-    String? gender,
-    String? ageRange,
-    String? personality,
-    String? currentOutfit,
-    String? styling,
-    String? wearingColor,
-    String? occasion,
+    required Customer draft,
   }) async {
     error = null;
-    if (!_hasAny(<String?>[
-      name,
-      mobile,
-      gender,
-      ageRange,
-      personality,
-      currentOutfit,
-      styling,
-      wearingColor,
-      occasion,
-    ])) {
+    if (draft.isEmpty) {
       skip(sessionId);
       return true;
     }
@@ -72,18 +54,25 @@ class OnboardingController extends ChangeNotifier {
     submitting = true;
     notifyListeners();
     try {
-      customer = await _repo.create(
-        name: name,
-        mobile: mobile,
-        gender: gender,
-        ageRange: ageRange,
-        personality: personality,
-        currentOutfit: currentOutfit,
-        styling: styling,
-        wearingColor: wearingColor,
-        occasion: occasion,
+      final Customer? created = await _repo.create(
+        name: draft.name,
+        mobile: draft.mobile,
+        gender: draft.gender,
+        ageRange: draft.ageRange,
+        personality: draft.personality,
+        currentOutfit: draft.currentOutfit,
+        styling: draft.styling,
+        wearingColor: draft.wearingColor,
+        occasion: draft.occasion,
         sessionId: sessionId,
       );
+      if (created == null) {
+        error = 'Could not save the guest profile. Try again or skip.';
+        submitting = false;
+        notifyListeners();
+        return false;
+      }
+      customer = _mergeSessionFields(created, draft);
       _completedForSessionId = sessionId;
       submitting = false;
       notifyListeners();
@@ -94,6 +83,33 @@ class OnboardingController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Carry the session-only styling fields from [draft] onto the persisted
+  /// [saved] record returned by the API.
+  Customer _mergeSessionFields(Customer saved, Customer draft) => saved.copyWith(
+    dateOfBirth: draft.dateOfBirth,
+    occupation: draft.occupation,
+    fashionStyles: draft.fashionStyles,
+    favoriteColors: draft.favoriteColors,
+    preferredFit: draft.preferredFit,
+    topSize: draft.topSize,
+    bottomSize: draft.bottomSize,
+    shoeSize: draft.shoeSize,
+    favoriteCategories: draft.favoriteCategories,
+    preferredFabrics: draft.preferredFabrics,
+    budgetRange: draft.budgetRange,
+    preferredBrands: draft.preferredBrands,
+    notes: draft.notes,
+    isRepeatCustomer: draft.isRepeatCustomer,
+  );
+
+  /// Replace the session's customer profile (used by the Customer Profile page).
+  /// Applies immediately so recommendations improve straight away; API-backed
+  /// fields are left as saved until an update endpoint exists.
+  void updateProfile(Customer next) {
+    customer = next;
+    notifyListeners();
   }
 
   /// Proceed without saving a profile.

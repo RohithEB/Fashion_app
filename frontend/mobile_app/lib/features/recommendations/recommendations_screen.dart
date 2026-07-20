@@ -68,6 +68,8 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
       gender: customer?.gender,
       ageRange: customer?.ageRange,
       personality: customer?.personality,
+      // Style, colours, brands, occasion, fit … sharpen the picks when captured.
+      styleHints: customer?.styleHints ?? const <String>[],
       limit: 6, // top 6 picks for the guest
     );
   }

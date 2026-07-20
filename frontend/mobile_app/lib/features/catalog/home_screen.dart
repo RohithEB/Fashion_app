@@ -12,11 +12,11 @@ import '../../models/product.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/state_views.dart';
 import '../auth/auth_controller.dart';
-import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
 import '../presentation/presentation_controller.dart';
 import '../presentation/widgets/live_preview.dart';
 import '../presentation/widgets/now_showing_bar.dart';
+import '../../widgets/initials_avatar.dart';
 import 'catalog_controller.dart';
 
 /// Private browsing home: search, categories, and the collection grid. Nothing
@@ -29,7 +29,6 @@ class HomeScreen extends StatelessWidget {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
     final CatalogController catalog = context.watch<CatalogController>();
-    final CartController cart = context.watch<CartController>();
     final ConnectionController conn = context.watch<ConnectionController>();
 
     return Scaffold(
@@ -50,7 +49,7 @@ class HomeScreen extends StatelessWidget {
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 titleSpacing: AppSpacing.xl,
-                toolbarHeight: 64,
+                toolbarHeight: 76,
                 automaticallyImplyLeading: false,
                 title: Row(
                   children: <Widget>[
@@ -76,24 +75,18 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    // Everything else (saved outfits, customer profiles,
+                    // recommendations, sign out) lives inside the profile hub.
                     IconButton(
-                      icon: const Icon(AppIcons.sparkle),
-                      iconSize: 24,
-                      tooltip: 'Recommendations',
-                      color: c.accent,
-                      onPressed: () =>
-                          context.push(AppRoutes.recommendations),
-                    ),
-                    _CartButton(
-                      count: cart.cart.count,
-                      onTap: () => context.push(AppRoutes.cart),
-                    ),
-                    IconButton(
-                      icon: const Icon(AppIcons.logout),
-                      iconSize: 22,
-                      tooltip: 'Log out',
-                      color: c.textSecondary,
-                      onPressed: () => _confirmLogout(context),
+                      icon: InitialsAvatar(
+                        name: context
+                            .watch<AuthController>()
+                            .salesperson
+                            ?.name,
+                        radius: 15,
+                      ),
+                      tooltip: 'Profile',
+                      onPressed: () => context.push(AppRoutes.profile),
                     ),
                   ],
                 ),
@@ -139,74 +132,6 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: conn.isConnected ? const NowShowingBar() : null,
-    );
-  }
-}
-
-Future<void> _confirmLogout(BuildContext context) async {
-  final bool ok =
-      await showDialog<bool>(
-        context: context,
-        builder: (BuildContext ctx) => AlertDialog(
-          title: const Text('Log out?'),
-          content: const Text(
-            'This ends the current session and signs you out.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Log out'),
-            ),
-          ],
-        ),
-      ) ??
-      false;
-  if (!ok || !context.mounted) return;
-  // End the live session (frees the display) then sign out → router → login.
-  context.read<ConnectionController>().disconnect();
-  await context.read<AuthController>().logout();
-}
-
-class _CartButton extends StatelessWidget {
-  const _CartButton({required this.count, required this.onTap});
-
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppColors c = AppColors.of(context);
-    return Stack(
-      children: <Widget>[
-        IconButton(
-          icon: const Icon(AppIcons.cart),
-          iconSize: 26,
-          tooltip: 'Saved outfits',
-          onPressed: onTap,
-        ),
-        if (count > 0)
-          Positioned(
-            right: 4,
-            top: 4,
-            child: Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: c.accent,
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                '$count',
-                style: Theme.of(
-                  context,
-                ).textTheme.labelSmall?.copyWith(color: c.onAccent),
-              ),
-            ),
-          ),
-      ],
     );
   }
 }
