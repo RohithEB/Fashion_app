@@ -221,10 +221,15 @@ adb -s <PHONE_ID> install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
 Open the apps → pair via QR → runs fully offline against the box.
 
-**(2) CMS in box mode — the one caveat.** The CMS still reads the SQLite **file** directly
-(`DB_PATH`), so on a laptop it can't see the **box's** DB over the network. Until the
-CMS-reads-via-`BOX_API_URL` wiring is done, author/view products by running the CMS in **Way A**
-(co-located with a local DB), or add that API wiring. The other 3 services run fully in box mode.
+**(2) CMS in box mode — fully two-way (wired).** Set `BOX_API_URL=http://10.0.1.45:3000`
+in the CMS env (`cms/.env.local`, note the leading dot), then `npm run dev`. The CMS now
+talks to the box over HTTP via `cms/src/lib/box.ts`:
+- **Reads** dashboard, products, salespeople, journey from the box (`/api/admin/*`).
+- **Writes**: adding a product forwards to the box (`POST /api/admin/products`) so it lands in
+  the live catalog the apps read; media uploads go to the box's `/media` disk
+  (`POST /api/admin/upload`) — offline-capable, no R2 needed.
+- AI enrich stays CMS-side (online, fills the form; the create then goes to the box).
+Unset `BOX_API_URL` → the CMS reads/writes the local SQLite file (co-located dev, Way A).
 
 ---
 

@@ -2,6 +2,7 @@
 // Ports the CMS's read queries verbatim so the returned shapes match exactly:
 // dashboard metrics, product list/detail, and salespeople + journey aggregates.
 import { getDb } from '../db/index.js';
+import { prefixId, nowIso } from '../util/ids.js';
 
 const tableExists = (name) =>
   Boolean(getDb().prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(name));
@@ -52,6 +53,115 @@ export function getDashboardMetrics() {
     revenue, currency: 'INR',
     ordersByDay, revenueByCategory, ordersByStatus, topProducts,
   };
+}
+
+// ─── Product authoring (CMS -> box) ────────────────────────────────
+// Structured attributes surfaced as enrichment rows (rendered on the display).
+const ATTR_LABELS = [
+  ['subCategory', 'Type'], ['material', 'Material'], ['fabric', 'Fabric'],
+  ['fit', 'Fit'], ['pattern', 'Pattern'], ['occasion', 'Occasion'],
+  ['season', 'Season'], ['vibe', 'Vibe'], ['styleArchetype', 'Style'],
+  ['ageGroup', 'Age Group'], ['primaryColor', 'Colour'],
+];
+
+// Persist a product + enrichment + media + variants in one transaction.
+// Ported from the CMS so authoring lands on the box (offline-capable).
+export function createProduct(input = {}) {
+  const db = getDb();
+  const id = prefixId('prod');
+  const createdAt = nowIso();
+
+  const insertProduct = db.prepare(`
+    INSERT INTO products
+      (id, name, category, subCategory, gender, basePrice, currency, brand, description, tags,
+       heroImage, styleArchetype, occasion, season, fit, pattern, material, fabric, vibe,
+       primaryColor, ageGroup, rating, aiEnriched, createdAt)
+    VALUES
+      (@id, @name, @category, @subCategory, @gender, @basePrice, @currency, @brand, @description, @tags,
+       @heroImage, @styleArchetype, @occasion, @season, @fit, @pattern, @material, @fabric, @vibe,
+       @primaryColor, @ageGroup, @rating, @aiEnriched, @createdAt)
+  `);
+  const insertEnrichment = db.prepare(
+    'INSERT INTO product_enrichment (id, productId, key, value, sortOrder) VALUES (?, ?, ?, ?, ?)',
+  );
+  const insertMedia = db.prepare(
+    'INSERT INTO product_media (id, productId, type, url, posterUrl, label, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  );
+  const insertVariant = db.prepare(
+    'INSERT INTO variants (id, productId, size, color, colorHex, mediaUrl, stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  );
+
+  const tx = db.transaction(() => {
+    insertProduct.run({
+      id,
+      name: input.name,
+      category: input.category,
+      subCategory: input.subCategory || null,
+      gender: input.gender || 'unisex',
+      basePrice: Number(input.basePrice) || 0,
+      currency: input.currency || 'INR',
+      brand: input.brand || null,
+      description: input.description || null,
+      tags: JSON.stringify(input.tags || []),
+      heroImage: input.heroImage || null,
+      styleArchetype: input.styleArchetype || null,
+      occasion: input.occasion || null,
+      season: input.season || null,
+      fit: input.fit || null,
+      pattern: input.pattern || null,
+      material: input.material || null,
+      fabric: input.fabric || null,
+      vibe: input.vibe || null,
+      primaryColor: input.primaryColor || null,
+      ageGroup: input.ageGroup || null,
+      rating: input.rating == null ? null : Number(input.rating),
+      aiEnriched: input.aiEnriched ? 1 : 0,
+      createdAt,
+    });
+
+    let order = 0;
+    for (const [field, label] of ATTR_LABELS) {
+      const value = input[field];
+      if (value) insertEnrichment.run(prefixId('enr'), id, label, String(value), order++);
+    }
+    if (input.rating != null) {
+      insertEnrichment.run(prefixId('enr'), id, 'Rating', `${Number(input.rating).toFixed(1)} / 5`, order++);
+    }
+    for (const h of input.highlights || []) {
+      if (h && h.trim()) insertEnrichment.run(prefixId('enr'), id, 'Highlight', h.trim(), order++);
+    }
+
+    // Media: hero image first, then extra images, then videos (postered by the hero).
+    let mOrder = 0;
+    const images = [input.heroImage, ...(input.mediaUrls || [])].filter(Boolean);
+    const seen = new Set();
+    for (const url of images) {
+      if (seen.has(url)) continue;
+      seen.add(url);
+      insertMedia.run(prefixId('med'), id, 'image', url, null, null, mOrder++);
+    }
+    for (const url of input.videoUrls || []) {
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      insertMedia.run(prefixId('med'), id, 'video', url, input.heroImage || null, null, mOrder++);
+    }
+
+    // Variants: colour × size grid with per-size quantity as stock.
+    const sizes = input.sizes && input.sizes.length ? input.sizes : [{ size: 'One Size', quantity: 0 }];
+    const colors = input.colors && input.colors.length
+      ? input.colors
+      : [{ color: input.primaryColor || 'Default' }];
+    for (const c of colors) {
+      for (const s of sizes) {
+        insertVariant.run(
+          prefixId('var'), id, s.size, c.color, c.colorHex || null,
+          c.mediaUrl || input.heroImage || null, Math.max(0, Number(s.quantity) || 0),
+        );
+      }
+    }
+  });
+  tx();
+  return id;
 }
 
 // ─── Products (CMS shapes) ─────────────────────────────────────────
