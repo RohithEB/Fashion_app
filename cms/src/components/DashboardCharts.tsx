@@ -75,9 +75,10 @@ export function DashboardCharts({ metrics }: { metrics: DashboardMetrics }) {
             <LineChart
               height={280}
               xAxis={[{ data: ordersByDay.map((d) => d.date.slice(5)), scaleType: 'point' }]}
+              yAxis={[{ id: 'orders' }, { id: 'revenue', position: 'right' }]}
               series={[
-                { data: ordersByDay.map((d) => d.orders), label: 'Orders', color: c1 },
-                { data: ordersByDay.map((d) => Math.round(d.revenue)), label: 'Revenue (₹)', color: c2 },
+                { data: ordersByDay.map((d) => d.orders), label: 'Orders', color: c1, yAxisId: 'orders', showMark: true, curve: 'monotoneX' },
+                { data: ordersByDay.map((d) => Math.round(d.revenue)), label: 'Revenue (₹)', color: c2, yAxisId: 'revenue', showMark: true, curve: 'monotoneX' },
               ]}
             />
           )}

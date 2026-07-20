@@ -102,6 +102,7 @@ export function SalespersonDetailView({ detail }: { detail: SalespersonDetail })
             ) : (
               <BarChart
                 height={260}
+                width={Math.min(560, 120 + weekly.length * 96)}
                 xAxis={[{ data: weekly.map((w) => w.week), scaleType: 'band' }]}
                 series={[
                   { data: weekly.map((w) => w.orders), label: 'Orders', color: c1 },
@@ -122,6 +123,7 @@ export function SalespersonDetailView({ detail }: { detail: SalespersonDetail })
             ) : (
               <BarChart
                 height={260}
+                width={Math.min(560, 120 + monthly.length * 96)}
                 xAxis={[{ data: monthly.map((m) => m.month), scaleType: 'band' }]}
                 series={[
                   { data: monthly.map((m) => m.orders), label: 'Orders', color: c1 },
