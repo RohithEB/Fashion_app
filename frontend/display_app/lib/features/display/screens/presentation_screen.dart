@@ -77,9 +77,15 @@ class PresentationScreen extends StatelessWidget {
         ),
         if (!isVideo && !isGallery && images.length > 1)
           Positioned(
-            left: AppSpacing.xl,
-            bottom: AppSpacing.xl,
-            child: _ImageDots(count: images.length, index: p.imageIndex),
+            left: 0,
+            right: 0,
+            // Sit just above the details sheet rather than behind it.
+            bottom: MediaQuery.of(context).size.height *
+                    (p.detailsExpanded ? 0.88 : 0.42) +
+                AppSpacing.md,
+            child: Center(
+              child: _ImageDots(count: images.length, index: p.imageIndex),
+            ),
           ),
       ],
     );
@@ -89,28 +95,71 @@ class PresentationScreen extends StatelessWidget {
       variant: variant,
       size: p.size,
       scrollFraction: p.scrollFraction,
+      detailsExpanded: p.detailsExpanded,
     );
 
+    // Full-screen on the phone => full-bleed here: drop the info panel entirely
+    // so the customer sees the same uninterrupted image.
+    if (p.fullscreen) {
+      return ColoredBox(color: c.background, child: stage);
+    }
+
+    // Mirrors the associate's screen: a full-bleed image with a details sheet
+    // anchored at the bottom, which rises when they drag their sheet up.
     return ColoredBox(
       color: c.background,
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          final bool portrait = constraints.maxHeight > constraints.maxWidth;
-          // Image takes 70%, the info panel 30% (of height in portrait, of
-          // width in landscape).
-          return portrait
-              ? Column(
-                  children: <Widget>[
-                    Expanded(flex: 7, child: stage),
-                    Expanded(flex: 3, child: info),
-                  ],
-                )
-              : Row(
-                  children: <Widget>[
-                    Expanded(flex: 7, child: stage),
-                    Expanded(flex: 3, child: info),
-                  ],
-                );
+          final double h = constraints.maxHeight;
+          final double sheetHeight = h * (p.detailsExpanded ? 0.88 : 0.42);
+          return Stack(
+            children: <Widget>[
+              Positioned.fill(child: stage),
+              AnimatedPositioned(
+                duration: AppMotion.slow,
+                curve: AppMotion.emphasized,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: sheetHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: c.surface,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        blurRadius: 32,
+                        offset: const Offset(0, -8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: <Widget>[
+                      // Grab handle, echoing the sheet on the phone.
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: AppSpacing.sm,
+                          bottom: AppSpacing.xs,
+                        ),
+                        child: Container(
+                          width: 68,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: c.textTertiary,
+                            borderRadius: AppRadius.brPill,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: info),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
@@ -123,12 +172,17 @@ class _InfoPanel extends StatefulWidget {
     required this.variant,
     required this.size,
     required this.scrollFraction,
+    required this.detailsExpanded,
   });
 
   final Product product;
   final ProductVariant variant;
   final String? size;
   final double scrollFraction;
+
+  /// True when the associate drags their details sheet up — the panel scrolls
+  /// down to the full specification so the customer can read it.
+  final bool detailsExpanded;
 
   @override
   State<_InfoPanel> createState() => _InfoPanelState();
@@ -142,6 +196,21 @@ class _InfoPanelState extends State<_InfoPanel> {
     super.didUpdateWidget(old);
     // Mirror the associate's scroll position onto this panel.
     if (widget.scrollFraction != old.scrollFraction) _applyScroll();
+    // The associate just opened the details sheet -> reveal the full spec.
+    if (widget.detailsExpanded && !old.detailsExpanded) _revealDetails();
+  }
+
+  /// Glide the panel down to the labelled specification section.
+  void _revealDetails() {
+    if (!_scroll.hasClients) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOutCubic,
+      );
+    });
   }
 
   void _applyScroll() {
@@ -169,9 +238,13 @@ class _InfoPanelState extends State<_InfoPanel> {
     final ProductVariant variant = widget.variant;
     final String? size = widget.size;
     return Container(
-      color: c.surface,
-      padding: const EdgeInsets.all(AppSpacing.giant),
-      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.giant,
+        AppSpacing.md,
+        AppSpacing.giant,
+        AppSpacing.xl,
+      ),
+      alignment: Alignment.topLeft,
       child: SingleChildScrollView(
         controller: _scroll,
         child: Column(

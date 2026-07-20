@@ -29,9 +29,9 @@ class DisplayController extends ChangeNotifier {
 
   StreamSubscription<WsEvent>? _sub;
 
-  /// Seconds the Thank-You screen stays before returning to idle. Spec: 60s;
-  /// shortened for the POC demo.
-  static const int thankYouSeconds = 15;
+  /// Seconds the Thank-You / session-closed screen stays before the display
+  /// returns to the pairing QR.
+  static const int thankYouSeconds = 30;
 
   /// Idle before a warning is issued. Spec: 10 minutes; shortened for the demo.
   static const Duration idleTimeout = Duration(seconds: 90);
@@ -125,6 +125,7 @@ class DisplayController extends ChangeNotifier {
         product = null;
         notifyListeners();
       case WsEventType.changeColor:
+      case WsEventType.fullscreen:
       case WsEventType.changeImage:
       case WsEventType.zoomImage:
       case WsEventType.panImage:
@@ -146,7 +147,9 @@ class DisplayController extends ChangeNotifier {
       case WsEventType.disconnectScreen:
       case WsEventType.sessionEnd:
       case WsEventType.sessionTimeout:
-        _toWaiting();
+        // Close on a thank-you beat, then return to the pairing QR so the next
+        // guest isn't greeted by an abrupt cut.
+        _runThankYou();
       default:
         break;
     }

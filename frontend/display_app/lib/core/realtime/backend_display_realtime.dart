@@ -107,6 +107,8 @@ class BackendDisplayRealtime extends DisplayRealtimeService {
         _push(WsEvent(type: WsEventType.showDetails, payload: payload));
       case 'show_related':
         _push(WsEvent(type: WsEventType.showRelatedMedia, payload: payload));
+      case 'fullscreen':
+        _push(WsEvent(type: WsEventType.fullscreen, payload: payload));
       case 'zoom':
         _push(
           WsEvent(

@@ -63,6 +63,12 @@ class Customer {
     this.preferredFabrics = const <String>[],
     this.notes,
     this.isRepeatCustomer = false,
+    this.shoppingFor,
+    this.familySize,
+    this.familyMembers = const <String>[],
+    this.boysCount,
+    this.girlsCount,
+    this.childAgeRanges = const <String>[],
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -95,6 +101,12 @@ class Customer {
       preferredFabrics: list('preferredFabrics'),
       notes: json['notes'] as String?,
       isRepeatCustomer: json['isRepeatCustomer'] as bool? ?? false,
+      shoppingFor: json['shoppingFor'] as String?,
+      familySize: (json['familySize'] as num?)?.toInt(),
+      familyMembers: list('familyMembers'),
+      boysCount: (json['boysCount'] as num?)?.toInt(),
+      girlsCount: (json['girlsCount'] as num?)?.toInt(),
+      childAgeRanges: list('childAgeRanges'),
     );
   }
 
@@ -126,6 +138,21 @@ class Customer {
 
   /// Whether this guest has shopped with us before.
   final bool isRepeatCustomer;
+
+  // ── Who they're shopping for ───────────────────────────────────────────
+  /// 'Myself' or 'Family' — when Family, the fields below describe the group.
+  final String? shoppingFor;
+  final int? familySize;
+
+  /// Relations being shopped for (Mother, Father, Sister, …).
+  final List<String> familyMembers;
+  final int? boysCount;
+  final int? girlsCount;
+
+  /// Age bands of the children being shopped for.
+  final List<String> childAgeRanges;
+
+  bool get isFamilyShopping => shoppingFor == 'Family';
 
   // ── What they are wearing today (API-backed notes) ─────────────────────
   final String? currentOutfit;
@@ -159,6 +186,12 @@ class Customer {
       _blank(styling) &&
       _blank(wearingColor) &&
       _blank(notes) &&
+      _blank(shoppingFor) &&
+      familySize == null &&
+      familyMembers.isEmpty &&
+      boysCount == null &&
+      girlsCount == null &&
+      childAgeRanges.isEmpty &&
       !isRepeatCustomer;
 
   static bool _blank(String? s) => s == null || s.trim().isEmpty;
@@ -175,6 +208,8 @@ class Customer {
     ?preferredFit,
     ?personality,
     ?occupation,
+    ...familyMembers,
+    ...childAgeRanges,
   ];
 
   Customer copyWith({
@@ -202,6 +237,12 @@ class Customer {
     List<String>? preferredFabrics,
     String? notes,
     bool? isRepeatCustomer,
+    String? shoppingFor,
+    int? familySize,
+    List<String>? familyMembers,
+    int? boysCount,
+    int? girlsCount,
+    List<String>? childAgeRanges,
   }) => Customer(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -227,6 +268,12 @@ class Customer {
     preferredFabrics: preferredFabrics ?? this.preferredFabrics,
     notes: notes ?? this.notes,
     isRepeatCustomer: isRepeatCustomer ?? this.isRepeatCustomer,
+    shoppingFor: shoppingFor ?? this.shoppingFor,
+    familySize: familySize ?? this.familySize,
+    familyMembers: familyMembers ?? this.familyMembers,
+    boysCount: boysCount ?? this.boysCount,
+    girlsCount: girlsCount ?? this.girlsCount,
+    childAgeRanges: childAgeRanges ?? this.childAgeRanges,
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -254,6 +301,12 @@ class Customer {
     if (preferredFabrics.isNotEmpty) 'preferredFabrics': preferredFabrics,
     if (notes != null) 'notes': notes,
     if (isRepeatCustomer) 'isRepeatCustomer': isRepeatCustomer,
+    if (shoppingFor != null) 'shoppingFor': shoppingFor,
+    if (familySize != null) 'familySize': familySize,
+    if (familyMembers.isNotEmpty) 'familyMembers': familyMembers,
+    if (boysCount != null) 'boysCount': boysCount,
+    if (girlsCount != null) 'girlsCount': girlsCount,
+    if (childAgeRanges.isNotEmpty) 'childAgeRanges': childAgeRanges,
   };
 }
 
@@ -331,6 +384,25 @@ abstract final class CustomerOptions {
     'Leather',
     'Viscose',
     'Blends',
+  ];
+  static const List<String> shoppingFor = <String>['Myself', 'Family'];
+  static const List<String> familyMembers = <String>[
+    'Mother',
+    'Father',
+    'Spouse',
+    'Sister',
+    'Brother',
+    'Daughter',
+    'Son',
+    'Grandparent',
+    'Friend',
+  ];
+  static const List<String> childAgeRanges = <String>[
+    '0-2',
+    '3-5',
+    '6-9',
+    '10-12',
+    '13-17',
   ];
   static const List<String> colors = <String>[
     'Black',

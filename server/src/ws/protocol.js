@@ -14,6 +14,7 @@ export const IN = {
   SHOW_RELATED: 'show_related',
   SHOW_MEDIA: 'show_media',
   SHOW_RECOMMENDATIONS: 'show_recommendations',
+  FULLSCREEN: 'fullscreen',
   ZOOM: 'zoom',
   SCROLL: 'scroll',
   CLEAR: 'clear',

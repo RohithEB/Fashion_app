@@ -12,6 +12,7 @@ import '../../models/product.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/state_views.dart';
 import '../auth/auth_controller.dart';
+import '../cart/cart_controller.dart';
 import '../connection/connection_controller.dart';
 import '../presentation/presentation_controller.dart';
 import '../presentation/widgets/live_preview.dart';
@@ -75,8 +76,12 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Everything else (saved outfits, customer profiles,
-                    // recommendations, sign out) lives inside the profile hub.
+                    _SavedOutfitsButton(
+                      count: context.watch<CartController>().cart.count,
+                      onTap: () => context.push(AppRoutes.cart),
+                    ),
+                    // Customer profiles, recommendations and sign out live
+                    // inside the profile hub.
                     IconButton(
                       icon: InitialsAvatar(
                         name: context
@@ -476,6 +481,44 @@ class _ProductsSliver extends StatelessWidget {
           );
         }, childCount: catalog.products.length),
       ),
+    );
+  }
+}
+
+/// Quick access to the guest's saved outfits, with a live count badge.
+class _SavedOutfitsButton extends StatelessWidget {
+  const _SavedOutfitsButton({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppColors c = AppColors.of(context);
+    return Stack(
+      children: <Widget>[
+        IconButton(
+          icon: const Icon(AppIcons.cart),
+          iconSize: 24,
+          tooltip: 'Saved outfits',
+          onPressed: onTap,
+        ),
+        if (count > 0)
+          Positioned(
+            right: 4,
+            top: 4,
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle),
+              child: Text(
+                '$count',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: c.onAccent),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

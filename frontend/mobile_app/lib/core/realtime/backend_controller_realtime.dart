@@ -153,6 +153,8 @@ class BackendControllerRealtime extends RealtimeService {
       case WsEventType.changeImage:
         _currentImageIndex = event.imageIndex ?? _currentImageIndex;
         _sendShowProduct();
+      case WsEventType.fullscreen:
+        _send('fullscreen', event.payload);
       case WsEventType.zoomImage:
         _send('zoom', <String, dynamic>{
           'assetId': _currentProductId,

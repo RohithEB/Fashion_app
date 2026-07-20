@@ -39,6 +39,7 @@ class ProductPresentation {
     this.videoPositionMs = 0,
     this.videoMuted = false,
     this.detailsExpanded = false,
+    this.fullscreen = false,
     this.scrollFraction = 0,
   });
 
@@ -61,6 +62,10 @@ class ProductPresentation {
   /// Whether the full product-details panel is expanded (synced from the sheet).
   final bool detailsExpanded;
 
+  /// True while the associate has the image open full-screen; the display
+  /// mirrors it by dropping the info panel and going full-bleed.
+  final bool fullscreen;
+
   /// Normalised scroll position (0..1) of the associate's product-detail sheet,
   /// mirrored so the display's info panel scrolls in step.
   final double scrollFraction;
@@ -80,6 +85,7 @@ class ProductPresentation {
     int? videoPositionMs,
     bool? videoMuted,
     bool? detailsExpanded,
+    bool? fullscreen,
     double? scrollFraction,
   }) => ProductPresentation(
     productId: productId ?? this.productId,
@@ -96,6 +102,7 @@ class ProductPresentation {
     videoPositionMs: videoPositionMs ?? this.videoPositionMs,
     videoMuted: videoMuted ?? this.videoMuted,
     detailsExpanded: detailsExpanded ?? this.detailsExpanded,
+    fullscreen: fullscreen ?? this.fullscreen,
     scrollFraction: scrollFraction ?? this.scrollFraction,
   );
 
@@ -148,6 +155,8 @@ class ProductPresentation {
         return copyWith(
           showAIHighlights: (event.payload['visible'] as bool?) ?? true,
         );
+      case WsEventType.fullscreen:
+        return copyWith(fullscreen: event.isFullscreen ?? !fullscreen);
       case WsEventType.showDetails:
         return copyWith(
           detailsExpanded:

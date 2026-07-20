@@ -145,6 +145,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _openFullscreen() {
     final PresentationController pres = context.read<PresentationController>();
     final bool presenting = _isPresentingThis(pres);
+    // Take the display full-bleed alongside the associate.
+    if (presenting) pres.setFullscreen(true);
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         fullscreenDialog: true,
@@ -158,7 +160,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     pres.zoom(s, focalX: px, focalY: py)
               : null,
           onClosed: () {
-            if (_isPresentingThis(pres)) pres.resetZoom();
+            if (_isPresentingThis(pres)) {
+              pres.setFullscreen(false);
+              pres.resetZoom();
+            }
           },
         ),
       ),
@@ -249,6 +254,50 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
+      // Pinned primary actions — always reachable, whatever the sheet is doing.
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          color: AppColors.of(context).background,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                flex: 3,
+                child: AppButton(
+                  label: !connected
+                      ? 'No screen connected'
+                      : (presentingThis ? 'Showing live' : 'Show on Screen'),
+                  icon: !connected
+                      ? AppIcons.disconnect
+                      : (presentingThis
+                            ? AppIcons.connected
+                            : AppIcons.showOnScreen),
+                  expand: true,
+                  onPressed: (!connected || presentingThis)
+                      ? null
+                      : _showOnScreen,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                flex: 2,
+                child: AppButton(
+                  label: 'Add',
+                  icon: AppIcons.add,
+                  variant: AppButtonVariant.outline,
+                  expand: true,
+                  onPressed: _addToCart,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -295,13 +344,6 @@ class _DetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppColors c = AppColors.of(context);
     final TextTheme t = Theme.of(context).textTheme;
-
-    final String showLabel = !connected
-        ? 'No screen connected'
-        : (presentingThis ? 'Showing live' : 'Show on Screen');
-    final IconData showIcon = !connected
-        ? AppIcons.disconnect
-        : (presentingThis ? AppIcons.connected : AppIcons.showOnScreen);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -377,32 +419,8 @@ class _DetailsSheet extends StatelessWidget {
             onSelect: onSelectSize,
           ),
           const SizedBox(height: AppSpacing.lg),
-
-          // Primary actions.
-          Row(
-            children: <Widget>[
-              Expanded(
-                flex: 3,
-                child: AppButton(
-                  label: showLabel,
-                  icon: showIcon,
-                  expand: true,
-                  onPressed: (!connected || presentingThis) ? null : onShow,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                flex: 2,
-                child: AppButton(
-                  label: 'Add',
-                  icon: AppIcons.add,
-                  variant: AppButtonVariant.outline,
-                  expand: true,
-                  onPressed: onAdd,
-                ),
-              ),
-            ],
-          ),
+          // Primary actions live in the screen's pinned bottom bar so they are
+          // reachable without dragging the sheet up.
           const SizedBox(height: AppSpacing.sm),
 
           // Drag-up affordance / toggle.

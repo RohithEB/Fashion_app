@@ -183,7 +183,15 @@ abstract final class AppTheme {
         selectedColor: c.primary,
         checkmarkColor: c.onPrimary,
         side: BorderSide(color: c.border),
-        labelStyle: text.labelMedium!,
+        // Selected chips fill with `primary`, so the label must flip to
+        // `onPrimary` or it renders dark-on-dark and disappears.
+        labelStyle: text.labelMedium!.copyWith(
+          color: WidgetStateColor.resolveWith(
+            (Set<WidgetState> states) => states.contains(WidgetState.selected)
+                ? c.onPrimary
+                : c.textPrimary,
+          ),
+        ),
         secondaryLabelStyle: text.labelMedium!.copyWith(color: c.onPrimary),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,
