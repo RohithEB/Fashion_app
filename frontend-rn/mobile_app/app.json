@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Ebani — Studio",
+    "slug": "mobile_app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ebani.controller"
+    },
+    "android": {
+      "package": "com.ebani.controller",
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F5F1",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-video",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Ebani to scan the display's pairing QR code."
+        }
+      ]
+    ]
+  }
+}

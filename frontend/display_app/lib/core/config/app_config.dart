@@ -3,23 +3,25 @@
 /// All values are compile-time `--dart-define`s so the same binary can run in
 /// either mode:
 ///
-/// * **Box-as-server (DEFAULT):** the display box hosts the LAN WebSocket server
-///   and both apps read a bundled real-catalog snapshot. Runs fully offline over
-///   WiFi — no internet, no laptop, no Node/CMS.
-/// * **Backend:** the Node server owns the catalog (HTTP) and the realtime
-///   channel (`ws://<box>:3000/ws`). Enable with
-///   `--dart-define=BACKEND=true --dart-define=BACKEND_HOST=10.0.1.12`.
+/// * **Backend (DEFAULT):** the Node server on the box owns the catalogue (HTTP)
+///   and the realtime channel (`ws://10.0.1.45:3000/ws`). This is the deployed
+///   topology — the box is the server.
+/// * **Box-as-server (opt-in):** `--dart-define=BACKEND=false` falls back to the
+///   bundled catalogue snapshot and the display-hosted LAN socket.
 abstract final class AppConfig {
-  // Box-as-server (offline) is the DEFAULT. Pass --dart-define=BACKEND=true to
-  // run against the Node backend instead.
+  // The showcase server runs ON THE BOX, so backend mode + the box's LAN address
+  // are the defaults. Relying on --dart-define proved fragile (Flutter does not
+  // always invalidate its build cache when a define changes, silently shipping an
+  // offline build), so the deployment values live here instead.
+  // Pass --dart-define=BACKEND=false for the bundled-catalogue offline mode.
   static const bool backendMode = bool.fromEnvironment(
     'BACKEND',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   static const String backendHost = String.fromEnvironment(
     'BACKEND_HOST',
-    defaultValue: '10.0.1.12',
+    defaultValue: '10.0.1.45', // the box
   );
 
   static const int backendPort = int.fromEnvironment(

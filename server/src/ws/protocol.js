@@ -33,7 +33,7 @@ export const OUT = {
 export const RELAY_TYPES = new Set([
   IN.SHOW_CATALOG, IN.SHOW_CART, IN.SHOW_PRODUCT, IN.SHOW_DETAILS,
   IN.SHOW_RELATED, IN.SHOW_MEDIA, IN.SHOW_RECOMMENDATIONS, IN.ZOOM,
-  IN.SCROLL, IN.CLEAR,
+  IN.SCROLL, IN.CLEAR, IN.FULLSCREEN,
 ]);
 
 export function encode(type, sessionId, payload = {}) {

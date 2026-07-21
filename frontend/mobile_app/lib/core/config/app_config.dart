@@ -9,23 +9,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 2. **Compile-time `--dart-define`s** — the fallback/default, so a build can
 ///    still be pinned at build time.
 ///
-/// * **Standalone (default):** in-app mock catalog + the display-hosted LAN
-///   WebSocket server. No backend required — the offline demo.
-/// * **Backend:** the Node server owns the catalog (HTTP) and the realtime
-///   channel (`ws://<box>:3000/ws`). Enable in-app under Server settings, or
-///   with `--dart-define=BACKEND=true --dart-define=BACKEND_HOST=192.168.1.5`.
+/// * **Backend (mandatory):** the Node server on the box owns the catalogue
+///   (HTTP) and the realtime channel (`ws://10.0.1.45:3000/ws`). Only the
+///   host/port are configurable — the mode itself cannot be switched off.
 abstract final class AppConfig {
-  // Box-as-server (offline) is the DEFAULT: the display box hosts the LAN server
-  // and both apps use the bundled catalog snapshot — works over WiFi with no
-  // internet. Pass --dart-define=BACKEND=true to run against the Node backend.
+  // The showcase server runs ON THE BOX, so backend mode + the box's LAN address
+  // are the defaults. Relying on --dart-define proved fragile (Flutter does not
+  // always invalidate its build cache when a define changes, silently shipping an
+  // offline build), so the deployment values live here instead.
+  // Pass --dart-define=BACKEND=false for the bundled-catalogue offline mode.
   static const bool _envBackend = bool.fromEnvironment(
     'BACKEND',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   static const String _envHost = String.fromEnvironment(
     'BACKEND_HOST',
-    defaultValue: '10.0.1.12',
+    defaultValue: '10.0.1.45', // the box
   );
   static const int _envPort = int.fromEnvironment(
     'BACKEND_PORT',
@@ -41,9 +41,13 @@ abstract final class AppConfig {
   static const String _kHost = 'cfg.host';
   static const String _kPort = 'cfg.port';
 
-  /// True when the app talks to the Node backend (HTTP + real WebSocket)
-  /// instead of the in-app mock/offline stack.
-  static bool get backendMode => _backendOverride ?? _envBackend;
+  /// True when the app talks to the Node backend (HTTP + real WebSocket).
+  ///
+  /// Backend mode is **mandatory** in this deployment: the showcase server and
+  /// the realtime WebSocket both run on the box, so a stored override must never
+  /// be able to drop the app into the offline/bundled stack and silently serve a
+  /// stale catalogue. Only the host/port stay configurable.
+  static bool get backendMode => _envBackend || (_backendOverride ?? false);
 
   /// Host the backend is reached at (LAN IP of the server box for a device).
   static String get backendHost => _hostOverride ?? _envHost;
