@@ -23,6 +23,7 @@ import { mediaSrc } from '@/lib/media';
   GENDERS, CATEGORIES, SUBCATEGORIES, STYLE_ARCHETYPES, OCCASIONS, SEASONS, FITS,
   PATTERNS, MATERIALS, VIBES, AGE_GROUPS, type EnrichedProduct,
 } from '@/lib/attributes';
+import { mediaSrc } from '@/lib/media';
 
 interface FormState {
   name: string; brand: string; category: string; subCategory: string; gender: string;
