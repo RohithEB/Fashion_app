@@ -36,7 +36,7 @@ export function ProductDetailScreen() {
   const nav = useNavigation<any>();
   const route = useRoute<any>();
   const deps = useDeps();
-  const { presentation, connection, cart, auth, onboarding, journey, catalogRepo } = deps;
+  const { presentation, connection, onboarding, catalogRepo } = deps;
   useListenable(presentation);
   useListenable(connection);
   const { height: screenH } = useWindowDimensions();
@@ -51,7 +51,6 @@ export function ProductDetailScreen() {
   const [talkingPoint, setTalkingPoint] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
 
   const variant = product.variantById(variantId);
   const collapsed = screenH * 0.42;
@@ -127,19 +126,6 @@ export function ProductDetailScreen() {
     presentation.showProduct(product, { variantId, size });
     if (detailsShown) presentation.showDetails(true);
     setPreviewOpen(true);
-  };
-
-  const addToCart = () => {
-    cart.addItem(product, { variantId, size });
-    journey.log({
-      eventType: 'cart_add',
-      token: auth.token,
-      sessionId: connection.session?.sessionId,
-      refId: product.id,
-      meta: { size, variantId },
-    });
-    setToast(`${product.name} saved to outfits`);
-    setTimeout(() => setToast(null), 2200);
   };
 
   const openFullscreen = () => {
@@ -282,29 +268,15 @@ export function ProductDetailScreen() {
 
       {/* Pinned actions */}
       <SafeAreaView edges={['bottom']} style={{ backgroundColor: colors.background }}>
-        <View style={{ flexDirection: 'row', paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}>
-          <View style={{ flex: 3 }}>
-            <AppButton
-              label={!connected ? 'No screen connected' : presentingThis ? 'Showing live' : 'Show on Screen'}
-              icon={!connected ? 'disconnect' : presentingThis ? 'connected' : 'showOnScreen'}
-              expand
-              onPress={!connected || presentingThis ? null : showOnScreen}
-            />
-          </View>
-          <View style={{ width: spacing.sm }} />
-          <View style={{ flex: 2 }}>
-            <AppButton label="Add" icon="add" variant="outline" expand onPress={addToCart} />
-          </View>
+        <View style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}>
+          <AppButton
+            label={!connected ? 'No screen connected' : presentingThis ? 'Showing live' : 'Show on Screen'}
+            icon={!connected ? 'disconnect' : presentingThis ? 'connected' : 'showOnScreen'}
+            expand
+            onPress={!connected || presentingThis ? null : showOnScreen}
+          />
         </View>
       </SafeAreaView>
-
-      {toast != null && (
-        <View style={{ position: 'absolute', left: spacing.md, right: spacing.md, bottom: 96 }}>
-          <View style={{ backgroundColor: colors.primary, borderRadius: radius.md, padding: spacing.md }}>
-            <Text style={{ color: colors.onPrimary }}>{toast}</Text>
-          </View>
-        </View>
-      )}
 
       <LivePreviewModal visible={previewOpen} onClose={() => setPreviewOpen(false)} />
       <FullscreenViewer
@@ -370,6 +342,32 @@ function DetailsSheet({
         <PriceTag base={product.price} effective={variant.price ?? product.price} style={text.titleMedium} />
       </View>
       <View style={{ height: spacing.lg }} />
+
+      {product.locationLabel != null && (
+        <>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: spacing.sm,
+              paddingHorizontal: spacing.md,
+              backgroundColor: withAlpha(colors.primary, 0.06),
+              borderRadius: radius.md,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}
+          >
+            <Icon name="tag" size={16} color={colors.primary} />
+            <View style={{ width: spacing.sm }} />
+            <View style={{ flex: 1 }}>
+              <Text style={eyebrow(colors.textTertiary)}>IN STORE</Text>
+              <View style={{ height: 2 }} />
+              <Text style={[text.bodyMedium, { color: colors.textPrimary }]}>{product.locationLabel}</Text>
+            </View>
+          </View>
+          <View style={{ height: spacing.lg }} />
+        </>
+      )}
 
       {talkingPoint != null && talkingPoint.length > 0 && (
         <>

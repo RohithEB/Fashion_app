@@ -75,11 +75,11 @@ export function createProduct(input = {}) {
     INSERT INTO products
       (id, name, category, subCategory, gender, basePrice, currency, brand, description, tags,
        heroImage, styleArchetype, occasion, season, fit, pattern, material, fabric, vibe,
-       primaryColor, ageGroup, rating, aiEnriched, createdAt)
+       primaryColor, ageGroup, storeSection, storeRack, storeColumn, rating, aiEnriched, createdAt)
     VALUES
       (@id, @name, @category, @subCategory, @gender, @basePrice, @currency, @brand, @description, @tags,
        @heroImage, @styleArchetype, @occasion, @season, @fit, @pattern, @material, @fabric, @vibe,
-       @primaryColor, @ageGroup, @rating, @aiEnriched, @createdAt)
+       @primaryColor, @ageGroup, @storeSection, @storeRack, @storeColumn, @rating, @aiEnriched, @createdAt)
   `);
   const insertEnrichment = db.prepare(
     'INSERT INTO product_enrichment (id, productId, key, value, sortOrder) VALUES (?, ?, ?, ?, ?)',
@@ -114,6 +114,9 @@ export function createProduct(input = {}) {
       vibe: input.vibe || null,
       primaryColor: input.primaryColor || null,
       ageGroup: input.ageGroup || null,
+      storeSection: input.storeSection || null,
+      storeRack: input.storeRack || null,
+      storeColumn: input.storeColumn || null,
       rating: input.rating == null ? null : Number(input.rating),
       aiEnriched: input.aiEnriched ? 1 : 0,
       createdAt,

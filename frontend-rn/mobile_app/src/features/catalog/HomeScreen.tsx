@@ -43,10 +43,9 @@ function cardImageHeight(width: number): number {
 export function HomeScreen() {
   const { colors, text } = useTheme();
   const nav = useNavigation<any>();
-  const { auth, catalog, cart, connection, presentation } = useDeps();
+  const { auth, catalog, connection, presentation } = useDeps();
   useListenable(auth);
   useListenable(catalog);
-  useListenable(cart);
   useListenable(connection);
   const { width } = useWindowDimensions();
 
@@ -96,7 +95,6 @@ export function HomeScreen() {
             <StatusBadge connected={connected} />
           </View>
         </View>
-        <SavedOutfitsButton count={cart.cart.count} onPress={() => nav.navigate('Cart')} />
         <Pressable onPress={() => nav.navigate('Profile')} accessibilityLabel="Profile" hitSlop={8}>
           <InitialsAvatar name={auth.salesperson?.name} radius={15} />
         </Pressable>
@@ -211,33 +209,6 @@ function StatusBadge({ connected }: { connected: boolean }) {
 }
 
 /// Quick access to the guest's saved outfits, with a live count badge.
-function SavedOutfitsButton({ count, onPress }: { count: number; onPress: () => void }) {
-  const { colors, text } = useTheme();
-  return (
-    <Pressable onPress={onPress} hitSlop={8} accessibilityLabel="Saved outfits" style={{ padding: spacing.xs }}>
-      <Icon name="cart" size={24} color={colors.textPrimary} />
-      {count > 0 && (
-        <View
-          style={{
-            position: 'absolute',
-            right: 4,
-            top: 4,
-            minWidth: 18,
-            height: 18,
-            borderRadius: 9,
-            paddingHorizontal: 4,
-            backgroundColor: colors.accent,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={[text.labelSmall, { color: colors.onAccent, fontSize: 10, lineHeight: 12 }]}>{count}</Text>
-        </View>
-      )}
-    </Pressable>
-  );
-}
-
 function CategoryBar({
   categories,
   selectedId,

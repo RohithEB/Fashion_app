@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, Platform, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -11,15 +11,58 @@ import { useListenable } from '../../core/useListenable';
 import { useDeps } from '../../app/providers';
 import { ConnectionStatus } from './connectionController';
 
+/// True when the web app is running inside the native kiosk WebView shell. There,
+/// the page is served over http, so the browser camera is unavailable — the native
+/// shell owns the camera and hands us the scanned value via `__ebaniPairFromQr`.
+function inKioskShell(): boolean {
+  return (
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    !!(window as unknown as { ReactNativeWebView?: unknown }).ReactNativeWebView
+  );
+}
+
 /// Pairing entry point: scan the QR shown on a display to connect over WiFi.
-/// Ported from `ConnectScreen` (connect_screen.dart).
+/// Camera-only — there is no manual URL entry.
 export function ConnectScreen() {
   const { colors, text } = useTheme();
-  const { connection } = useDeps();
+  const { connection, auth } = useDeps();
   useListenable(connection);
 
   const connecting = connection.status === ConnectionStatus.connecting;
   const [scannerVisible, setScannerVisible] = useState(false);
+
+  const pairFromValue = useCallback(
+    (value: string) => {
+      const trimmed = (value || '').trim();
+      if (trimmed.length === 0) return;
+      void connection.connectFromQr(trimmed, { salesperson: auth.salesperson ?? undefined });
+    },
+    [connection, auth],
+  );
+
+  // Bridge for the native shell: when it scans a QR it calls this global with the
+  // pairing URL. Registered only on the web build (the one that runs in the shell).
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const w = window as unknown as { __ebaniPairFromQr?: (url: string) => void };
+    w.__ebaniPairFromQr = (url: string) => pairFromValue(url);
+    return () => {
+      w.__ebaniPairFromQr = undefined;
+    };
+  }, [pairFromValue]);
+
+  const startScan = () => {
+    if (inKioskShell()) {
+      // Ask the native shell to open its camera scanner.
+      (window as unknown as { ReactNativeWebView: { postMessage: (s: string) => void } }).ReactNativeWebView.postMessage(
+        JSON.stringify({ type: 'open-scanner' }),
+      );
+    } else {
+      // Native RN app (or a secure browser): use the in-app camera directly.
+      setScannerVisible(true);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -65,29 +108,34 @@ export function ConnectScreen() {
           icon="qrScan"
           expand
           isLoading={connecting}
-          onPress={connecting ? null : () => setScannerVisible(true)}
+          onPress={connecting ? null : startScan}
         />
         <View style={{ height: spacing.xl }} />
       </View>
 
-      <ScannerModal visible={scannerVisible} onClose={() => setScannerVisible(false)} />
+      <ScannerModal visible={scannerVisible} onClose={() => setScannerVisible(false)} onScanned={pairFromValue} />
     </SafeAreaView>
   );
 }
 
-/// Full-screen scanner: a live camera QR reader with a manual paste-URL
-/// fallback for the web build (no camera access there).
-function ScannerModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/// In-app camera scanner. Used on the native RN app and in secure browsers; in the
+/// kiosk WebView the native shell provides the camera instead (see startScan).
+function ScannerModal({
+  visible,
+  onClose,
+  onScanned,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onScanned: (value: string) => void;
+}) {
   const { colors, text } = useTheme();
-  const { connection, auth } = useDeps();
   const [permission, requestPermission] = useCameraPermissions();
   const handled = useRef(false);
-  const [manualValue, setManualValue] = useState('');
 
   useEffect(() => {
     if (!visible) return;
     handled.current = false;
-    setManualValue('');
     if (!permission?.granted) void requestPermission();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -97,7 +145,7 @@ function ScannerModal({ visible, onClose }: { visible: boolean; onClose: () => v
     const trimmed = value.trim();
     if (trimmed.length === 0) return;
     handled.current = true;
-    void connection.connectFromQr(trimmed, { salesperson: auth.salesperson ?? undefined });
+    onScanned(trimmed);
     onClose();
   };
 
@@ -109,14 +157,7 @@ function ScannerModal({ visible, onClose }: { visible: boolean; onClose: () => v
         <View style={{ height: spacing.md }} />
 
         <View style={{ flex: 1, paddingHorizontal: spacing.md }}>
-          <View
-            style={{
-              flex: 1,
-              borderRadius: radius.lg,
-              overflow: 'hidden',
-              backgroundColor: colors.surface,
-            }}
-          >
+          <View style={{ flex: 1, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.surface }}>
             {permission?.granted ? (
               <CameraView
                 style={{ flex: 1 }}
@@ -128,7 +169,7 @@ function ScannerModal({ visible, onClose }: { visible: boolean; onClose: () => v
                 <Icon name="qrScan" size={48} color={colors.textTertiary} />
                 <View style={{ height: spacing.sm }} />
                 <Text style={[text.bodySmall, { color: colors.textSecondary, textAlign: 'center' }]}>
-                  Camera unavailable. Paste the pairing URL below instead.
+                  Allow camera access to scan the display's QR code.
                 </Text>
               </View>
             )}
@@ -136,33 +177,9 @@ function ScannerModal({ visible, onClose }: { visible: boolean; onClose: () => v
         </View>
 
         <View style={{ padding: spacing.md }}>
-          <Text style={[text.bodySmall, { color: colors.textSecondary }]}>
+          <Text style={[text.bodySmall, { color: colors.textSecondary, textAlign: 'center' }]}>
             Point the camera at the code on the screen
           </Text>
-          <View style={{ height: spacing.sm }} />
-          <TextInput
-            value={manualValue}
-            onChangeText={setManualValue}
-            placeholder="Or paste the pairing URL"
-            placeholderTextColor={colors.textTertiary}
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={{
-              height: 52,
-              borderWidth: 1,
-              borderColor: colors.border,
-              borderRadius: radius.md,
-              paddingHorizontal: spacing.md,
-              color: colors.textPrimary,
-              backgroundColor: colors.surface,
-            }}
-          />
-          <View style={{ height: spacing.sm }} />
-          <AppButton
-            label="Connect"
-            expand
-            onPress={manualValue.trim().length > 0 ? () => handleValue(manualValue) : null}
-          />
           <View style={{ height: spacing.sm }} />
           <Pressable onPress={onClose} style={{ alignItems: 'center', paddingVertical: spacing.xs }}>
             <Text style={[text.bodyMedium, { color: colors.textSecondary }]}>Cancel</Text>

@@ -23,9 +23,8 @@ import { CustomerDirectoryController } from '../customer/customerDirectoryContro
 export function ProfileScreen() {
   const { colors, text } = useTheme();
   const nav = useNavigation<any>();
-  const { auth, cart, connection, onboarding, customerDirectory, presentation } = useDeps();
+  const { auth, connection, onboarding, customerDirectory, presentation } = useDeps();
   useListenable(auth);
-  useListenable(cart);
   useListenable(onboarding);
   useListenable(customerDirectory);
 
@@ -170,12 +169,6 @@ export function ProfileScreen() {
         <View style={{ height: spacing.xl }} />
 
         {/* Shortcuts */}
-        <HubTile
-          icon="cart"
-          label="Saved outfits"
-          subtitle={cart.cart.count === 0 ? 'Nothing saved yet' : `${cart.cart.count} item(s) saved`}
-          onTap={() => nav.navigate('Cart')}
-        />
         <HubTile
           icon="sparkle"
           label="Recommendations"

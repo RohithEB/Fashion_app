@@ -63,6 +63,9 @@ CREATE TABLE IF NOT EXISTS products (
   vibe           TEXT,            -- Elegant/Edgy/Playful/Relaxed/Romantic…
   primaryColor   TEXT,
   ageGroup       TEXT,            -- Teen/Young Adult/Adult/Mature
+  storeSection   TEXT,            -- in-store zone shown to the salesperson, e.g. "Women · Formals"
+  storeRack      TEXT,            -- rack label within the section, e.g. "B3"
+  storeColumn    TEXT,            -- column/shelf within the rack, e.g. "4"
   rating         REAL,            -- 0–5 style/quality rating
   aiEnriched     INTEGER NOT NULL DEFAULT 0,
   createdAt   TEXT NOT NULL

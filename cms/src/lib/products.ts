@@ -34,6 +34,9 @@ export interface ProductInput {
   vibe?: string;
   primaryColor?: string;
   ageGroup?: string;
+  storeSection?: string;         // in-store placement: section (e.g. "Women · Formals")
+  storeRack?: string;            // in-store placement: rack (e.g. "B3")
+  storeColumn?: string;          // in-store placement: column (e.g. "4")
   aiEnriched?: boolean;
   highlights?: string[];         // -> product_enrichment rows
   sizes?: SizeStock[];           // size-wise quantity -> variants stock
@@ -60,11 +63,11 @@ export function createProduct(input: ProductInput): string {
     INSERT INTO products
       (id, name, category, subCategory, gender, basePrice, currency, brand, description, tags,
        heroImage, styleArchetype, occasion, season, fit, pattern, material, fabric, vibe,
-       primaryColor, ageGroup, rating, aiEnriched, createdAt)
+       primaryColor, ageGroup, storeSection, storeRack, storeColumn, rating, aiEnriched, createdAt)
     VALUES
       (@id, @name, @category, @subCategory, @gender, @basePrice, @currency, @brand, @description, @tags,
        @heroImage, @styleArchetype, @occasion, @season, @fit, @pattern, @material, @fabric, @vibe,
-       @primaryColor, @ageGroup, @rating, @aiEnriched, @createdAt)
+       @primaryColor, @ageGroup, @storeSection, @storeRack, @storeColumn, @rating, @aiEnriched, @createdAt)
   `);
   const insertEnrichment = db.prepare(
     'INSERT INTO product_enrichment (id, productId, key, value, sortOrder) VALUES (?, ?, ?, ?, ?)',
@@ -99,6 +102,9 @@ export function createProduct(input: ProductInput): string {
       vibe: input.vibe || null,
       primaryColor: input.primaryColor || null,
       ageGroup: input.ageGroup || null,
+      storeSection: input.storeSection || null,
+      storeRack: input.storeRack || null,
+      storeColumn: input.storeColumn || null,
       rating: input.rating == null ? null : Number(input.rating),
       aiEnriched: input.aiEnriched ? 1 : 0,
       createdAt,

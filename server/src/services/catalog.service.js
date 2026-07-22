@@ -79,6 +79,10 @@ export function getProductDetail(id) {
     colors: [...colorMap].map(([name, hex]) => ({ name, hex })),
     sizes: [...sizeSet],
     heroImage: media.find((m) => m.type === 'image')?.url || variants[0]?.mediaUrl || null,
+    // In-store placement, surfaced to the salesperson (not the display).
+    storeSection: p.storeSection || null,
+    storeRack: p.storeRack || null,
+    storeColumn: p.storeColumn || null,
   };
 }
 

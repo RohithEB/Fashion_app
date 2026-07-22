@@ -174,6 +174,9 @@ export const BackendDto = {
       aiHighlights: highlights,
       materials,
       details,
+      storeSection: (json.storeSection as string | undefined) ?? undefined,
+      storeRack: (json.storeRack as string | undefined) ?? undefined,
+      storeColumn: (json.storeColumn as string | undefined) ?? undefined,
     });
   },
 };

@@ -18,12 +18,13 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import UploadIcon from '@mui/icons-material/CloudUpload';
 import CloseIcon from '@mui/icons-material/Close';
 import MovieIcon from '@mui/icons-material/Movie';
-import {
+
 import { mediaSrc } from '@/lib/media';
+import {
   GENDERS, CATEGORIES, SUBCATEGORIES, STYLE_ARCHETYPES, OCCASIONS, SEASONS, FITS,
   PATTERNS, MATERIALS, VIBES, AGE_GROUPS, type EnrichedProduct,
 } from '@/lib/attributes';
-import { mediaSrc } from '@/lib/media';
+// import { mediaSrc } from '@/lib/media';
 
 interface FormState {
   name: string; brand: string; category: string; subCategory: string; gender: string;
@@ -32,6 +33,7 @@ interface FormState {
   pattern: string; material: string; fabric: string; vibe: string;
   primaryColor: string; ageGroup: string; tags: string; sizes: string;
   colors: string; highlights: string;
+  storeSection: string; storeRack: string; storeColumn: string;
 }
 
 const EMPTY: FormState = {
@@ -40,6 +42,7 @@ const EMPTY: FormState = {
   season: '', fit: '', pattern: '', material: '', fabric: '', vibe: '',
   primaryColor: '', ageGroup: '', tags: '', sizes: 'S:5, M:8, L:5, XL:3', colors: '',
   highlights: '',
+  storeSection: '', storeRack: '', storeColumn: '',
 };
 
 // A product can carry up to this many media items (images + videos combined).
@@ -218,6 +221,9 @@ export default function NewProductPage() {
         vibe: form.vibe || undefined,
         primaryColor: form.primaryColor.trim() || undefined,
         ageGroup: form.ageGroup || undefined,
+        storeSection: form.storeSection.trim() || undefined,
+        storeRack: form.storeRack.trim() || undefined,
+        storeColumn: form.storeColumn.trim() || undefined,
         heroImage: heroImage || undefined,
         mediaUrls: images.slice(1).map((m) => m.url),
         videoUrls: videos.map((m) => m.url),
@@ -409,6 +415,24 @@ export default function NewProductPage() {
                 <SelectField label="Age group" value={form.ageGroup} options={AGE_GROUPS} onChange={set('ageGroup')} />
               </Stack>
               <TextField fullWidth label="Primary colour" value={form.primaryColor} onChange={(e) => set('primaryColor')(e.target.value)} />
+
+              <Typography variant="overline" color="text.secondary">
+                Store placement
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <TextField
+                  fullWidth label="Section" value={form.storeSection}
+                  onChange={(e) => set('storeSection')(e.target.value)} placeholder="e.g. Women · Formals"
+                />
+                <TextField
+                  fullWidth label="Rack" value={form.storeRack}
+                  onChange={(e) => set('storeRack')(e.target.value)} placeholder="e.g. B3"
+                />
+                <TextField
+                  fullWidth label="Column" value={form.storeColumn}
+                  onChange={(e) => set('storeColumn')(e.target.value)} placeholder="e.g. 4"
+                />
+              </Stack>
 
               <Typography variant="overline" color="text.secondary">
                 Variants, stock & display

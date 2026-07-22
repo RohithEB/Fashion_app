@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Keyboard, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { eyebrow } from '../../theme/typography';
 import { radius, sizes, spacing } from '../../theme/tokens';
@@ -11,13 +10,12 @@ import { useListenable } from '../../core/useListenable';
 import { AppButton } from '../../widgets/AppButton';
 
 /// Boutique sign-in. Login gates the whole app — a successful sign-in lets the
-/// associate through to pair a display. New associates register first.
-/// Ported from `LoginScreen`.
+/// associate through to pair a display. Accounts are created by an admin in the
+/// CMS; there is no self-registration.
 export function LoginScreen() {
   const { colors, text } = useTheme();
   const { auth } = useDeps();
   useListenable(auth);
-  const nav = useNavigation<any>();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -85,18 +83,6 @@ export function LoginScreen() {
           isLoading={auth.isBusy}
           onPress={auth.isBusy ? null : submit}
         />
-        <View style={{ height: spacing.md }} />
-        <View style={{ alignItems: 'center' }}>
-          <Pressable
-            disabled={auth.isBusy}
-            onPress={() => {
-              auth.clearError();
-              nav.navigate('Register');
-            }}
-          >
-            <Text style={[text.bodyMedium, { color: colors.accent }]}>New associate? Create an account</Text>
-          </Pressable>
-        </View>
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </SafeAreaView>

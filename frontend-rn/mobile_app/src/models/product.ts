@@ -108,6 +108,10 @@ export class Product {
   readonly materials: string[];
   readonly details: ProductDetail[];
   readonly isNew: boolean;
+  // In-store placement, shown to the salesperson (never mirrored to the display).
+  readonly storeSection?: string;
+  readonly storeRack?: string;
+  readonly storeColumn?: string;
 
   constructor(init: {
     id: string;
@@ -121,6 +125,9 @@ export class Product {
     materials?: string[];
     details?: ProductDetail[];
     isNew?: boolean;
+    storeSection?: string;
+    storeRack?: string;
+    storeColumn?: string;
   }) {
     this.id = init.id;
     this.name = init.name;
@@ -133,6 +140,18 @@ export class Product {
     this.materials = init.materials ?? [];
     this.details = init.details ?? [];
     this.isNew = init.isNew ?? false;
+    this.storeSection = init.storeSection;
+    this.storeRack = init.storeRack;
+    this.storeColumn = init.storeColumn;
+  }
+
+  /// Human-readable placement line, e.g. "Women · Formals · Rack B3 · Col 4".
+  get locationLabel(): string | undefined {
+    const parts: string[] = [];
+    if (this.storeSection) parts.push(this.storeSection);
+    if (this.storeRack) parts.push(`Rack ${this.storeRack}`);
+    if (this.storeColumn) parts.push(`Col ${this.storeColumn}`);
+    return parts.length > 0 ? parts.join(' · ') : undefined;
   }
 
   static fromJson(json: any): Product {
